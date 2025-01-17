@@ -9,6 +9,7 @@
 #' "v5.0", "v5.01" or "latest" (default).
 #' @param output_dir Directory to save downloaded files. Default is current working directory.
 #' @param n_cores Number of cores to use for parallel download. Default is all cores except one.
+#' @param file_names Character vector of specific filenames to download. If NULL (default), all files will be downloaded.
 #'
 #' @return A character vector of downloaded file paths.
 #'
@@ -21,7 +22,8 @@
 download_esacci_biomass <- function(esacci_biomass_year = "latest",
                                     esacci_biomass_version = "latest",
                                     output_dir = "data/ESACCI-BIOMASS",
-                                    n_cores = parallel::detectCores() - 1) {
+                                    n_cores = parallel::detectCores() - 1,
+                                    file_names = NULL) {
 
   base_url <- "https://data.ceda.ac.uk/neodc/esacci/biomass/data/agb/maps"
 
@@ -47,7 +49,17 @@ download_esacci_biomass <- function(esacci_biomass_year = "latest",
   # Fetch file list
   page <- read_html(url)
   file_table <- html_table(page, fill = TRUE)[[1]]
-  file_names <- file_table$X1
+  available_files <- file_table$X1
+
+  # If specific file_names are provided, use those. Otherwise, use all available files.
+  if (!is.null(file_names)) {
+    file_names <- intersect(file_names, available_files)
+    if (length(file_names) == 0) {
+      stop("None of the specified file names are available for download.")
+    }
+  } else {
+    file_names <- available_files
+  }
 
   # Download function
   download_file <- function(file_name) {
@@ -62,7 +74,7 @@ download_esacci_biomass <- function(esacci_biomass_year = "latest",
     })
   }
 
-  message(paste0("Downloading ESA CCI Biomass ", esacci_biomass_version, " data for year ", esacci_biomass_year, "..."))
+  message(paste0("Downloading ", length(file_names), " ESA CCI Biomass ", esacci_biomass_version, " file(s) for year ", esacci_biomass_year, "..."))
 
   # Setup parallel processing with progress bar
   cl <- makeCluster(n_cores)

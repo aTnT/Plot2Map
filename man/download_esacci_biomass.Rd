@@ -8,7 +8,8 @@ download_esacci_biomass(
   esacci_biomass_year = "latest",
   esacci_biomass_version = "latest",
   output_dir = "data/ESACCI-BIOMASS",
-  n_cores = parallel::detectCores() - 1
+  n_cores = parallel::detectCores() - 1,
+  file_names = NULL
 )
 }
 \arguments{
@@ -21,6 +22,8 @@ download_esacci_biomass(
 \item{output_dir}{Directory to save downloaded files. Default is current working directory.}
 
 \item{n_cores}{Number of cores to use for parallel download. Default is all cores except one.}
+
+\item{file_names}{Character vector of specific filenames to download. If NULL (default), all files will be downloaded.}
 }
 \value{
 A character vector of downloaded file paths.
