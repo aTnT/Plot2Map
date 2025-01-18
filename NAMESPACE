@@ -3,6 +3,7 @@
 export(AGBtileNames)
 export(BiomePair)
 export(Deforested)
+export(ESACCIAGBtileNames)
 export(HistoShift)
 export(HistoTemp)
 export(MakeBlockPolygon)

@@ -9,6 +9,7 @@ download_esacci_biomass(
   esacci_biomass_version = "latest",
   output_dir = "data/ESACCI-BIOMASS",
   n_cores = parallel::detectCores() - 1,
+  timeout = 600,
   file_names = NULL
 )
 }
@@ -19,9 +20,11 @@ download_esacci_biomass(
 \item{esacci_biomass_version}{The ESACCI BIOMASS AGB tiles version to use. Use either "v2.0", "v3.0", "v4.0",
 "v5.0", "v5.01" or "latest" (default).}
 
-\item{output_dir}{Directory to save downloaded files. Default is current working directory.}
+\item{output_dir}{Directory to save downloaded files. Default is "data/ESACCI-BIOMASS".}
 
 \item{n_cores}{Number of cores to use for parallel download. Default is all cores except one.}
+
+\item{timeout}{Number of seconds for reaching file download timeout.}
 
 \item{file_names}{Character vector of specific filenames to download. If NULL (default), all files will be downloaded.}
 }
