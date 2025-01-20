@@ -194,15 +194,13 @@ head(plots_corners_AGB)
 
 
 
-
-
 ### Plot data contains tree-level measurements
 
-This format of plot data contains tree-level alometric measurements that will be used to 
-estimate AGB and associated standard deviation, using [BIOMASS](https://umr-amap.github.io/BIOMASS/) R package.
+This format of plot data contains tree-level allometric measurements that will be used to 
+estimate mean AGB and standard deviation by plot ID, using [BIOMASS](https://umr-amap.github.io/BIOMASS/) package's height-diameter model:
 
 
-```{r plot_trees, eval=FALSE}
+```{r plot_trees1, eval=FALSE}
 
 # Formatted data example
 plotsTree <- utils::read.csv(sample_file("SampleTree.csv"))
@@ -258,7 +256,226 @@ head(xyTree)
 # 5 11 74.91944 14.36806
 # 6 11 74.91944 14.36806
 
+# Calculate mean AGB and SD by PLOT_ID using BIOMASS package's height-diameter model
 plots_trees_agb_sd <- MeasurementErr(plotTree, xyTree, "India")
+
+print(plots_trees_agb_sd)
+#    PLOT_ID  POINT_X  POINT_Y SIZE_HA AVG_YEAR   AGB_T_HA    sdTree
+# 1       11 74.91944 14.36806       1     1998 185.812601 12.272846
+# 2       12 74.62778 15.16667       1     1998 301.668486 19.112798
+# 3       13 74.63667 14.24944       1     1998 160.599641 16.647684
+# 4       14 74.66806 14.24528       1     1998 349.610949 20.916878
+# 5       15 75.11806 14.28333       1     1998 303.425709 19.913703
+# 6       16 75.13583 14.28389       1     1998 427.535715 39.376169
+# 7       17 74.87222 14.42500       1     1998 233.888981 12.691625
+# 8       18 75.30806 14.44583       1     1998   5.313496  1.659927
+# 9       19 75.17222 14.34861       1     1998  81.295106 10.029705
+# 10     110 75.28639 14.08750       1     1998  72.996814  6.807416
+
+```
+
+
+
+### Plot data contains tree-level measurements and nested plots (sub-plots)
+
+This format of plot data is similar to the previous one but contains nested plot (sub-plots) data. Let's exemplify it by using the following sample shapefile: 
+
+```{r plot_trees2, eval=FALSE}
+
+#cent <- readOGR(dsn = dataDir, layer = "SampleCentroid") #Sub-plot centroid
+cent <- sf::read_sf(sample_file("SampleCentroid.shp")) # Sub-plot centroids
+
+print(cent)
+# Simple feature collection with 5 features and 23 fields
+# Geometry type: POINT
+# Dimension:     XY
+# Bounding box:  xmin: 272004.1 ymin: 350052.3 xmax: 272092.6 ymax: 350087.1
+# Projected CRS: OSGB36 / British National Grid
+# # A tibble: 5 × 24
+#   POINT_GUID    GRID_REF POINT_NUMB VISIT_STAT REASON_FOR PEG_LEFT PEG_NOT_LE PEG_DESCRI PLOT_GUID OBJECTID
+#   <chr>         <chr>         <int>      <int>      <int>    <int>      <int> <chr>      <chr>        <int>
+# 1 {89B25687-ED… sh72029…          1          3          1        1          0 NW of v. … {ABC3BE5…        1
+# 2 {22E69595-D9… sh72018…          1          3          1        1          0 5m N of e… {E76DFF7…        2
+# 3 {B4980FC2-4D… sh72092…          1          3          1        1          0 W of larg… {6EFDF9E…        3
+# 4 {224FD85B-6B… sh72087…          1          3          1        1          0 in plough… {47011DC…        4
+# 5 {197A519B-7A… sh72007…          1          3          1        1          0 N from sm… {EE0EF57…        5
+# # ℹ 14 more variables: INACCESSIB <int>, ACCESS_STA <int>, GENERATE_N <int>, HEIGHT <dbl>,
+# #   TREE_COUNT <int>, ESTIMATED_ <dbl>, TREE_COU_1 <int>, RECORD_STA <chr>, FIELDS_STA <chr>,
+# #   RESURVEY_P <int>, FROZEN <int>, POINT_STUM <int>, ACCESS_COM <chr>, geometry <POINT [m]>
+
+
+tree <- read.csv(sample_file("SampleTreeNested.csv")) # Tree data per sub-plot
+str(tree)
+# 'data.frame':	153 obs. of  50 variables:
+#  $ TREE_GUID..              : chr  "{90106646-EC43-4E04-B3DB-F4DBE0F37FD3}" "{3B18375F-B224-420E-92D0-0D7A0AC51B4A}" "{BCADC7ED-3C2B-41E1-9118-D3A74AAE8353}" "{DE39854B-074C-4CAE-B32C-42AC66063D68}" ...
+#  $ TREE_TYPE                : chr  "1" "1" "1" "1" ...
+#  $ SPIS                     : chr  "SS" "SS" "SS" "SS" ...
+#  $ STRY                     : chr  "4" "4" "4" "4" ...
+#  $ TREE_ALIVE               : chr  "1" "1" "1" "1" ...
+#  $ DEAD_TREE_CAUSE          : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ GROUP_TYPE               : chr  "1" "1" "1" "1" ...
+#  $ CONIFER_STEM_STRAIGHTNESS: chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ LOWEST_DEAD_BRANCH_HEIGHT: chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ POINT_GUID..             : chr  "{197A519B-7AF1-4374-BDD8-81FA03CCC54F}" "{197A519B-7AF1-4374-BDD8-81FA03CCC54F}" "{197A519B-7AF1-4374-BDD8-81FA03CCC54F}" "{197A519B-7AF1-4374-BDD8-81FA03CCC54F}" ...
+#  $ TREE_OR_STUMP            : int  1 1 1 1 1 1 1 1 1 1 ...
+#  $ DECAY_CLASS              : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ STUMP_DECAY_CLASS        : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ COPPICE_STOOL            : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ LINKED_TREE_GUID..       : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ TREE_LOCATION            : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ OBJECTID..               : int  34 24 25 26 27 28 29 30 31 23 ...
+#  $ OUTSIDE_PLOT             : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ HEIGHT                   : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ TREE_HEIGHT              : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ UC_HEIGHT                : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ LC_HEIGHT                : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ SHAPE..                  : chr  "Point" "Point" "Point" "Point" ...
+#  $ DBH                      : chr  "11" "11" "10" "12" ...
+#  $ DIAMETER_ONE             : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ DIAMETER_TWO             : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ SPECIES_GROUP            : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ EXCESSIVE_LEAN           : chr  "0" "0" "0" "0" ...
+#  $ WINDSNAPPED              : chr  "0" "0" "0" "0" ...
+#  $ COPPICE_STOOL_GUID..     : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ CROWN_DIAMETER_ONE       : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ CROWN_DIAMETER_TWO       : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ RECORD_STATUS            : chr  "new" "new" "new" "new" ...
+#  $ FIELDS_STATUS            : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ TIMBER_HEIGHT            : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ TREE_RESURVEY            : int  1 1 1 1 1 1 1 1 1 1 ...
+#  $ GOOD_FELLING_PRACTICE    : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ COPPICE_STOOL_DIAMETER   : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ RANGE_DBH                : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ RANGE_HEIGHT             : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ RANGE_CROWN_DIAMETER_1   : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ RANGE_CROWN_DIAMETER_2   : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ RANGE_DIAMETER_ONE       : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ RANGE_STUMP_HEIGHT       : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ STUMP_TYPE               : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ RANGE_DIAMETER_TWO       : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ SIZE_RANK                : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ PERCENTAGE_HEIGHT_REM    : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ STUMP_AGE                : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ IS_STUMP_AGE             : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+
+
+TreeData <- Nested(cent, tree)
+# which column is your unique Plot ID? 
+# 
+#  1: TREE_GUID..                 2: TREE_TYPE                   3: SPIS                     
+#  4: STRY                        5: TREE_ALIVE                  6: DEAD_TREE_CAUSE          
+#  7: GROUP_TYPE                  8: CONIFER_STEM_STRAIGHTNESS   9: LOWEST_DEAD_BRANCH_HEIGHT
+# 10: POINT_GUID..               11: TREE_OR_STUMP              12: DECAY_CLASS              
+# 13: STUMP_DECAY_CLASS          14: COPPICE_STOOL              15: LINKED_TREE_GUID..       
+# 16: TREE_LOCATION              17: OBJECTID..                 18: OUTSIDE_PLOT             
+# 19: HEIGHT                     20: TREE_HEIGHT                21: UC_HEIGHT                
+# 22: LC_HEIGHT                  23: SHAPE..                    24: DBH                      
+# 25: DIAMETER_ONE               26: DIAMETER_TWO               27: SPECIES_GROUP            
+# 28: EXCESSIVE_LEAN             29: WINDSNAPPED                30: COPPICE_STOOL_GUID..     
+# 31: CROWN_DIAMETER_ONE         32: CROWN_DIAMETER_TWO         33: RECORD_STATUS            
+# 34: FIELDS_STATUS              35: TIMBER_HEIGHT              36: TREE_RESURVEY            
+# 37: GOOD_FELLING_PRACTICE      38: COPPICE_STOOL_DIAMETER     39: RANGE_DBH                
+# 40: RANGE_HEIGHT               41: RANGE_CROWN_DIAMETER_1     42: RANGE_CROWN_DIAMETER_2   
+# 43: RANGE_DIAMETER_ONE         44: RANGE_STUMP_HEIGHT         45: STUMP_TYPE               
+# 46: RANGE_DIAMETER_TWO         47: SIZE_RANK                  48: PERCENTAGE_HEIGHT_REM    
+# 49: STUMP_AGE                  50: IS_STUMP_AGE               
+# 
+# Selection: 10
+# which column is your unique  DBH (cm)? 
+# 
+#  1: TREE_GUID..                 2: TREE_TYPE                   3: SPIS                     
+#  4: STRY                        5: TREE_ALIVE                  6: DEAD_TREE_CAUSE          
+#  7: GROUP_TYPE                  8: CONIFER_STEM_STRAIGHTNESS   9: LOWEST_DEAD_BRANCH_HEIGHT
+# 10: POINT_GUID..               11: TREE_OR_STUMP   plots <- MeasurementErr(plotTree, xyTree, 'Europe')           12: DECAY_CLASS              
+# 13: STUMP_DECAY_CLASS          14: COPPICE_STOOL              15: LINKED_TREE_GUID..       
+# 16: TREE_LOCATION              17: OBJECTID..                 18: OUTSIDE_PLOT             
+# 19: HEIGHT                     20: TREE_HEIGHT                21: UC_HEIGHT                
+# 22: LC_HEIGHT                  23: SHAPE..                    24: DBH                      
+# 25: DIAMETER_ONE               26: DIAMETER_TWO               27: SPECIES_GROUP            
+# 28: EXCESSIVE_LEAN             29: WINDSNAPPED                30: COPPICE_STOOL_GUID..     
+# 31: CROWN_DIAMETER_ONE         32: CROWN_DIAMETER_TWO         33: RECORD_STATUS            
+# 34: FIELDS_STATUS              35: TIMBER_HEIGHT              36: TREE_RESURVEY            
+# 37: GOOD_FELLING_PRACTICE      38: COPPICE_STOOL_DIAMETER     39: RANGE_DBH                
+# 40: RANGE_HEIGHT               41: RANGE_CROWN_DIAMETER_1     42: RANGE_CROWN_DIAMETER_2   
+# 43: RANGE_DIAMETER_ONE         44: RANGE_STUMP_HEIGHT         45: STUMP_TYPE               
+# 46: RANGE_DIAMETER_TWO         47: SIZE_RANK                  48: PERCENTAGE_HEIGHT_REM    
+# 49: STUMP_AGE                  50: IS_STUMP_AGE               
+# 
+# Selection: 24
+# which column is your unique Tree Height (m)? 
+# 
+#  1: TREE_GUID..                 2: TREE_TYPE                   3: SPIS                     
+#  4: STRY                        5: TREE_ALIVE                  6: DEAD_TREE_CAUSE          
+#  7: GROUP_TYPE                  8: CONIFER_STEM_STRAIGHTNESS   9: LOWEST_DEAD_BRANCH_HEIGHT
+# 10: POINT_GUID..               11: TREE_OR_STUMP              12: DECAY_CLASS              
+# 13: STUMP_DECAY_CLASS          14: COPPICE_STOOL              15: LINKED_TREE_GUID..       
+# 16: TREE_LOCATION              17: OBJECTID..                 18: OUTSIDE_PLOT             
+# 19: HEIGHT                     20: TREE_HEIGHT                21: UC_HEIGHT                
+# 22: LC_HEIGHT                  23: SHAPE..                    24: DBH                      
+# 25: DIAMETER_ONE               26: DIAMETER_TWO               27: SPECIES_GROUP            
+# 28: EXCESSIVE_LEAN             29: WINDSNAPPED                30: COPPICE_STOOL_GUID..     
+# 31: CROWN_DIAMETER_ONE         32: CROWN_DIAMETER_TWO         33: RECORD_STATUS            
+# 34: FIELDS_STATUS              35: TIMBER_HEIGHT              36: TREE_RESURVEY            
+# 37: GOOD_FELLING_PRACTICE      38: COPPICE_STOOL_DIAMETER     39: RANGE_DBH                
+# 40: RANGE_HEIGHT               41: RANGE_CROWN_DIAMETER_1     42: RANGE_CROWN_DIAMETER_2   
+# 43: RANGE_DIAMETER_ONE         44: RANGE_STUMP_HEIGHT         45: STUMP_TYPE               
+# 46: RANGE_DIAMETER_TWO         47: SIZE_RANK                  48: PERCENTAGE_HEIGHT_REM    
+# 49: STUMP_AGE                  50: IS_STUMP_AGE               
+# 
+# Selection: 20
+# Warning: NAs introduced by coercion
+# Enter tree genus: Picea
+# Enter tree species: sitchensis
+# Enter plot size in m2: 100
+
+plotTree <- TreeData[[1]]
+head(plotTree)
+#                                       id genus    species diameter size fez gez year   height
+# 1 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} Picea sitchensis       11  100  NA  NA 2010 11.96667
+# 2 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} Picea sitchensis       11  100  NA  NA 2010 11.96667
+# 3 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} Picea sitchensis       10  100  NA  NA 2010 11.96667
+# 4 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} Picea sitchensis       12  100  NA  NA 2010 11.96667
+# 5 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} Picea sitchensis       10  100  NA  NA 2010 11.96667
+# 6 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} Picea sitchensis       13  100  NA  NA 2010 11.96667
+
+xyTree <- TreeData[[2]]
+head(xyTree)
+#                                       id       y         x
+# 1 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} 53.0327 -3.910179
+# 2 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} 53.0327 -3.910179
+# 3 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} 53.0327 -3.910179
+# 4 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} 53.0327 -3.910179
+# 5 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} 53.0327 -3.910179
+# 6 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} 53.0327 -3.910179
+
+plots_trees_nested_agb_sd <- MeasurementErr(plotTree, xyTree, 'Europe')
+print(plots_trees_nested_agb_sd)
+#                                  PLOT_ID   POINT_X  POINT_Y SIZE_HA AVG_YEAR AGB_T_HA   sdTree
+# 1 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} -3.910179 53.03270    0.01     2010 192.3808 27.40171
+# 2 {224FD85B-6B64-4075-B51F-BA2D390AB4EF} -3.908944 53.03241    0.01     2010 243.1564 65.49890
+# 3 {22E69595-D9BE-4BB1-8660-E2E7457E2068} -3.910026 53.03247    0.01     2010 303.7086 42.19278
+# 4 {89B25687-EDA0-4704-B00D-93EDDA162779} -3.909820 53.03270    0.01     2010 291.0694 47.14336
+# 5 {B4980FC2-4DA9-4897-93E2-07D03233D2F4} -3.908851 53.03252    0.01     2010 432.0858 91.30732
+
+```
+
+
+
+### Lidar reference data
+
+Let's see an example where lidar data is used as plot data reference:
+
+
+```{r lidar_plots, eval=FALSE}
+
+
+slb.agb.dir <- 'data/SustainableLandscapeBrazil_v04/SLB_AGBmaps'
+slb.cv.dir <- 'data/SustainableLandscapeBrazil_v04/SLB_CVmaps'
+slb.cv <- RefLidar(slb.cv.dir, 2018)
+plots <- RefLidar(slb.agb.dir, 2018)
+plots$sdTree <- slb.cv$CV * plots$AGB_T_HA
+
+
 
 ```
 
@@ -268,17 +485,6 @@ plots_trees_agb_sd <- MeasurementErr(plotTree, xyTree, "India")
 
 
 
-
-
-
-## (5) PLOT DATA WITH TREE-LEVEL MEASUREMENT AND NESTED PLOTS (SUB-PLOTS)
-
-cent <- readOGR(dsn = dataDir, layer = "SampleCentroid") #Sub-plot centroid
-tree <- read.csv(paste0(dataDir,'/SampleTreeNested.csv')) #Tree data per sub-plot
-TreeData <- Nested(cent, tree)
-plotTree <- TreeData[[1]]
-xyTree <- TreeData[[2]]
-plots <- MeasurementErr(plotTree, xyTree, 'Europe')
 
 
 ## (6) REFERENCE DATA IS A LIDAR-BASED MAP
