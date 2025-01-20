@@ -45,10 +45,24 @@ This format correspond to a dataframe containing sample plots with an unique plo
 
 In this case there is also a dataframe in a similar format to the previous case, but with unformatted data over which the user will be asked about the specific column index of required plot variables such as unique plot ID, longitude, latitude, AGB of the plot, plot size, inventory year. This can be exemplified below:
 
-```{r unformatted plots1}
+```{r unformatted plots1, eval=FALSE}
 
-unformatted_plots <- utils::read.csv("SampleUnformattedPlots.csv")
+unformatted_plots <- utils::read.csv(sample_file("SampleUnformattedPlots.csv"))
 head(unformatted_plots)
+#      Provincia                          Estrato.Florestal id_parcela Ycoordinate Xcoordinate Vt..m.3.ha.
+# 1 Cabo Delgado Floresta (semi-) decidua, incluindo Miombo  CD0772003   -10.60656    40.53664       39.90
+# 2 Cabo Delgado Floresta (semi-) decidua, incluindo Miombo  CD0772002   -10.60657    40.53572       24.65
+# 3 Cabo Delgado Floresta (semi-) decidua, incluindo Miombo  CD0770543   -10.60666    40.52744        4.09
+# 4 Cabo Delgado Floresta (semi-) decidua, incluindo Miombo  CD0770542   -10.60667    40.52652       20.06
+# 5 Cabo Delgado Floresta (semi-) decidua, incluindo Miombo  CD0772004   -10.60747    40.53664        0.00
+# 6 Cabo Delgado Floresta (semi-) decidua, incluindo Miombo  CD0772001   -10.60747    40.53573       64.15
+#   Vc..m.3.ha. AGB..ton.ha. BGB..ton.ha. year size
+# 1        2.53        32.61        21.73 2016  0.1
+# 2        0.77        21.44        13.32 2016  0.1
+# 3        0.00         4.41         2.96 2016  0.1
+# 4        2.38        17.77        10.56 2016  0.1
+# 5        0.00         0.00         0.00 2016  0.1
+# 6        0.97        77.74        27.38 2016  0.1
 
 ```
 
@@ -57,7 +71,6 @@ The following step will request the user to select the requested columns:
 ```{r unformatted plots2, eval=FALSE}
 
 formatted_plots <- RawPlots(unformatted_plots)
-
 # Which column is your unique Plot ID? 
 # 
 #  1: Manual entry        2: Provincia           3: Estrato.Florestal
@@ -141,20 +154,41 @@ This format correspond to a dataframe containing sample plots with an ID, longit
 This is the plot data format found in [Labriere et al. 2018](https://doi.org/10.1109/JSTARS.2018.2851606) sample data. It contains the corner coordinates of a bounding box defining each plot:
 
 
-```{r polygon_corner_coords}
+```{r polygon_corner_coords, eval=FALSE}
 
-plots_corners <- utils::read.csv("PolyTropiSAR.csv") # Labriere et al. 2018 plots sample data
+plots_corners <- utils::read.csv(sample_file("PolyTropiSAR.csv")) # Labriere et al. 2018 plots sample data
 head(plots_corners)
+#     id  POINT_X  POINT_Y  X
+# 1 NOU01 312514.3 449724.3 NA
+# 2 NOU01 312517.6 449824.2 NA
+# 3 NOU02 313704.3 451320.5 NA
+# 4 NOU02 313752.2 451408.3 NA
+# 5 NOU02 313800.0 451496.1 NA
+# 6 NOU02 313847.9 451583.9 NA
 
-plots_AGB <-  utils::read.csv("PolyTropiAGB.csv") # plot-level AGB
+plots_AGB <-  utils::read.csv(sample_file("PolyTropiAGB.csv")) # plot-level AGB
 head(plots_AGB)
+#   PLOT_ID AVG_YEAR AGB_T_HA
+# 1   NOU01     2010   431.90
+# 2   NOU02     2010   368.41
+# 3   NOU03     2010   525.65
+# 4   NOU04     2010   429.87
+# 5   NOU05     2010   234.60
+# 6   NOU06     2010   288.10
 
-SRS <- 32622 # plot data projection
+SRS <- 32622 # plot data spatial reference system
 plots_corners_AGB <- Polygonize(plots_corners, SRS)
 plots_corners_AGB$AGB_T_HA <- plots_AGB$AGB_T_HA
 plots_corners_AGB$AVG_YEAR <- plots_AGB$AVG_YEAR
 
 head(plots_corners_AGB)
+#       ID PLOT_ID        SIZE_HA   POINT_X       POINT_Y AGB_T_HA AVG_YEAR
+# NOU01  1   NOU01 0.6971249 [ha] -55.48901  3.888050e-04   431.90     2010
+# NOU02  1   NOU02 1.8970650 [ha] -55.48835  1.302744e-04   368.41     2010
+# NOU03  1   NOU03 2.6599369 [ha] -55.48853  1.519248e-04   525.65     2010
+# NOU04  1   NOU04 2.2067426 [ha] -55.48865  4.301939e-05   429.87     2010
+# NOU05  1   NOU05 0.1436755 [ha] -55.48813  6.329935e-04   234.60     2010
+# NOU06  1   NOU06 0.2499998 [ha] -55.48886 -4.925199e-04   288.10     2010
 
 ```
 
@@ -162,34 +196,79 @@ head(plots_corners_AGB)
 
 
 
-## (3) PLOT DATA IS A POLYGON WITH PLOT CORNER COORDINATES
+### Plot data contains tree-level measurements
 
-# plotsFile <- 'PolyTropiSAR.csv'  #Labriere et al. 2018 sample data
-# plotsAGBFile <- 'PolyTropiAGB.csv'
-plotsFile <- file.path(dataDir, 'PolyTropiSAR.csv')  #Labriere et al. 2018 sample data
-plotsAGBFile <- file.path(dataDir, 'PolyTropiAGB.csv')
-plotsPoly <- read.csv(plotsFile)
-plotsPolyAGB <-  read.csv(plotsAGBFile) #plot-level AGB
-SRS <- 32622 #plot data is projected
-plots <- Polygonize(plotsPoly, SRS)
-plots$AGB_T_HA <- plotsPolyAGB$AGB_T_HA
-plots$AVG_YEAR <- plotsPolyAGB$AVG_YEAR
+This format of plot data contains tree-level alometric measurements that will be used to 
+estimate AGB and associated standard deviation, using [BIOMASS](https://umr-amap.github.io/BIOMASS/) R package.
 
 
-## (4) PLOT DATA HAVE TREE-LEVEL MEASUREMENT
-## Estimate plot-level AGB using BIOMASS R package with associated SD of measurement error
+```{r plot_trees, eval=FALSE}
 
-## Formatted (See Technical Documentation)
-plotTree<- read.csv(paste0(dataDir, '/SampleTree.csv'))
-xyTree <- read.csv(paste0(dataDir,'/SampleTreeXY.csv'))
+# Formatted data example
+plotsTree <- utils::read.csv(sample_file("SampleTree.csv"))
+head(plotsTree)
+#     id      genus    species  diameter  size                 fez      gez year
+# 1 BSP1 Terminalia  bellirica  3.501409 10000 tropical rainforest tropical 1996
+# 2 BSP1   Ziziphus   oenoplia  3.819719 10000 tropical rainforest tropical 1996
+# 3 BSP1    Aporosa lindleyana 16.870424 10000 tropical rainforest tropical 1996
+# 4 BSP1      Ixora  brachiata  4.138029 10000 tropical rainforest tropical 1996
+# 5 BSP1   Wrightia    arborea  5.411268 10000 tropical rainforest tropical 1996
+# 6 BSP1      Ixora  brachiata  3.183099 10000 tropical rainforest tropical 1996
 
-## Unformatted
-TreeRaw <- read.csv(paste0(dataDir, '/KarnatakaForest.csv'))
-rawTree <- RawPlotsTree(TreeRaw)
-plotTree<- rawTree[[1]]
+xyTree <- utils::read.csv(sample_file("SampleTreeXY.csv"))
+head(xyTree)
+#     id        y        x
+# 1 BSP1 14.36806 74.91944
+# 2 BSP1 14.36806 74.91944
+# 3 BSP1 14.36806 74.91944
+# 4 BSP1 14.36806 74.91944
+# 5 BSP1 14.36806 74.91944
+# 6 BSP1 14.36806 74.91944
+
+# Unformatted data example
+TreeRaw <- utils::read.csv(sample_file("KarnatakaForest.csv"))
+head(TreeRaw)
+#   plotId     treeId     family       genus        species     d_cm      lat     long size_m2 year
+# 1   BSP1   BSP1_248 Clusiaceae    Garcinia         indica 3.183099 14.36806 74.91944   10000 1998
+# 2   BSP1   BSP1_269  Rubiaceae       Ixora      brachiata 3.183099 14.36806 74.91944   10000 1998
+# 3   BSP1 BSP1_303_B  Rubiaceae       Meyna      laxiflora 3.183099 14.36806 74.91944   10000 1998
+# 4   BSP1    BSP1_29  Lauraceae Alseodaphne semecarpifolia 3.501409 14.36806 74.91944   10000 1998
+# 5   BSP1    BSP1_30  Lauraceae Alseodaphne semecarpifolia 3.501409 14.36806 74.91944   10000 1998
+# 6   BSP1    BSP1_31  Lauraceae Alseodaphne semecarpifolia 3.501409 14.36806 74.91944   10000 1998
+
+rawTree <- RawPlotsTree(TreeRaw) # User is be asked to select the requested columns
+
+plotTree <- rawTree[[1]]
+head(plotTree)
+#   id       genus        species diameter  size fez gez year
+# 1 11    Garcinia         indica 3.183099 10000  NA  NA 1998
+# 2 11       Ixora      brachiata 3.183099 10000  NA  NA 1998
+# 3 11       Meyna      laxiflora 3.183099 10000  NA  NA 1998
+# 4 11 Alseodaphne semecarpifolia 3.501409 10000  NA  NA 1998
+# 5 11 Alseodaphne semecarpifolia 3.501409 10000  NA  NA 1998
+# 6 11 Alseodaphne semecarpifolia 3.501409 10000  NA  NA 1998
+
 xyTree <- rawTree[[2]]
+head(xyTree)
+#   id        x        y
+# 1 11 74.91944 14.36806
+# 2 11 74.91944 14.36806
+# 3 11 74.91944 14.36806
+# 4 11 74.91944 14.36806
+# 5 11 74.91944 14.36806
+# 6 11 74.91944 14.36806
 
-plots <- MeasurementErr(plotTree, xyTree, 'Asia')
+plots_trees_agb_sd <- MeasurementErr(plotTree, xyTree, "India")
+
+```
+
+
+
+
+
+
+
+
 
 
 ## (5) PLOT DATA WITH TREE-LEVEL MEASUREMENT AND NESTED PLOTS (SUB-PLOTS)

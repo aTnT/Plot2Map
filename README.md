@@ -30,8 +30,8 @@ Here's a basic workflow using Plot2Map:
 ```R
 library(Plot2Map)
 
-# Load and preprocess plot data
-plots <- read.csv("SamplePlots.csv")
+# Load, inspect and preprocess plot data
+head(plots)
 plots <- Deforested(plots, flDir, mapYear)
 plots <- BiomePair(plots)
 
@@ -60,21 +60,10 @@ Accuracy(AGBdata, 8, outDir, "ValidationRun")
 
 ## Vignettes
 
-1. Getting Started with Plot2Map
-
-2. Plot Data Preparation
-
-2.1 Plot Data Formats
-2.2 Estimating Measurement and Sampling Errors
-2.3 Temporal Adjustment of Plot Data
-
-3. AGB and Treecover Data Preparation
-3.1 Validating Global AGB Maps
-3.2 Using Custom Forest Masks
-
-4. Results Data Aggregation and Visualization
-Aggregating Results at Different Spatial Scales
-Visualizing Validation Results
+* Getting started with Plot2Map
+* Plot data preparation
+* Uncertainty quantification
+* Map bias assessment and correction
 
 
 
