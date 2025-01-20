@@ -1,5 +1,5 @@
 Package: Plot2Map
-Title: Aboveground Biomass Plot to Map Comparison
+Title: Above Ground Biomass Plot to Map Comparison
 Version: 0.0.0.9000
 Authors@R: 
     person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
@@ -10,3 +10,10 @@ License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+Depends: 
+    R (>= 3.5)
+LazyData: true
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

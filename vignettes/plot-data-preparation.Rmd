@@ -1,0 +1,225 @@
+---
+title: "Plot data preparation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{plot-data-preparation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, include = FALSE}
+#library(Plot2Map)
+devtools::load_all()
+```
+
+
+## Introduction
+
+In this page we showcase the different user data formats of plot estimates of AGB, here refereed as plot data, possible to be used in the Plot2Map workflow.
+
+## Plot data formats
+
+### Point data formatted dataframe
+
+In this case there is already an AGB estimate from the user. This format is exemplified with the sample plots dataframe available with the package accessible with:
+
+```{r plots}
+head(plots) 
+
+```
+
+This format correspond to a dataframe containing sample plots with an unique plot ID, longitude and latitude point data, an estimated Above Ground Biomass in t/ha, average year of inventory, and plot size in ha.
+
+
+
+### Point data unformatted dataframe
+
+
+
+In this case there is also a dataframe in a similar format to the previous case, but with unformatted data over which the user will be asked about the specific column index of required plot variables such as unique plot ID, longitude, latitude, AGB of the plot, plot size, inventory year. This can be exemplified below:
+
+```{r unformatted plots1}
+
+unformatted_plots <- utils::read.csv("SampleUnformattedPlots.csv")
+head(unformatted_plots)
+
+```
+
+The following step will request the user to select the requested columns:
+
+```{r unformatted plots2, eval=FALSE}
+
+formatted_plots <- RawPlots(unformatted_plots)
+
+# Which column is your unique Plot ID? 
+# 
+#  1: Manual entry        2: Provincia           3: Estrato.Florestal
+#  4: id_parcela          5: Ycoordinate         6: Xcoordinate      
+#  7: Vt..m.3.ha.         8: Vc..m.3.ha.         9: AGB..ton.ha.     
+# 10: BGB..ton.ha.       11: year               12: size             
+# 
+# 
+# Selection: 4
+# Which column is your plot AGB? 
+# 
+#  1: Manual entry        2: Provincia           3: Estrato.Florestal
+#  4: id_parcela          5: Ycoordinate         6: Xcoordinate      
+#  7: Vt..m.3.ha.         8: Vc..m.3.ha.         9: AGB..ton.ha.     
+# 10: BGB..ton.ha.       11: year               12: size             
+# 
+# 
+# Selection: 9
+# Select longitude column 
+# 
+#  1: Manual entry        2: Provincia           3: Estrato.Florestal
+#  4: id_parcela          5: Ycoordinate         6: Xcoordinate      
+#  7: Vt..m.3.ha.         8: Vc..m.3.ha.         9: AGB..ton.ha.     
+# 10: BGB..ton.ha.       11: year               12: size             
+# 
+# 
+# Selection: 6
+# Which column is your latitude? 
+# 
+#  1: Manual entry        2: Provincia           3: Estrato.Florestal
+#  4: id_parcela          5: Ycoordinate         6: Xcoordinate      
+#  7: Vt..m.3.ha.         8: Vc..m.3.ha.         9: AGB..ton.ha.     
+# 10: BGB..ton.ha.       11: year               12: size             
+# 
+# 
+# Selection: 5
+# Select plot size column 
+# 
+#  1: Manual entry        2: Provincia           3: Estrato.Florestal
+#  4: id_parcela          5: Ycoordinate         6: Xcoordinate      
+#  7: Vt..m.3.ha.         8: Vc..m.3.ha.         9: AGB..ton.ha.     
+# 10: BGB..ton.ha.       11: year               12: size             
+# 
+# 
+# Selection: 12
+# Select year column 
+# 
+#  1: Manual entry        2: Provincia           3: Estrato.Florestal
+#  4: id_parcela          5: Ycoordinate         6: Xcoordinate      
+#  7: Vt..m.3.ha.         8: Vc..m.3.ha.         9: AGB..ton.ha.     
+# 10: BGB..ton.ha.       11: year               12: size             
+# 
+# 
+# Selection: 11
+
+
+```
+
+Note how after user input we get a similar data format to the previous section:
+
+```{r unformatted plots3, eval=FALSE}
+
+tail(formatted_plots)
+#      PLOT_ID  POINT_X   POINT_Y AGB_T_HA SIZE_HA FEZ GEZ AVG_YEAR
+# 3267      21 32.35752 -26.54318    54.13     0.1  NA  NA     2016
+# 3268      24 32.35853 -26.54318    13.90     0.1  NA  NA     2016
+# 3269      12 32.75884 -26.65187    92.66     0.1  NA  NA     2016
+# 3270      13 32.75984 -26.65187   112.87     0.1  NA  NA     2016
+# 3271      11 32.75884 -26.65277    56.08     0.1  NA  NA     2016
+# 3272      14 32.75984 -26.65277    65.59     0.1  NA  NA     2016
+
+```
+
+
+This format correspond to a dataframe containing sample plots with an ID, longitude and latitude point data, an estimated Above Ground Biomass in t/ha, average year of plot survey, and plot size in ha.
+
+
+
+### Plot corner coordinates
+
+This is the plot data format found in [Labriere et al. 2018](https://doi.org/10.1109/JSTARS.2018.2851606) sample data. It contains the corner coordinates of a bounding box defining each plot:
+
+
+```{r polygon_corner_coords}
+
+plots_corners <- utils::read.csv("PolyTropiSAR.csv") # Labriere et al. 2018 plots sample data
+head(plots_corners)
+
+plots_AGB <-  utils::read.csv("PolyTropiAGB.csv") # plot-level AGB
+head(plots_AGB)
+
+SRS <- 32622 # plot data projection
+plots_corners_AGB <- Polygonize(plots_corners, SRS)
+plots_corners_AGB$AGB_T_HA <- plots_AGB$AGB_T_HA
+plots_corners_AGB$AVG_YEAR <- plots_AGB$AVG_YEAR
+
+head(plots_corners_AGB)
+
+```
+
+
+
+
+
+## (3) PLOT DATA IS A POLYGON WITH PLOT CORNER COORDINATES
+
+# plotsFile <- 'PolyTropiSAR.csv'  #Labriere et al. 2018 sample data
+# plotsAGBFile <- 'PolyTropiAGB.csv'
+plotsFile <- file.path(dataDir, 'PolyTropiSAR.csv')  #Labriere et al. 2018 sample data
+plotsAGBFile <- file.path(dataDir, 'PolyTropiAGB.csv')
+plotsPoly <- read.csv(plotsFile)
+plotsPolyAGB <-  read.csv(plotsAGBFile) #plot-level AGB
+SRS <- 32622 #plot data is projected
+plots <- Polygonize(plotsPoly, SRS)
+plots$AGB_T_HA <- plotsPolyAGB$AGB_T_HA
+plots$AVG_YEAR <- plotsPolyAGB$AVG_YEAR
+
+
+## (4) PLOT DATA HAVE TREE-LEVEL MEASUREMENT
+## Estimate plot-level AGB using BIOMASS R package with associated SD of measurement error
+
+## Formatted (See Technical Documentation)
+plotTree<- read.csv(paste0(dataDir, '/SampleTree.csv'))
+xyTree <- read.csv(paste0(dataDir,'/SampleTreeXY.csv'))
+
+## Unformatted
+TreeRaw <- read.csv(paste0(dataDir, '/KarnatakaForest.csv'))
+rawTree <- RawPlotsTree(TreeRaw)
+plotTree<- rawTree[[1]]
+xyTree <- rawTree[[2]]
+
+plots <- MeasurementErr(plotTree, xyTree, 'Asia')
+
+
+## (5) PLOT DATA WITH TREE-LEVEL MEASUREMENT AND NESTED PLOTS (SUB-PLOTS)
+
+cent <- readOGR(dsn = dataDir, layer = "SampleCentroid") #Sub-plot centroid
+tree <- read.csv(paste0(dataDir,'/SampleTreeNested.csv')) #Tree data per sub-plot
+TreeData <- Nested(cent, tree)
+plotTree <- TreeData[[1]]
+xyTree <- TreeData[[2]]
+plots <- MeasurementErr(plotTree, xyTree, 'Europe')
+
+
+## (6) REFERENCE DATA IS A LIDAR-BASED MAP
+
+slb.agb.dir <- './SustainableLandscapeBrazil_v04/SLB_AGBmaps'
+slb.cv.dir <- './SustainableLandscapeBrazil_v04/SLB_CVmaps'
+slb.cv <- RefLidar(slb.cv.dir, 2018)
+plots <- RefLidar(slb.agb.dir, 2018)
+plots$sdTree <- slb.cv$CV * plots$AGB_T_HA
+
+
+## (7) PLOT DATA IS A SHAPEFILE
+plotsFile <- 'samp_shp.shp'
+plots_sf <- st_read(plotsFile)
+plots_sf <- st_transform(plots_sf, crs = 4326)
+plots_sf$longitude <- st_coordinates(st_centroid(plots_sf))[, 1]
+plots_sf$latitude <- st_coordinates(st_centroid(plots_sf))[, 2]
+plots <- RawPlots(plots_sf) # Users should know year, plot size, inventory year beforehand for manual entry if ever missing in the shapefiles'attributes
+
+
+## Remote deforested plots until year of map epoch and assign biomes/eco-regins
+plots1 <- Deforested(plots,flDir,mapYear)
+plots2 <- BiomePair(plots)

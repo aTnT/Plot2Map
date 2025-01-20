@@ -440,4 +440,33 @@ ESACCIAGBtileNames <- function(pol,
 #
 #   expect_true(all(grepl("ESACCI-BIOMASS-L4-AGB_SD-MERGED-100m-2020", result)))
 # })
+#
+#
+# test_that("ESACCIAGBtileNames function behaves consistently", {
+#
+#   # Amazon, 1 tile
+#   amazon_pol <- st_polygon(list(rbind(c(-62.2159, -3.4653), c(-62.2059, -3.4653),
+#                                       c(-62.2059, -3.4553), c(-62.2159, -3.4553),
+#                                       c(-62.2159, -3.4653))))
+#   amazon_pol_sf <- st_sfc(amazon_pol, crs = 4326)
+#
+#   # Mexico, 2 tiles
+#   mexico_pol <- st_polygon(list(rbind(c(-99.5,18), c(-101,19), c(-101,19), c(-99.5,19), c(-99.5,18))))
+#   mexico_pol_sf <- st_sfc(mexico_pol, crs = 4326)
+#
+#   result_amazon1 <- ESACCIAGBtileNames(amazon_pol_sf, esacci_biomass_year=2021, esacci_biomass_version="v5.01")
+#   result_mexico1 <- ESACCIAGBtileNames(mexico_pol_sf, esacci_biomass_year=2021, esacci_biomass_version="v5.01")
+#   expect_equal(result_amazon1, "N00W070_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2021-fv5.0.tif")
+#   expect_equal(result_mexico1, c(
+#     "N20W110_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2021-fv5.0.tif",
+#     "N20W100_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2021-fv5.0.tif"
+#   ))
+#
+#   result_amazon2 <- ESACCIAGBtileNames(amazon_pol_sf, esacci_biomass_year=2021, esacci_biomass_version="v5.0")
+#   expect_equal(result_amazon1, result_amazon2)
+#
+#   expect_error(ESACCIAGBtileNames(amazon_pol_sf, esacci_biomass_year=2021, esacci_biomass_version="v2.0"))
+#
+# })
+
 
