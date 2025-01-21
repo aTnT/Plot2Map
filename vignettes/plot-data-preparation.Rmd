@@ -463,19 +463,58 @@ print(plots_trees_nested_agb_sd)
 
 ### Lidar reference data
 
-Let's see an example where lidar data is used as plot data reference:
+Let's see an example where lidar data is used as plot data reference. In the example below we use sample lidar data provided with the package:
 
 
 ```{r lidar_plots, eval=FALSE}
 
+# Sample lidar data folder location:
+slb.agb.dir <- sample_lidar_folder("SustainableLandscapeBrazil_v04/SLB_AGBmaps")
+slb.cv.dir <- sample_lidar_folder("SustainableLandscapeBrazil_v04/SLB_CVmaps")
 
-slb.agb.dir <- 'data/SustainableLandscapeBrazil_v04/SLB_AGBmaps'
-slb.cv.dir <- 'data/SustainableLandscapeBrazil_v04/SLB_CVmaps'
-slb.cv <- RefLidar(slb.cv.dir, 2018)
-plots <- RefLidar(slb.agb.dir, 2018)
-plots$sdTree <- slb.cv$CV * plots$AGB_T_HA
+# Obtaining the Coeficient of Variation for each cell in the dataset:
+slb.cv <- RefLidar(slb.cv.dir)
+# Enter raster type (AGB, CV, or SD): cv
+# User input needed to extract PLOT_ID from filename(s)...
+# File(s) used to extract data: BON_A01_2018_CV_100m.tif
+# Enter numeric index of the first letter of PLOT_ID: 1
+# Enter numeric index of the last letter of PLOT_ID: 7
+# User input needed to extract YEAR from filename(s)...
+# File(s) used to extract data: BON_A01_2018_CV_100m.tif
+# Enter numeric index of the first letter of YEAR: 9
+# Enter numeric index of the last letter of YEAR: 12
 
+head(slb.cv)
+#    PLOT_ID   POINT_X   POINT_Y        CV AVG_YEAR
+# 21 BON_A01 -67.28247 -9.859331 10.991895     2018
+# 54 BON_A01 -67.28337 -9.860239 13.910153     2018
+# 55 BON_A01 -67.28247 -9.860239  9.466972     2018
+# 56 BON_A01 -67.28156 -9.860239 10.045134     2018
+# 87 BON_A01 -67.28428 -9.861147  4.744854     2018
+# 88 BON_A01 -67.28337 -9.861147  2.984538     2018
 
+# Obtaining the Above Ground Biomass for each cell in the dataset:
+plots_lidar <- RefLidar(slb.agb.dir)
+# Enter raster type (AGB, CV, or SD): agb
+# User input needed to extract PLOT_ID from filename(s)...
+# File(s) used to extract data: BON_A01_2018_AGB_100m.tif
+# Enter numeric index of the first letter of PLOT_ID: 1
+# Enter numeric index of the last letter of PLOT_ID: 7
+# User input needed to extract YEAR from filename(s)...
+# File(s) used to extract data: BON_A01_2018_AGB_100m.tif
+# Enter numeric index of the first letter of YEAR: 9
+# Enter numeric index of the last letter of YEAR: 12
+
+# Calculating the Standard Deviation (SD = CV * AGB) and adding it to the final plot data:
+plots_lidar$sdTree <- slb.cv$CV * plots_lidar$AGB
+head(plots_lidar)
+#    PLOT_ID   POINT_X   POINT_Y       AGB AVG_YEAR    sdTree
+# 21 BON_A01 -67.28247 -9.859331 0.2824650     2018  3.104826
+# 54 BON_A01 -67.28337 -9.860239 0.1802490     2018  2.507291
+# 55 BON_A01 -67.28247 -9.860239 0.3926857     2018  3.717545
+# 56 BON_A01 -67.28156 -9.860239 0.3369435     2018  3.384643
+# 87 BON_A01 -67.28428 -9.861147 1.4032360     2018  6.658150
+# 88 BON_A01 -67.28337 -9.861147 6.1049371     2018 18.220417
 
 ```
 
@@ -483,17 +522,6 @@ plots$sdTree <- slb.cv$CV * plots$AGB_T_HA
 
 
 
-
-
-
-
-## (6) REFERENCE DATA IS A LIDAR-BASED MAP
-
-slb.agb.dir <- './SustainableLandscapeBrazil_v04/SLB_AGBmaps'
-slb.cv.dir <- './SustainableLandscapeBrazil_v04/SLB_CVmaps'
-slb.cv <- RefLidar(slb.cv.dir, 2018)
-plots <- RefLidar(slb.agb.dir, 2018)
-plots$sdTree <- slb.cv$CV * plots$AGB_T_HA
 
 
 ## (7) PLOT DATA IS A SHAPEFILE

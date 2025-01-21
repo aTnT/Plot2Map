@@ -30,7 +30,7 @@
 #' @examples
 #' lidar_data <- RefLidar(lidar.dir = "data/SustainableLandscapeBrazil_v04/SLB_AGBmaps")
 #'
-#' @import raster
+#' @import terra
 #' @importFrom utils menu
 #'
 #' @export
@@ -92,13 +92,13 @@ RefLidar <- function(lidar.dir) {
 
   # Manual entry for PLOT_ID and AVG_YEAR
   message("User input needed to extract PLOT_ID from filename(s)...")
-  message(paste0("Files used to extract data: ",  unique(pts$ID)))
+  message(paste0("File(s) used to extract data: ",  unique(pts$ID)))
   plot_start <- as.integer(readline(prompt = "Enter numeric index of the first letter of PLOT_ID: "))
   plot_end <- as.integer(readline(prompt = "Enter numeric index of the last letter of PLOT_ID: "))
   pts$PLOT_ID <- substr(pts$ID, plot_start, plot_end)
 
   message("User input needed to extract YEAR from filename(s)...")
-  message(paste0("Files used to extract data: ",  unique(pts$ID)))
+  message(paste0("File(s) used to extract data: ",  unique(pts$ID)))
   year_start <- as.integer(readline(prompt = "Enter numeric index of the first letter of YEAR: "))
   year_end <- as.integer(readline(prompt = "Enter numeric index of the last letter of YEAR: "))
   pts$AVG_YEAR <- substr(pts$ID, year_start, year_end)
