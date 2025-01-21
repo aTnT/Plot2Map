@@ -27,8 +27,8 @@ sample_file <- function(file = NULL) {
 #' @examples
 #' sample_lidar_folder("SustainableLandscapeBrazil_v04/SLB_AGBmaps")
 sample_lidar_folder <- function(folder) {
-  if (is.null(file)) {
-    dir(system.file(file.path("extdata", folder), package = "Plot2Map"))
-  }
+
+  dir(system.file(file.path("extdata", folder), package = "Plot2Map"))
+
   return(file.path("extdata", folder))
 }

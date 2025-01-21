@@ -282,8 +282,7 @@ This format of plot data is similar to the previous one but contains nested plot
 
 ```{r plot_trees2, eval=FALSE}
 
-#cent <- readOGR(dsn = dataDir, layer = "SampleCentroid") #Sub-plot centroid
-cent <- sf::read_sf(sample_file("SampleCentroid.shp")) # Sub-plot centroids
+cent <- sf::st_read(sample_file("SampleCentroid.shp")) # Sub-plot centroids
 
 print(cent)
 # Simple feature collection with 5 features and 23 fields
@@ -291,18 +290,30 @@ print(cent)
 # Dimension:     XY
 # Bounding box:  xmin: 272004.1 ymin: 350052.3 xmax: 272092.6 ymax: 350087.1
 # Projected CRS: OSGB36 / British National Grid
-# # A tibble: 5 × 24
-#   POINT_GUID    GRID_REF POINT_NUMB VISIT_STAT REASON_FOR PEG_LEFT PEG_NOT_LE PEG_DESCRI PLOT_GUID OBJECTID
-#   <chr>         <chr>         <int>      <int>      <int>    <int>      <int> <chr>      <chr>        <int>
-# 1 {89B25687-ED… sh72029…          1          3          1        1          0 NW of v. … {ABC3BE5…        1
-# 2 {22E69595-D9… sh72018…          1          3          1        1          0 5m N of e… {E76DFF7…        2
-# 3 {B4980FC2-4D… sh72092…          1          3          1        1          0 W of larg… {6EFDF9E…        3
-# 4 {224FD85B-6B… sh72087…          1          3          1        1          0 in plough… {47011DC…        4
-# 5 {197A519B-7A… sh72007…          1          3          1        1          0 N from sm… {EE0EF57…        5
-# # ℹ 14 more variables: INACCESSIB <int>, ACCESS_STA <int>, GENERATE_N <int>, HEIGHT <dbl>,
-# #   TREE_COUNT <int>, ESTIMATED_ <dbl>, TREE_COU_1 <int>, RECORD_STA <chr>, FIELDS_STA <chr>,
-# #   RESURVEY_P <int>, FROZEN <int>, POINT_STUM <int>, ACCESS_COM <chr>, geometry <POINT [m]>
-
+#                               POINT_GUID     GRID_REF POINT_NUMB VISIT_STAT REASON_FOR PEG_LEFT
+# 1 {89B25687-EDA0-4704-B00D-93EDDA162779} sh7202950089          1          3          1        1
+# 2 {22E69595-D9BE-4BB1-8660-E2E7457E2068} sh7201850062          1          3          1        1
+# 3 {B4980FC2-4DA9-4897-93E2-07D03233D2F4} sh7209250061          1          3          1        1
+# 4 {224FD85B-6B64-4075-B51F-BA2D390AB4EF} sh7208750054          1          3          1        1
+# 5 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} sh7200750088          1          3          1        1
+#   PEG_NOT_LE                                  PEG_DESCRI                              PLOT_GUID OBJECTID
+# 1          0                   NW of v. slight open area {ABC3BE55-35CC-430B-A9C2-5BA9437286B6}        1
+# 2          0                   5m N of edge of mossy gap {E76DFF7B-39B4-45A5-85B8-F7BC38A429D5}        2
+# 3          0      W of large SS in shallow plough furrow {6EFDF9E3-F49D-4ED1-8BEB-F53D2A896BBA}        3
+# 4          0 in plough ditch with slight gap in row to E {47011DCB-7ADF-4C3D-B621-74AA98265CA4}        4
+# 5          0                      N from small mossy gap {EE0EF576-D6FF-4603-864F-23DC93C6A74D}        5
+#   INACCESSIB ACCESS_STA GENERATE_N HEIGHT TREE_COUNT ESTIMATED_ TREE_COU_1 RECORD_STA FIELDS_STA
+# 1          0          1          0      0          0          0          0        new       <NA>
+# 2          0          1          0      0          0          0          0        new       <NA>
+# 3          0          1          0      0          0          0          0        new       <NA>
+# 4          0          1          0      0          0          0          0        new       <NA>
+# 5          0          1          0      0          0          0          0        new       <NA>
+#   RESURVEY_P FROZEN POINT_STUM ACCESS_COM                  geometry
+# 1          0      0         21       <NA> POINT (272028.2 350085.6)
+# 2          0      0         49       <NA> POINT (272013.6 350060.7)
+# 3          0      0          8       <NA> POINT (272092.6 350063.9)
+# 4          0      0         10       <NA>   POINT (272086 350052.3)
+# 5          0      0         22       <NA> POINT (272004.1 350087.1)
 
 tree <- read.csv(sample_file("SampleTreeNested.csv")) # Tree data per sub-plot
 str(tree)
@@ -357,7 +368,6 @@ str(tree)
 #  $ PERCENTAGE_HEIGHT_REM    : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
 #  $ STUMP_AGE                : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
 #  $ IS_STUMP_AGE             : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
-
 
 TreeData <- Nested(cent, tree)
 # which column is your unique Plot ID? 
@@ -521,18 +531,125 @@ head(plots_lidar)
 
 
 
+### Plot data is a GIS file
+
+Let's see an example where the plot data is a GIS file. Users should know plot ID, plot size, inventory year beforehand for manual entry if ever missing in the GIS files' attributes. In the example below we use a sample shapefile provided with the package:
+
+
+```{r shp_plots1, eval=FALSE}
+
+plots_sf <- sf::st_read(sample_file("samp_shp.shp"))
+
+print(plots_sf)
+# Simple feature collection with 170 features and 3 fields
+# Geometry type: POINT
+# Dimension:     XY
+# Bounding box:  xmin: 137.3756 ymin: 35.16216 xmax: 137.4079 ymax: 35.19799
+# Geodetic CRS:  WGS 84
+# First 10 features:
+#    MEAN_Heigh        V       AGB                  geometry
+# 1    20.99811 263.2125 127.70163 POINT (137.3777 35.16275)
+# 2    20.92308 330.6375 177.22711 POINT (137.3774 35.16304)
+# 3    18.03867 223.0688 123.08946  POINT (137.381 35.16245)
+# 4    17.39841 172.4500  95.24402 POINT (137.3799 35.16216)
+# 5    20.43833 249.2562 138.22925 POINT (137.3806 35.16245)
+# 6    20.04576 235.3688 130.56611 POINT (137.3806 35.16363)
+# 7    20.01860 266.9125 143.88520  POINT (137.377 35.16275)
+# 8    21.07500 273.0625 151.47596 POINT (137.3803 35.16363)
+# 9    19.81884 270.2000 148.59707 POINT (137.3785 35.16363)
+# 10   22.15147 333.8500 182.89619 POINT (137.3788 35.16392)
+
+```
+
+The sample shapefile's SRS / CRS is already in EPSG:4326 / WGS84 so there is no need to transform it. In case it isn't we would precede the following step with `plots_sf <- st_transform(plots_sf, crs = 4326)`.
+
+
+```{r shp_plots2, eval=FALSE}
+
+plots_sf$longitude <- sf::st_coordinates(sf::st_centroid(plots_sf))[, 1]
+plots_sf$latitude <- sf::st_coordinates(sf::st_centroid(plots_sf))[, 2]
+
+shapefile_plots <- RawPlots(as.data.frame(plots_sf)) 
+# Which column is your unique Plot ID? 
+# 
+# 1: Manual entry
+# 2: MEAN_Heigh
+# 3: V
+# 4: AGB
+# 5: geometry
+# 6: longitude
+# 7: latitude
+# 
+# Selection: 1
+# Enter the numeric value for manual entry: 1
+# Which column is your plot AGB? 
+# 
+# 1: Manual entry
+# 2: MEAN_Heigh
+# 3: V
+# 4: AGB
+# 5: geometry
+# 6: longitude
+# 7: latitude
+# 
+# Selection: 4
+# Select longitude column 
+# 
+# 1: Manual entry
+# 2: MEAN_Heigh
+# 3: V
+# 4: AGB
+# 5: geometry
+# 6: longitude
+# 7: latitude
+# 
+# Selection: 6
+# Which column is your latitude? 
+# 
+# 1: Manual entry
+# 2: MEAN_Heigh
+# 3: V
+# 4: AGB
+# 5: geometry
+# 6: longitude
+# 7: latitude
+# 
+# Selection: 7
+# Select plot size column 
+# 
+# 1: Manual entry
+# 2: MEAN_Heigh
+# 3: V
+# 4: AGB
+# 5: geometry
+# 6: longitude
+# 7: latitude
+# 
+# Selection: 1
+# Enter the numeric value for manual entry: 100
+# Select year column 
+# 
+# 1: Manual entry
+# 2: MEAN_Heigh
+# 3: V
+# 4: AGB
+# 5: geometry
+# 6: longitude
+# 7: latitude
+# 
+# Selection: 1
+# Enter the numeric value for manual entry: 2022
+
+head(shapefile_plots)
+#   PLOT_ID  POINT_X  POINT_Y  AGB_T_HA SIZE_HA FEZ GEZ AVG_YEAR
+# 1       1 137.3777 35.16275 127.70163    0.01  NA  NA     2022
+# 2       1 137.3774 35.16304 177.22711    0.01  NA  NA     2022
+# 3       1 137.3810 35.16245 123.08946    0.01  NA  NA     2022
+# 4       1 137.3799 35.16216  95.24402    0.01  NA  NA     2022
+# 5       1 137.3806 35.16245 138.22925    0.01  NA  NA     2022
+# 6       1 137.3806 35.16363 130.56611    0.01  NA  NA     2022
+
+```
 
 
 
-## (7) PLOT DATA IS A SHAPEFILE
-plotsFile <- 'samp_shp.shp'
-plots_sf <- st_read(plotsFile)
-plots_sf <- st_transform(plots_sf, crs = 4326)
-plots_sf$longitude <- st_coordinates(st_centroid(plots_sf))[, 1]
-plots_sf$latitude <- st_coordinates(st_centroid(plots_sf))[, 2]
-plots <- RawPlots(plots_sf) # Users should know year, plot size, inventory year beforehand for manual entry if ever missing in the shapefiles'attributes
-
-
-## Remote deforested plots until year of map epoch and assign biomes/eco-regins
-plots1 <- Deforested(plots,flDir,mapYear)
-plots2 <- BiomePair(plots)
