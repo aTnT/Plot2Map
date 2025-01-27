@@ -4,32 +4,43 @@
 \alias{Deforested}
 \title{Remove deforested plots by overlaying plots with Global Forest Change data}
 \usage{
-Deforested(plt, fdir, dataset = 2023, map_year = 10)
+Deforested(
+  plt,
+  map_year,
+  gfc_folder = "data/GFC",
+  gfc_dataset_year = "latest",
+  defo_threshold = 0.05
+)
 }
 \arguments{
-\item{plt}{A data frame or sf object containing plot data. Coordinates are assumed to be in WGS 84 CRS.}
+\item{plt}{A data frame or sf object containing plot data. For data frame input format, coordinates are assumed to be in WGS 84 CRS.}
 
-\item{fdir}{Character string specifying the directory to download GFC forest loss data.}
+\item{map_year}{Numeric value indicating the threshold year for deforestation. Plots with deforestation started at or before the \code{map_year} will be removed from the \verb{$non_deforested_plots} list element output. Any year in the 2001-2023 range.}
 
-\item{dataset}{Numeric value describing which version of the Hansen data to use: 2023 (default) down to 2018.}
+\item{gfc_folder}{Character string specifying the directory to download GFC forest loss data.}
 
-\item{map_year}{Numeric value indicating the year threshold for deforestation (default is 10).}
+\item{gfc_dataset_year}{Numeric value describing which version of the Hansen data to use: any year in the 2018-2023 range or "latest" (default).}
+
+\item{defo_threshold}{Numeric value indicating the deforestation threshold. Plots with a deforestation area proportion larger than the set \code{defo_threshold} will be removed from the \verb{$non_deforested_plots} list element output. Default is 5\%.}
 }
 \value{
 A list containing two elements:
-\item{netPlt}{A data frame of non-deforested plots}
-\item{plt}{The original input data frame with an added deforestation indicator}
+\item{non_deforested_plots}{A sf object with non-deforested plots}
+\item{all_plots}{The original input sf object with added deforestated proportion (0-1) w.r.t. to plot area and deforestation start year}
 }
 \description{
 This function identifies and removes plots that have been deforested based on
-the Global Forest Change dataset (Hansen et al., 2013). It processes each plot,
+the Global Forest Change (GFC) dataset (Hansen et al., 2013). It processes each plot,
 downloads the necessary forest loss tiles, and determines if the plot has been
-deforested beyond a 5\% threshold or if the deforestation occurred before or during the specified map year.
+deforested beyond a set deforestation threshold or if the deforestation occurred before or during the specified map year.
 }
 \examples{
 \dontrun{
   plot_data <- data.frame(POINT_X = c(-3.1, -3.2), POINT_Y = c(51.5, 51.6),
                           SIZE_HA = c(1, 1.5), PLOT_ID = c(1, 2))
-  result <- Deforested(plot_data, "path/to/forest/loss/data", 10)
+  result <- Deforested(plot_data, map_year = 2010)
 }
+}
+\references{
+M. C. Hansen et al., High-Resolution Global Maps of 21st-Century Forest Cover Change. Science342,850-853(2013). \href{https://doi.org/10.1126/science.1244693}{DOI:10.1126/science.1244693}
 }

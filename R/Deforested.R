@@ -5,6 +5,9 @@
 # - Updated the function to work with sf objects instead of SpatialPolygonsDataFrame.
 # - Removed the global variable SRS and assumed WGS84 as the default coordinate reference system.
 # - Possibility to set the Hansen data GFC tiles version, from "GFC-2023-v1.11" (default) to "GFC-2018-v1.6".
+# 27/01/2025:
+# - Making less assumptions about the structure of plot data, for ex not assuming a Xnew column if POINT_X column not existing.
+# - Corrected bug which removed plots with >50% deforestation vs >5% deforestation
 
 
 ## Notes:
@@ -18,18 +21,19 @@
 #' Remove deforested plots by overlaying plots with Global Forest Change data
 #'
 #' This function identifies and removes plots that have been deforested based on
-#' the Global Forest Change dataset (Hansen et al., 2013). It processes each plot,
+#' the Global Forest Change (GFC) dataset (Hansen et al., 2013). It processes each plot,
 #' downloads the necessary forest loss tiles, and determines if the plot has been
-#' deforested beyond a 5% threshold or if the deforestation occurred before or during the specified map year.
+#' deforested beyond a set deforestation threshold or if the deforestation occurred before or during the specified map year.
 #'
-#' @param plt A data frame or sf object containing plot data. Coordinates are assumed to be in WGS 84 CRS.
-#' @param fdir Character string specifying the directory to download GFC forest loss data.
-#' @param dataset Numeric value describing which version of the Hansen data to use: 2023 (default) down to 2018.
-#' @param map_year Numeric value indicating the year threshold for deforestation (default is 10).
+#' @param plt A data frame or sf object containing plot data. For data frame input format, coordinates are assumed to be in WGS 84 CRS.
+#' @param map_year Numeric value indicating the threshold year for deforestation. Plots with deforestation started at or before the `map_year` will be removed from the `$non_deforested_plots` list element output. Any year in the 2001-2023 range.
+#' @param gfc_folder Character string specifying the directory to download GFC forest loss data.
+#' @param gfc_dataset_year Numeric value describing which version of the Hansen data to use: any year in the 2018-2023 range or "latest" (default).
+#' @param defo_threshold Numeric value indicating the deforestation threshold. Plots with a deforestation area proportion larger than the set `defo_threshold` will be removed from the `$non_deforested_plots` list element output. Default is 5%.
 #'
 #' @return A list containing two elements:
-#'   \item{netPlt}{A data frame of non-deforested plots}
-#'   \item{plt}{The original input data frame with an added deforestation indicator}
+#'   \item{non_deforested_plots}{A sf object with non-deforested plots}
+#'   \item{all_plots}{The original input sf object with added deforestated proportion (0-1) w.r.t. to plot area and deforestation start year}
 #'
 #' @importFrom sf st_as_sf st_buffer st_bbox st_coordinates
 #' @importFrom terra rast extract
@@ -38,26 +42,48 @@
 #'
 #' @export
 #'
+#' @references M. C. Hansen et al., High-Resolution Global Maps of 21st-Century Forest Cover Change. Science342,850-853(2013). [DOI:10.1126/science.1244693](https://doi.org/10.1126/science.1244693)
+#'
 #' @examples
 #' \dontrun{
 #'   plot_data <- data.frame(POINT_X = c(-3.1, -3.2), POINT_Y = c(51.5, 51.6),
 #'                           SIZE_HA = c(1, 1.5), PLOT_ID = c(1, 2))
-#'   result <- Deforested(plot_data, "path/to/forest/loss/data", 10)
+#'   result <- Deforested(plot_data, map_year = 2010)
 #' }
-Deforested <- function(plt, fdir, dataset = 2023, map_year = 10) {
+Deforested <- function(plt, map_year, gfc_folder = "data/GFC", gfc_dataset_year = "latest", defo_threshold = 0.05) {
 
   # Refactored version, more radical changes (changing to terra, sf ecosystem, etc)
 
-  if (!dataset %in% seq(2023, 2015)) {
-    stop("Invalid dataset. Please use a year between 2023 and 2015.")
+  # Verify gfc_folder exists, create if it doesn't
+  if (!dir.exists(gfc_folder)) {
+    dir.create(gfc_folder, recursive = TRUE)
+    message(paste("Created directory:", gfc_folder))
   }
 
-  dataset_str <- paste0("GFC-", dataset, "-v1.", (dataset-2018) + 6)
+  if (!map_year %in% seq(2001, 2023)) {
+    stop("Invalid map_year Please use a year between 2001 and 2023.")
+  }
 
-  if (!"POINT_X" %in% colnames(plt)) {
+  if (gfc_dataset_year == "latest") {
+    gfc_dataset_year <- 2023
+  }
+
+  if (!gfc_dataset_year %in% seq(2023, 2015)) {
+    stop("Invalid gfc_dataset_year. Please use a year between 2015 and 2023.")
+  }
+
+  if (gfc_dataset_year < map_year) {
+    stop("The gfc_dataset_year must be equal or later than the map_year.")
+  }
+
+  dataset_str <- paste0("GFC-", gfc_dataset_year, "-v1.", (gfc_dataset_year-2018) + 6)
+
+  if ((!"POINT_X" %in% colnames(plt)) & ("Xnew" %in% colnames(plt))) {
     plt$POINT_X <- plt$Xnew
     plt$POINT_Y <- plt$Ynew
     plt$PLOT_ID <- 1:nrow(plt)
+  } else if ((!"POINT_X" %in% colnames(plt)) & (!"Xnew" %in% colnames(plt))) {
+    stop("Invalid plot data. Please check that both ´POINT_X' and ´POINT_Y´ columns (corresponding to lon, lat points in WGS 84) are provided.")
   }
 
   if (!inherits(plt, "sf")) {
@@ -65,26 +91,27 @@ Deforested <- function(plt, fdir, dataset = 2023, map_year = 10) {
   }
 
   defo <- numeric(nrow(plt))
+  defo_start_year <- rep(NA, nrow(plt))
 
   for (p in 1:nrow(plt)) {
 
-    # ww in arc-deg
+    # Make a square polygon with a ww buffer
     ww <- ifelse(!(is.na(plt[p,]$SIZE_HA)),
-                 (sqrt(plt[p,]$SIZE_HA*10000) *0.00001)/2, 0.0002) #mean of plots for NAs
+                 (sqrt(plt[p,]$SIZE_HA*10000) *0.00001)/2, 0.0002) # mean of plots for NAs, ww in arc-deg
     ww <- ifelse(ww < 0, abs(ww), ww)
     sf_use_s2(FALSE)  # ww in sf:: with sf_use_s2(TRUE) is in meters
-    pol <- sf::st_buffer(plt[p,], dist = ww, endCapStyle = "SQUARE")
+    pol <- suppressMessages(suppressWarnings(sf::st_buffer(plt[p,], dist = ww, endCapStyle = "SQUARE")))
     # diff(st_bbox(pol)[c(2, 4)])
     # diff(st_bbox(pol)[c(1, 3)])
 
-    cat("Processing", round(as.numeric(sf::st_area(pol) / 10000), 2), "ha ... \n")
+    message(paste("Processing row", p, "with PLOT_ID", plt[p,]$PLOT_ID, "and buffered area", round(as.numeric(sf::st_area(pol) / 10000), 2), "ha ... \n"))
     #cat(paste('processing:', round((res / 0.00001 * res / 0.00001) / 10000, 2), 'ha')) # checker
 
     # Downloads respective forest loss tile/s from squared plots
-    dir.create(file.path(fdir), showWarnings = FALSE)
-    #setwd(file.path(fdir))
-    gfcTile <- gfcanalysis::calc_gfc_tiles(pol)
-    gfcanalysis::download_tiles(gfcTile, fdir, images = "lossyear", dataset = dataset_str)
+    dir.create(file.path(gfc_folder), showWarnings = FALSE)
+    #setwd(file.path(gfc_folder))
+    gfcTile <- suppressMessages(suppressWarnings(gfcanalysis::calc_gfc_tiles(pol)))
+    gfcanalysis::download_tiles(gfcTile, gfc_folder, images = "lossyear", dataset = dataset_str)
 
     # Get overlapping tile/s (up to 4 possible tiles)
     bb <- sf::st_bbox(pol)
@@ -99,7 +126,7 @@ Deforested <- function(plt, fdir, dataset = 2023, map_year = 10) {
       WE <- paste0(sprintf('%03d', abs(lon)), LtX)
       NS <- paste0(sprintf('%02d', abs(lat)), LtY)
 
-      fnms[i] <- file.path(fdir, paste0("Hansen_", dataset_str, "_lossyear_", NS, "_", WE, ".tif"))
+      fnms[i] <- file.path(gfc_folder, paste0("Hansen_", dataset_str, "_lossyear_", NS, "_", WE, ".tif"))
     }
 
     vls <- numeric()
@@ -108,26 +135,45 @@ Deforested <- function(plt, fdir, dataset = 2023, map_year = 10) {
         vls <- c(vls, terra::extract(terra::rast(f), pol)[[2]])
     }
 
-    vls <- if (length(vls[vls == 0]) > length(vls[vls > 0])) vls * 0 else (c(vls))
-    cat(vls)
-    vls[vls > 0] <- 1
+    # vls <- if (length(vls[vls == 0]) > length(vls[vls > 0])) vls * 0 else (c(vls)) # implies a 50% threshold
 
-    defo[p] <- sum(vls[vls > 0], na.rm = TRUE)
-    cat(defo[p])
+    if (any(vls > 0)) {
+      defo_start <- as.numeric(paste0("20", sprintf("%02d", round(min(vls), 0))))
+      nr_no_defo_cells <- length(vls[vls == 0])
+      nr_defo_cells <- length(vls[vls > 0])
+      ratio_defo_cells <- nr_defo_cells / (nr_defo_cells + nr_no_defo_cells)
+
+      message(paste0("Deforestation detected in ", 100 * ratio_defo_cells, "% of the buffered area in plot row ", p, " with PLOT_ID ", plt[p,]$PLOT_ID, ". The earliest measured year of deforestation is ", defo_start, ".\n"))
+    } else if (all(vls == 0)) {
+      ratio_defo_cells <- 0
+      defo_start <- NA
+    }
+
+    defo[p] <- ratio_defo_cells
+    defo_start_year[p] <- defo_start
   }
 
   plt$defo <- defo
-  thresh <- plt$SIZE_HA * 0.05
-  cat(paste('Removed', nrow(subset(plt, plt$defo > thresh)), 'plots that have > 5% change'))
-  defPlt <- subset(plt, plt$defo > 0)
-  defPlt <- subset(defPlt, defPlt$defo <= map_year)
-  netPlt <- dplyr::select(dplyr::setdiff(plt, defPlt), -defo)
+  plt$defo_start_year <- defo_start_year
 
-  return(list(netPlt = netPlt, plt = plt))
+  # Plots deforested before map year:
+  deforestedPlots <- plt |>
+    dplyr::filter(defo > defo_threshold) |>
+    dplyr::filter(!is.na(defo_start_year)) |>
+    dplyr::filter(defo_start_year <= map_year)
+
+  netPlt <- dplyr::select(dplyr::setdiff(plt, deforestedPlots), -c(defo, defo_start_year))
+
+  message(paste('Removed', nrow(deforestedPlots), 'plot(s) that have >', 100 * defo_threshold, '% deforested area before/during the', map_year, 'map year.'))
+
+  return(list(non_deforested_plots = netPlt, all_plots = plt))
 }
 
 
+
 # old_refactored_Deforested <- function(plt, fdir, map_year=10){
+#
+#   library(sp)
 #
 #   # Test params
 #   # dataDir <- file.path(getwd(), "data")
@@ -258,7 +304,8 @@ Deforested <- function(plt, fdir, dataset = 2023, map_year = 10) {
 #   }
 #
 #   if (class(plt)[1] == 'SpatialPolygonsDataFrame'){
-#     plt <- as.data.frame(pt)
+#     plt <- as.data.frame(pt)  new_result <- Deforested(sampled_plots, "data/testdata", 2018, 10)
+
 #   }
 #
 #   defo <- c()
@@ -290,7 +337,7 @@ Deforested <- function(plt, fdir, dataset = 2023, map_year = 10) {
 #
 #       lon <- 10*(crds[i,1]%/%10)
 #       lat <- 10*(crds[i,2]%/%10) + 10
-#       LtX <- ifelse(lon < 0, "W", "E")
+#     1  LtX <- ifelse(lon < 0, "W", "E")
 #       LtY <- ifelse(lat < 0, "S", "N")
 #       WE <- paste0(sprintf('%03d',abs(lon)), LtX)
 #       NS <- paste0(sprintf('%02d',abs(lat)), LtY)
@@ -324,8 +371,8 @@ Deforested <- function(plt, fdir, dataset = 2023, map_year = 10) {
 
 
 
-# # Testing
-#
+# Testing
+
 # # rgeos is deprecated but we need it for testing the old function:
 # if(!require(rgeos)){
 #   remotes::install_version("rgeos", version = "0.6-4")
@@ -348,7 +395,7 @@ Deforested <- function(plt, fdir, dataset = 2023, map_year = 10) {
 #   skip(message = "Skipping because it takes too long, next test is similar but takes a smaller sample")
 #
 #   # Test params
-#   plots <- read.csv(file.path("data", "SamplePlots.csv"))
+#   #plots <- read.csv(file.path("data", "SamplePlots.csv"))
 #
 #   # Run both versions
 #   start.time <- Sys.time()
@@ -375,10 +422,12 @@ Deforested <- function(plt, fdir, dataset = 2023, map_year = 10) {
 #
 # test_that("Old and new Deforested functions produce consistent results - small sample", {
 #
+#   skip(message = "Skipping because Deforested has now a different API from old version")
+#
 #   # Test params
-#   plots <- read.csv(file.path("data", "SamplePlots.csv"))
+#   #plots <- read.csv(file.path("data", "SamplePlots.csv"))
 #   set.seed(42)
-#   plots_sample <- c(sample(1:dim(plots)[1], 10), 182, 200, 323, 6765)
+#   plots_sample <- c(sample(1:dim(plots)[1], 10), 182, 200, 323, 6765) # handpicking some plots with deforestation
 #   sampled_plots <- plots[plots_sample,]
 #
 #   # Run both versions
@@ -387,7 +436,7 @@ Deforested <- function(plt, fdir, dataset = 2023, map_year = 10) {
 #   # old_result <- old_Deforested(plot_data, mock_fdir, 10)
 #   old_result <- old_refactored_Deforested(sampled_plots, "data/testdata", 10)
 #
-#   new_result <- Deforested(sampled_plots, "data/testdata", 2018, 10)
+#   new_result <- Deforested(sampled_plots, gfc_dataset_year = 2018, map_year = 2010)
 #
 #   # Compare results
 #   expect_equal(dim(old_result[[1]])[1], dim(new_result[[1]])[1])
@@ -397,15 +446,75 @@ Deforested <- function(plt, fdir, dataset = 2023, map_year = 10) {
 # })
 #
 #
+# test_that("Deforested function behaves consistently across map_years", {
+#
+#   # Test params
+#   #plots <- read.csv(file.path("data", "SamplePlots.csv"))
+#   set.seed(42)
+#   plots_sample <- c(sample(1:dim(plots)[1], 10), 182, 200, 323, 6765) # handpicking some plots with deforestation
+#   sampled_plots <- plots[plots_sample,]
+#
+#   result_2010 <- Deforested(sampled_plots, 2010)
+#   result_2020 <- Deforested(sampled_plots, 2020)
+#   result_2023 <- Deforested(sampled_plots, 2023)
+#
+#   # Compare results
+#   expect_equal(
+#     unique(result_2010$all_plots |>
+#              dplyr::filter(defo > 0) |>
+#              dplyr::select(defo_start_year)),
+#     unique(result_2020$all_plots |>
+#              dplyr::filter(defo > 0) |>
+#              dplyr::select(defo_start_year))
+#   )
+#   expect_equal(
+#     unique(result_2020$all_plots |>
+#              dplyr::filter(defo > 0) |>
+#              dplyr::select(defo_start_year)),
+#     unique(result_2023$all_plots |>
+#              dplyr::filter(defo > 0) |>
+#              dplyr::select(defo_start_year))
+#   )
+# })
+#
+# test_that("Deforested function behaves consistently across gfc_dataset_year", {
+#
+#   # Test params
+#   #plots <- read.csv(file.path("data", "SamplePlots.csv"))
+#   set.seed(42)
+#   plots_sample <- c(sample(1:dim(plots)[1], 10), 182, 200, 323, 6765) # handpicking some plots with deforestation
+#   sampled_plots <- plots[plots_sample,]
+#
+#   result_gfc_2015 <- Deforested(sampled_plots, map_year = 2010, gfc_dataset_year = 2015)
+#   result_gfc_2019 <- Deforested(sampled_plots, map_year = 2010, gfc_dataset_year = 2019)
+#   result_gfc_2022 <- Deforested(sampled_plots, map_year = 2010, gfc_dataset_year = 2022)
+#   result_gfc_2023 <- Deforested(sampled_plots, map_year = 2010, gfc_dataset_year = 2023)
+#   result_gfc_latest <- Deforested(sampled_plots, map_year = 2010)
+#
+#   # Compare results
+#   expect_equal(result_gfc_2015$non_deforested_plots, result_gfc_2019$non_deforested_plots)
+#   expect_equal(result_gfc_2022$non_deforested_plots, result_gfc_2019$non_deforested_plots)
+#   expect_equal(result_gfc_2015$non_deforested_plots, result_gfc_2023$non_deforested_plots)
+#   expect_equal(result_gfc_latest$non_deforested_plots, result_gfc_2023$non_deforested_plots)
+#
+#   expect_equal(result_gfc_latest$all_plots, result_gfc_2023$all_plots)
+#
+#   expect_equal(sum(result_gfc_2015$all_plots$defo), 2)
+#   expect_equal(sum(result_gfc_2019$all_plots$defo), 4)
+#   expect_equal(sum(result_gfc_2022$all_plots$defo), 5)
+#   expect_equal(sum(result_gfc_2023$all_plots$defo), sum(result_gfc_latest$all_plots$defo))
+#
+# })
+#
 # test_that("Deforested function behaves consistently", {
 #
 #   # Test params
-#   plots <- read.csv(file.path("data", "SamplePlots.csv"))
+#   #plots <- read.csv(file.path("data", "SamplePlots.csv"))
 #   set.seed(42)
 #   plots_sample <- sample(1:dim(plots)[1], 2)
 #   sampled_plots <- plots[plots_sample,]
 #
-#   result <- Deforested(sampled_plots, "data/testdata")
+#   result <- Deforested(sampled_plots, map_year = 2010)
 #
 #   # Check output structure
 #   expect_type(result, "list")
@@ -419,52 +528,6 @@ Deforested <- function(plt, fdir, dataset = 2023, map_year = 10) {
 #
 #   # Check deforestation filtering
 #   expect_true(all(result[[2]]$defo <= 0.05))
-# })
-#
-#
-# test_that("Deforested function defo metric behaves consistently with different GFC dataset years", {
-#
-#   # Test params
-#   plots <- read.csv(file.path("data", "SamplePlots.csv"))
-#   set.seed(111)
-#   plots_sample <- c(sample(1:dim(plots)[1], 10), 182, 200, 323, 6765)
-#   sampled_plots <- plots[plots_sample,]
-#
-#   result2023 <- Deforested(sampled_plots, "data/testdata", 2023)
-#   result2020 <- Deforested(sampled_plots, "data/testdata", 2020)
-#   result2015 <- Deforested(sampled_plots, "data/testdata", 2015)
-#
-#   expect_equal(sum(result2023$plt$defo), 88)
-#   expect_equal(sum(result2020$plt$defo), 80)
-#   expect_equal(sum(result2015$plt$defo), 40)
-#
-# })
-#
-#
-# # Test with polygons
-# test_that("Deforested function works with polygon input", {
-#   # Create sample polygon data
-#   poly_data <- st_sf(
-#     PLOT_ID = c("P1", "P2"),
-#     SIZE_HA = c(1.23, 1.23),
-#     geometry = st_sfc(
-#       st_polygon(list(1e-3*rbind(c(0,0), c(1,0), c(1,1), c(0,1), c(0,0)))),
-#       st_polygon(list(1e-3*rbind(c(2,2), c(3,2), c(3,3), c(2,3), c(2,2))))
-#     ),
-#     crs = 4326
-#   )
-#
-#   result <- Deforested(poly_data, "data/testdata")
-#
-#   # Check output structure for polygon input
-#   expect_type(result, "list")
-#   expect_length(result, 2)
-#   expect_s3_class(result[[1]], "sf")
-#   expect_s3_class(result[[2]], "sf")
-#
-#   # Check if geometry is preserved
-#   expect_true("geometry" %in% colnames(result[[1]]))
-#   expect_true("geometry" %in% colnames(result[[2]]))
 # })
 
 

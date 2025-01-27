@@ -1,5 +1,5 @@
 
-# Plot2Map <img src="man/figures/logo.png" align="right" height="138"/>
+# Plot2Map <img src="man/figures/logo.png" align="right" height="75"/>
 
 Plot2Map is an R package for comparing forest plot data to biomass maps, with a focus on Above Ground Biomass (AGB) estimation and validation.
 
@@ -14,7 +14,7 @@ devtools::install_github("aTnT/Plot2Map")
 
 ## What Plot2Map can be used for
 
-- Process various types of plot data (point data, polygons, tree-level measurements)
+- Process various types of plot data (point data, polygons, tree-level measurements, lidar)
 - Temporal adjustment of plot data to match map epoch
 - Estimation of measurement and sampling errors
 - Validation of global AGB maps
@@ -32,7 +32,7 @@ library(Plot2Map)
 
 # Load, inspect and preprocess plot data
 head(plots)
-plots <- Deforested(plots, flDir, mapYear)
+plots <- Deforested(plots[1:100,],  dataset_year = 2023)
 plots <- BiomePair(plots)
 
 # Apply temporal adjustment

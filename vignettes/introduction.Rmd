@@ -35,7 +35,7 @@ Using a collection of plot datasets with uncertainty estimates across the globe 
 
 ## Map Bias
 
-A key principle for climate monitoring is that random errors and time-dependent biases in satellite observations and derived products should be identified. More generally map users prefer AGB maps to be unbiased and to have spatially explicit uncertainty information, including its spatial autocorrelation.
+A key principle for climate monitoring is that random errors and time-dependent biases in satellite EO and derived products should be identified. More generally map users prefer AGB maps to be unbiased and to have spatially explicit uncertainty information, including its spatial autocorrelation.
 
 ## The Plot2Map Package
 
