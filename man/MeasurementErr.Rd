@@ -53,8 +53,9 @@ The function performs the following steps:
 }
 }
 \examples{
+\dontrun{
 plotsTree <- utils::read.csv(sample_file("SampleTree.csv"))
 xyTree <- utils::read.csv(sample_file("SampleTreeXY.csv"))
 plot_uncertainties <- MeasurementErr(plotsTree, xyTree, region = "Asia")
-
+}
 }

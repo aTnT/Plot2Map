@@ -4,20 +4,21 @@
 \alias{TempVar}
 \title{Calculate temporal variance in plot biomass}
 \usage{
-TempVar(df, domain, year)
+TempVar(plt, map_year, gez = "all")
 }
 \arguments{
-\item{df}{A data frame containing plot data.}
+\item{plt}{A data frame or sf object containing plot data. For data frame input format, longitude and latitude coordinates should be placed under "POINT_X" and "POINT_Y" columns respectively in WGS 84 CRS.}
 
-\item{domain}{Character string specifying the ecological domain of interest.}
+\item{map_year}{Numeric value indicating the AGB map year.}
 
-\item{year}{Numeric value indicating the map AGB year (e.g., 2010 for GlobBiomass).}
+\item{gez}{Character string specifying the Global Ecological Zones (GEZ) of interest to apply. If "all" (default),
+all GEZ in plt will be calculated.}
 }
 \value{
-A data frame with adjusted AGB values and calculated growth standard deviations.
+A data frame with calculated growth standard deviations.
 }
 \description{
 This function calculates the temporal variance in plot biomass based on growth rate
-standard deviations. It adjusts the AGB values and computes the standard deviation
+standard deviations. It computes the standard deviation
 of growth for each plot.
 }

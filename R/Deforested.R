@@ -25,7 +25,7 @@
 #' downloads the necessary forest loss tiles, and determines if the plot has been
 #' deforested beyond a set deforestation threshold or if the deforestation occurred before or during the specified map year.
 #'
-#' @param plt A data frame or sf object containing plot data. For data frame input format, coordinates are assumed to be in WGS 84 CRS.
+#' @param plt A data frame or sf object containing plot data. For data frame input format, longitude and latitude coordinates should be placed under "POINT_X" and "POINT_Y" columns respectively in WGS 84 CRS.
 #' @param map_year Numeric value indicating the threshold year for deforestation. Plots with deforestation started at or before the `map_year` will be removed from the `$non_deforested_plots` list element output. Any year in the 2001-2023 range.
 #' @param gfc_folder Character string specifying the directory to download GFC forest loss data.
 #' @param gfc_dataset_year Numeric value describing which version of the Hansen data to use: any year in the 2018-2023 range or "latest" (default).
@@ -86,9 +86,10 @@ Deforested <- function(plt, map_year, gfc_folder = "data/GFC", gfc_dataset_year 
     stop("Invalid plot data. Please check that both ´POINT_X' and ´POINT_Y´ columns (corresponding to lon, lat points in WGS 84) are provided.")
   }
 
-  if (!inherits(plt, "sf")) {
-    plt <- sf::st_as_sf(plt, coords = c("POINT_X", "POINT_Y"), crs = 4326)
-  }
+  plt <- check_and_convert_plt(plt)
+  # if (!inherits(plt, "sf")) {
+  #   plt <- sf::st_as_sf(plt, coords = c("POINT_X", "POINT_Y"), crs = 4326)
+  # }
 
   defo <- numeric(nrow(plt))
   defo_start_year <- rep(NA, nrow(plt))

@@ -31,6 +31,7 @@ The function performs the following steps:
 }
 }
 \examples{
+\dontrun{
 lidar_data <- RefLidar(lidar.dir = "data/SustainableLandscapeBrazil_v04/SLB_AGBmaps")
-
+}
 }

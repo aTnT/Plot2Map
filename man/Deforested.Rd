@@ -13,7 +13,7 @@ Deforested(
 )
 }
 \arguments{
-\item{plt}{A data frame or sf object containing plot data. For data frame input format, coordinates are assumed to be in WGS 84 CRS.}
+\item{plt}{A data frame or sf object containing plot data. For data frame input format, longitude and latitude coordinates should be placed under "POINT_X" and "POINT_Y" columns respectively in WGS 84 CRS.}
 
 \item{map_year}{Numeric value indicating the threshold year for deforestation. Plots with deforestation started at or before the \code{map_year} will be removed from the \verb{$non_deforested_plots} list element output. Any year in the 2001-2023 range.}
 

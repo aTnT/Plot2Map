@@ -4,22 +4,23 @@
 \alias{BiomePair}
 \title{Assign ecological zones and continents to plot locations}
 \usage{
-BiomePair(df_defoCheck)
+BiomePair(plt)
 }
 \arguments{
-\item{df_defoCheck}{A data frame containing plot data with at least POINT_X and POINT_Y columns.}
+\item{plt}{A data frame or sf object containing plot data. For data frame input format, longitude and latitude coordinates should be placed under "POINT_X" and "POINT_Y" columns respectively in WGS 84 CRS.}
 }
 \value{
-A data frame with added columns for ZONE (continent), FAO.ecozone, and GEZ (general eco-zone).
+A data frame with added columns for ZONE (continent), FAO.ecozone, and GEZ (Global Ecological Zones).
 }
 \description{
-This function overlays plot locations with pre-processed shapefiles to assign
-corresponding FAO ecological zones (biomes) and continents (zones) to each plot.
-It uses the Global Ecological Zones (GEZ) and world regions shapefiles.
+This function overlays plot locations with pre-processed data to assign
+corresponding FAO ecological zones (biomes), Global Ecological Zones (GEZ)
+and continents (zones) to each plot.
 }
 \examples{
 \dontrun{
-  plot_data <- data.frame(POINT_X = c(-3.007, -3.008), POINT_Y = c(6.010, 6.011))
+  plot_data <- data.frame(POINT_X = c(-1.007, -1.208), POINT_Y = c(12.010, 13.611))
   result <- BiomePair(plot_data)
 }
+
 }

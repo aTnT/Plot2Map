@@ -22,7 +22,8 @@ The function prompts the user to select or manually enter column indices for key
 It then formats the data, converting plot sizes from m^2 to hectares if necessary.
 }
 \examples{
+\dontrun{
 # Assuming 'raw_plots' is your input data frame
 formatted_plots <- RawPlots(raw_plots)
-
+}
 }

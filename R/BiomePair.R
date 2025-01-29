@@ -6,13 +6,13 @@
 
 #' Assign ecological zones and continents to plot locations
 #'
-#' This function overlays plot locations with pre-processed shapefiles to assign
-#' corresponding FAO ecological zones (biomes) and continents (zones) to each plot.
-#' It uses the Global Ecological Zones (GEZ) and world regions shapefiles.
+#' This function overlays plot locations with pre-processed data to assign
+#' corresponding FAO ecological zones (biomes), Global Ecological Zones (GEZ)
+#' and continents (zones) to each plot.
 #'
-#' @param df_defoCheck A data frame containing plot data with at least POINT_X and POINT_Y columns.
+#' @inheritParams Deforested
 #'
-#' @return A data frame with added columns for ZONE (continent), FAO.ecozone, and GEZ (general eco-zone).
+#' @return A data frame with added columns for ZONE (continent), FAO.ecozone, and GEZ (Global Ecological Zones).
 #'
 #' @importFrom terra vect intersect
 #' @importFrom stringr word
@@ -21,22 +21,25 @@
 #'
 #' @examples
 #' \dontrun{
-#'   plot_data <- data.frame(POINT_X = c(-3.007, -3.008), POINT_Y = c(6.010, 6.011))
+#'   plot_data <- data.frame(POINT_X = c(-1.007, -1.208), POINT_Y = c(12.010, 13.611))
 #'   result <- BiomePair(plot_data)
-#' }
-BiomePair <- function(df_defoCheck) {
+#'}
+#'
+BiomePair <- function(plt) {
+
+  plt <- check_and_convert_plt(plt)
 
   # Convert input to terra vector
-  plots0 <- terra::vect(df_defoCheck, geom = c("POINT_X", "POINT_Y"))
+  plots0 <- terra::vect(plt, geom = c("POINT_X", "POINT_Y"))
 
   # Load pre-processed shapefiles
-  li <- terra::vect(file.path("data", "eco_zone.shp"))
-  re <- terra::vect(file.path("data", "world_region.shp"))
+  li <- terra::vect(system.file(file.path("data", "eco_zone.shp"), package="Plot2Map"))
+  re <- terra::vect(system.file(file.path("data", "world_region.shp"), package="Plot2Map"))
 
   # Prepare points for intersection
   p <- plots0
-  p$POINT_X <- df_defoCheck$POINT_X
-  p$POINT_Y <- df_defoCheck$POINT_Y
+  p$POINT_X <- plt$POINT_X
+  p$POINT_Y <- plt$POINT_Y
 
   # Intersect polygons with points
   intFez0 <- terra::intersect(p, li)
