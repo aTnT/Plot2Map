@@ -28,8 +28,9 @@
 #' 5. Formats output based on the specified raster type (AGB, CV, or SD)
 #'
 #' @examples
+#' \dontrun{
 #' lidar_data <- RefLidar(lidar.dir = "data/SustainableLandscapeBrazil_v04/SLB_AGBmaps")
-#'
+#' }
 #' @import terra
 #' @importFrom utils menu
 #'

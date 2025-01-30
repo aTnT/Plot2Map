@@ -21,3 +21,11 @@ This function analyzes the shift in AGB values across different bins before and 
 temporal adjustment or forest fraction correction. It generates a summary table
 of the changes in AGB distribution.
 }
+\examples{
+set.seed(42)
+sample_plots <- plots[sample(nrow(plots), 10), ]
+sample_plots <- BiomePair(sample_plots)
+sample_plots <- TempApply(sample_plots, 2004)
+head(sample_plots)
+HistoShift(sample_plots, 2004)
+}

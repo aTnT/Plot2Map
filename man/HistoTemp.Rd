@@ -21,3 +21,11 @@ This function creates a histogram to visualize the effect of temporal adjustment
 or forest fraction correction on AGB values. It generates a plot comparing the
 distribution of AGB values before and after the adjustment.
 }
+\examples{
+set.seed(42)
+sample_plots <- plots[sample(nrow(plots), 10), ]
+sample_plots <- BiomePair(sample_plots)
+sample_plots <- TempApply(sample_plots, 2004)
+head(sample_plots)
+HistoTemp(sample_plots, 2004)
+}

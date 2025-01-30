@@ -2,24 +2,57 @@
 % Please edit documentation in R/MakeBlockPolygon.R
 \name{MakeBlockPolygon}
 \alias{MakeBlockPolygon}
-\title{Create a block polygon}
+\title{Create a square polygon (block) based on input coordinates and size}
 \usage{
 MakeBlockPolygon(x, y, size)
 }
 \arguments{
-\item{x}{Numeric, x-coordinate of a point within the desired block.}
+\item{x}{Numeric. The x-coordinate (longitude) of a point within the desired block.}
 
-\item{y}{Numeric, y-coordinate of a point within the desired block.}
+\item{y}{Numeric. The y-coordinate (latitude) of a point within the desired block.}
 
-\item{size}{Numeric, the size of the square block.}
+\item{size}{Numeric. The size (side length) of the square block in the same units as the
+input coordinates (e.g., degrees for longitude/latitude).}
 }
 \value{
-An sf object representing the square polygon.
+An \code{sf} object representing the square polygon. The polygon is created in the
+WGS 84 coordinate reference system (EPSG:4326).
 }
 \description{
-This function creates a square polygon (block) based on given coordinates and size.
-It calculates the lower left corner of the cell and defines the vertices of the polygon.
+This function creates a square polygon (block) centered around the input coordinates.
+The block is aligned to a grid defined by the \code{size} parameter, with the lower-left corner
+of the block calculated based on the input coordinates. The resulting polygon is returned
+as an \code{sf} object.
+}
+\details{
+The function calculates the lower-left corner of the block by aligning the input coordinates
+to a grid defined by the \code{size} parameter. For example:
+\itemize{
+\item If \code{x = 5.2}, \code{y = 10.7}, and \code{size = 1}, the lower-left corner will be at \verb{(5, 10)}.
+\item The block will extend from \verb{(5, 10)} to \verb{(6, 11)}.
+\item If \code{x = 5.2}, \code{y = 10.7}, and \code{size = 0.1}, the lower-left corner will be at \verb{(5.1, 10.6)}.
+\item The block will extend from \verb{(5.1, 10.6)} to \verb{(5.2, 10.7)}.
+}
+
+The polygon is created with vertices in the following order:
+\enumerate{
+\item Lower-left corner \verb{(xll, yll)}
+\item Lower-right corner \verb{(xll + size, yll)}
+\item Upper-right corner \verb{(xll + size, yll + size)}
+\item Upper-left corner \verb{(xll, yll + size)}
+\item Lower-left corner \verb{(xll, yll)} (to close the polygon)
+}
+
+The resulting polygon is returned as an \code{sf} object with a WGS 84 (EPSG:4326) coordinate
+reference system.
 }
 \examples{
+# Create a 1x1 degree block including the point (5.2, 10.7) aligned to a 1x1 degree grid:
 block <- MakeBlockPolygon(5.2, 10.7, 1)
+print(block)
+plot(block)
+# Create a 0.25x0.25 degree block including the point (5.2, 10.7) aligned to a 0.25x0.25 degree grid:
+block2 <- MakeBlockPolygon(5.2, 10.7, 0.25)
+print(block2)
+sf::st_centroid(block2)
 }

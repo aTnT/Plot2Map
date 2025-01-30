@@ -86,10 +86,9 @@ Deforested <- function(plt, map_year, gfc_folder = "data/GFC", gfc_dataset_year 
     stop("Invalid plot data. Please check that both ´POINT_X' and ´POINT_Y´ columns (corresponding to lon, lat points in WGS 84) are provided.")
   }
 
-  plt <- check_and_convert_plt(plt)
-  # if (!inherits(plt, "sf")) {
-  #   plt <- sf::st_as_sf(plt, coords = c("POINT_X", "POINT_Y"), crs = 4326)
-  # }
+  if (!inherits(plt, "sf")) {
+    plt <- sf::st_as_sf(plt, coords = c("POINT_X", "POINT_Y"), crs = 4326)
+  }
 
   defo <- numeric(nrow(plt))
   defo_start_year <- rep(NA, nrow(plt))

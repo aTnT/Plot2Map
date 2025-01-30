@@ -47,19 +47,19 @@ print(sampled_plots)
 # 4002     EU2  -3.9889352  40.33963  46.49786     2000   0.196
 
 # Preprocess plot data:
-sampled_plots <- Deforested(sampled_plots,  map_year = 2023)
+sampled_plots <- Deforested(sampled_plots,  map_year = 2006)
 sampled_plots <- BiomePair(sampled_plots$non_deforested_plots)
 
 # Apply temporal adjustment
-sampled_plots <- TempApply(sampled_plots, "Subtropical", 2023)
+sampled_plots <- TempApply(sampled_plots, map_year = 2006)
 
 # Estimate errors, using a pre-trained RF model for plot-level data
-load('rf1.RData') #pre-trained RF model from 10000+ plots across biomes
-plotsPred <- plots2[,c('AGB_T_HA','SIZE_HA', 'GEZ')]
+load('data/rf1.RData') #pre-trained RF model from 10000+ plots across biomes
+plotsPred <- sampled_plots[,c('AGB_T_HA','SIZE_HA', 'GEZ')]
 names(plotsPred) <- c('agb', 'size', 'gez')
 plotsPred$size <- as.numeric(plotsPred$size) * 10000 #convert size to m2
 plotsPred$gez = factor(plotsPred$gez,levels = c("Boreal","Subtropical","Temperate","Tropical"))
-plots2$sdTree <- predict(rf1, plotsPred)[[1]]
+sampled_plots$sdTree <- predict(rf1, plotsPred)[[1]]
 
 # Validate AGB map
 AGBdata <- invDasymetry("ZONE", "Europe", wghts = TRUE, is_poly = FALSE, own = FALSE)

@@ -24,6 +24,13 @@
 #' @importFrom grDevices png dev.off rgb
 #'
 #' @export
+#' @examples
+#' set.seed(42)
+#' sample_plots <- plots[sample(nrow(plots), 10), ]
+#' sample_plots <- BiomePair(sample_plots)
+#' sample_plots <- TempApply(sample_plots, 2004)
+#' head(sample_plots)
+#' HistoTemp(sample_plots, 2004)
 HistoTemp <- function(df, year, outDir = "results") {
 
     # Create output directory if it doesn't exist
@@ -81,6 +88,13 @@ HistoTemp <- function(df, year, outDir = "results") {
 #' @importFrom utils write.csv
 #'
 #' @export
+#' @examples
+#' set.seed(42)
+#' sample_plots <- plots[sample(nrow(plots), 10), ]
+#' sample_plots <- BiomePair(sample_plots)
+#' sample_plots <- TempApply(sample_plots, 2004)
+#' head(sample_plots)
+#' HistoShift(sample_plots, 2004)
 HistoShift <- function(df, year, outDir = "results") {
 
   # Create output directory if it doesn't exist

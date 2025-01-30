@@ -26,6 +26,14 @@
 #' @importFrom utils read.csv
 #'
 #' @export
+#' @examples
+#' set.seed(42)
+#' sample_plots <- plots[sample(nrow(plots), 10), ]
+#' sample_plots <- BiomePair(sample_plots)
+#' resultApply <- TempApply(sample_plots, 2004)
+#' head(resultApply)
+#' resultVar <- TempVar(sample_plots, 2004)
+#' head(resultVar)
 TempApply <- function(plt, map_year, gez = "all") {
 
   plt <- check_and_convert_plt(plt, ez=TRUE)
@@ -123,6 +131,14 @@ TempApply <- function(plt, map_year, gez = "all") {
 #' @importFrom utils read.csv
 #'
 #' @export
+#' @examples
+#' set.seed(42)
+#' sample_plots <- plots[sample(nrow(plots), 10), ]
+#' sample_plots <- BiomePair(sample_plots)
+#' resultApply <- TempApply(sample_plots, 2004)
+#' head(resultApply)
+#' resultVar <- TempVar(sample_plots, 2004)
+#' head(resultVar)
 TempVar <- function(plt, map_year, gez = "all") {
 
   plt <- check_and_convert_plt(plt, ez=TRUE)

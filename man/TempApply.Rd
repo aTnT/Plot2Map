@@ -22,3 +22,12 @@ This function adjusts plot biomass values to align with the map year by adding o
 annual growth increment to older or newer plots. It uses growth data from a model-based
 estimate of growth-age relationships.
 }
+\examples{
+set.seed(42)
+sample_plots <- plots[sample(nrow(plots), 10), ]
+sample_plots <- BiomePair(sample_plots)
+resultApply <- TempApply(sample_plots, 2004)
+head(resultApply)
+resultVar <- TempVar(sample_plots, 2004)
+head(resultVar)
+}

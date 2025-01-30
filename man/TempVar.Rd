@@ -22,3 +22,12 @@ This function calculates the temporal variance in plot biomass based on growth r
 standard deviations. It computes the standard deviation
 of growth for each plot.
 }
+\examples{
+set.seed(42)
+sample_plots <- plots[sample(nrow(plots), 10), ]
+sample_plots <- BiomePair(sample_plots)
+resultApply <- TempApply(sample_plots, 2004)
+head(resultApply)
+resultVar <- TempVar(sample_plots, 2004)
+head(resultVar)
+}
