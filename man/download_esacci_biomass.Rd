@@ -14,15 +14,15 @@ download_esacci_biomass(
 )
 }
 \arguments{
-\item{esacci_biomass_year}{The ESACCI BIOMASS AGB tiles year to use. Use either 2010, 2015, 2016, 2017, 2018, 2019,
+\item{esacci_biomass_year}{The ESA CCI BIOMASS AGB tiles year to use. Use either 2010, 2015, 2016, 2017, 2018, 2019,
 2020, 2021 or "latest" (default).}
 
-\item{esacci_biomass_version}{The ESACCI BIOMASS AGB tiles version to use. Use either "v2.0", "v3.0", "v4.0",
+\item{esacci_biomass_version}{The ESA CCI BIOMASS AGB tiles version to use. Use either "v2.0", "v3.0", "v4.0",
 "v5.0", "v5.01" or "latest" (default).}
 
-\item{output_dir}{Directory to save downloaded files. Default is "data/ESACCI-BIOMASS".}
+\item{output_dir}{Directory to save downloaded ESA CCI BIOMASS AGB files. Default is the relative path "data/ESACCI-BIOMASS".}
 
-\item{n_cores}{Number of cores to use for parallel download. Default is all cores except one.}
+\item{n_cores}{Number of cores to use for parallel download.}
 
 \item{timeout}{Number of seconds for reaching file download timeout.}
 
@@ -33,4 +33,7 @@ A character vector of downloaded file paths.
 }
 \description{
 This function downloads ESA CCI Biomass GeoTIFF data from the CEDA Archive.
+}
+\references{
+\href{https://dx.doi.org/10.5285/bf535053562141c6bb7ad831f5998d77}{Santoro, M.; Cartus, O. (2024): ESA Biomass Climate Change Initiative (Biomass_cci): Global datasets of forest above-ground biomass for the years 2010, 2015, 2016, 2017, 2018, 2019, 2020 and 2021, v5.01. NERC EDS Centre for Environmental Data Analysis, 22 August 2024.}
 }

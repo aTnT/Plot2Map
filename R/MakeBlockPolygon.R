@@ -11,17 +11,18 @@
 
 
 
+
 #' Create a square polygon (block) based on input coordinates and size
 #'
-#' This function creates a square polygon (block) centered around the input coordinates.
-#' The block is aligned to a grid defined by the `size` parameter, with the lower-left corner
-#' of the block calculated based on the input coordinates. The resulting polygon is returned
-#' as an `sf` object.
+#' This function creates a square polygon (block) that contains the input coordinates.
+#' The block is aligned to a grid defined by the `size` parameter, with the coordinates
+#' rounded to the nearest multiple of `size`. The resulting polygon is returned as an `sf`
+#' object.
 #'
-#' @param x Numeric. The x-coordinate (longitude) of a point within the desired block.
-#' @param y Numeric. The y-coordinate (latitude) of a point within the desired block.
+#' @param x Numeric. The x-coordinate (e.g., longitude) of a point within the desired block.
+#' @param y Numeric. The y-coordinate (e.g., latitude) of a point within the desired block.
 #' @param size Numeric. The size (side length) of the square block in the same units as the
-#'             input coordinates (e.g., degrees for longitude/latitude).
+#'             input coordinates (e.g., degrees).
 #'
 #' @return An `sf` object representing the square polygon. The polygon is created in the
 #'         WGS 84 coordinate reference system (EPSG:4326).

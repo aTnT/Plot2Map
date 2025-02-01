@@ -4,14 +4,15 @@
 \alias{sampleTreeCover}
 \title{Sample block mean mapped forest over a polygon}
 \usage{
-sampleTreeCover(pol, thresholds, wghts = FALSE, fmask = NA)
+sampleTreeCover(roi, thresholds, weighted_mean = FALSE, fmask = NA)
 }
 \arguments{
-\item{pol}{An sf or SpatVector object representing the polygon of interest.}
+\item{roi}{An sf or SpatVector object representing the Region of Interest.}
 
 \item{thresholds}{Numeric vector of tree cover thresholds to apply.}
 
-\item{wghts}{Logical, whether to use weighted extraction (default is FALSE).}
+\item{weighted_mean}{Logical, if TRUE the weighted mean is calculated considering the
+approximate fraction of each cell that is covered by the polygon (default is FALSE).}
 
 \item{fmask}{A SpatRaster object representing a custom forest mask (default is NA).}
 }
