@@ -7,7 +7,7 @@
 #' 2020, 2021 or "latest" (default).
 #' @param esacci_biomass_version The ESA CCI BIOMASS AGB tiles version to use. Use either "v2.0", "v3.0", "v4.0",
 #' "v5.0", "v5.01" or "latest" (default).
-#' @param output_dir Directory to save downloaded ESA CCI BIOMASS AGB files. Default is the relative path "data/ESACCI-BIOMASS".
+#' @param esacci_folder Directory to save downloaded ESA CCI BIOMASS AGB files. Default is the relative path "data/ESACCI-BIOMASS".
 #' @param n_cores Number of cores to use for parallel download.
 #' @param timeout Number of seconds for reaching file download timeout.
 #' @param file_names Character vector of specific filenames to download. If NULL (default), all files will be downloaded.
@@ -25,7 +25,7 @@
 #'
 download_esacci_biomass <- function(esacci_biomass_year = "latest",
                                     esacci_biomass_version = "latest",
-                                    output_dir = "data/ESACCI-BIOMASS",
+                                    esacci_folder = "data/ESACCI-BIOMASS",
                                     n_cores = parallel::detectCores() - 1,
                                     timeout = 600,
                                     file_names = NULL) {
@@ -37,9 +37,9 @@ download_esacci_biomass <- function(esacci_biomass_year = "latest",
   esacci_biomass_version <- esacci_args$esacci_biomass_version
 
   # Check if output directory exists, if not create it
-  if (!dir.exists(output_dir)) {
-    dir.create(output_dir, recursive = TRUE)
-    message(paste("Created output directory:", output_dir))
+  if (!dir.exists(esacci_folder)) {
+    dir.create(esacci_folder, recursive = TRUE)
+    message(paste("Created output directory:", esacci_folder))
   }
 
   # Construct URL
@@ -79,7 +79,7 @@ download_esacci_biomass <- function(esacci_biomass_year = "latest",
     options(timeout = max(timeout, getOption("timeout")))
 
     file_url <- file.path(url, file_name)
-    output_file <- file.path(output_dir, file_name)
+    output_file <- file.path(esacci_folder, file_name)
     download.file(file_url, output_file, mode = "wb", quiet = TRUE)
     return(output_file)
   }
@@ -95,7 +95,7 @@ download_esacci_biomass <- function(esacci_biomass_year = "latest",
       download_file(file_name)
     }, error = function(e) {
       warning(paste("Failed to download:", file_name, "-", e$message))
-      return(file.path(output_dir, file_name))
+      return(file.path(esacci_folder, file_name))
     })
   }, cl = cl)
 

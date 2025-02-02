@@ -68,7 +68,7 @@ sampleAGBmap <- function(
     agb_raster = NULL,
     esacci_biomass_year = "latest",
     esacci_biomass_version = "latest",
-    output_dir = "data/ESACCI-BIOMASS",
+    esacci_folder = "data/ESACCI-BIOMASS",
     n_cores = 1,
     timeout = 600
 ) {
@@ -80,7 +80,7 @@ sampleAGBmap <- function(
     #vls <- matrix(ncol = 2, nrow = 0)
 
 
-    # TO DO: this case assumes weighted_mean = TRUE
+    # TO DO: this case assumes weighted_mean = TRUE (not optional)
 
     tryCatch({
       extracted_vals <- terra::extract(agb_raster, sf::st_as_sf(roi), weights = TRUE, normalizeWeights = FALSE)
@@ -114,22 +114,22 @@ sampleAGBmap <- function(
       message("Processing file: ", f)
 
       # Check if the file already exists
-      if (!file.exists(file.path(output_dir, f))) {
+      if (!file.exists(file.path(esacci_folder, f))) {
         message("File not found locally. Attempting to download...")
 
         # Download the file
         download_esacci_biomass(
           esacci_biomass_year = esacci_biomass_year,
           esacci_biomass_version = esacci_biomass_version,
-          output_dir = output_dir,
+          esacci_folder = esacci_folder,
           n_cores = n_cores,
           timeout = timeout,
           file_names = f
         )
 
         # Verify if the file was downloaded successfully
-        if (!file.exists(file.path(output_dir, f))) {
-          stop(paste0("Something went wrong with downloading ", f, ". Please try again later or check the input arguments."))
+        if (!file.exists(file.path(esacci_folder, f))) {
+          stop(paste0("Failed to download ", f, ". Please try again later or check the input arguments."))
         } else {
           message("Download successful: ", f)
         }
@@ -140,7 +140,7 @@ sampleAGBmap <- function(
       # Try to extract values from the raster
       tryCatch({
         message("Loading raster")
-        raster_obj <- terra::rast(file.path(output_dir, f))
+        raster_obj <- terra::rast(file.path(esacci_folder, f))
 
         message("Extracting values for ROI...")
         extracted_vals <- terra::extract(raster_obj, sf::st_as_sf(roi), weights = weighted_mean, normalizeWeights = FALSE)
@@ -206,89 +206,164 @@ sampleAGBmap <- function(
 
 
 
-#' Sample block mean mapped forest over a polygon
+#' Sample block mean mapped forest cover over a region of interest
 #'
 #' This function samples the block mean mapped forest cover over a given polygon.
-#' It can use either predefined tree cover tiles or a custom forest mask.
+#' It can use either a custom forest cover mask provided as input or download and use
+#' Global Forest Change (GFC) tree cover tiles (Hansen et al., 2013).
 #'
-#' @inheritParams sampleAGBmap
-#' @param thresholds Numeric vector of tree cover thresholds to apply.
-#' @param fmask A SpatRaster object representing a custom forest mask (default is NA).
+#' @param roi An sf or SpatVector object representing the Region of Interest.
+#' @param thresholds Numeric vector of tree cover thresholds percentages (e.g., c(10, 20, 30)) to calculate forest cover percentages.
+#' @param weighted_mean Logical, if TRUE the weighted mean is calculated considering the
+#'  approximate fraction of each cell that is covered by the polygon (default is FALSE).
+#' @param forest_mask A SpatRaster object with a custom forest cover mask. If NULL, Hansen GFC tree cover tiles will be downloaded and used.
+#' @inheritParams Deforested
 #'
-#' @return Numeric vector of tree cover percentages for each threshold.
+#' @return Numeric value representing the mean forest cover for the polygon.
 #'
 #' @importFrom sf st_as_sf
 #' @importFrom terra rast extract
+#' @importFrom dplyr bind_rows
 #'
 #' @export
-sampleTreeCover <- function(roi, thresholds, weighted_mean = FALSE, fmask = NA) {
-  TCs <- numeric()
+#'
+#' @references M. C. Hansen et al., High-Resolution Global Maps of 21st-Century Forest Cover Change. Science342,850-853(2013). [DOI:10.1126/science.1244693](https://doi.org/10.1126/science.1244693)
+#'
+#' @examples
+#' # Load required libraries
+#' library(sf)
+#'
+#' # Define a region of interest (ROI) in the Amazon Rainforest
+#' roi_amazon <- st_polygon(list(rbind(
+#'   c(-62.2159, -3.4653), c(-62.2059, -3.4653),
+#'   c(-62.2059, -3.4553), c(-62.2159, -3.4553),
+#'   c(-62.2159, -3.4653)
+#' )))
+#' roi_sf_amazon <- st_sfc(roi_amazon, crs = 4326)
+#'
+#' # Example 1: Calculate forest cover for the Amazon ROI (unweighted)
+#' sampleTreeCover(roi_sf_amazon, thresholds = c(10, 20, 30))
+#'
+#' # Example 2: Calculate forest cover for the Amazon ROI (weighted)
+#' sampleTreeCover(roi_sf_amazon, thresholds = c(10, 20, 30), weighted_mean = TRUE)
+#'
+sampleTreeCover <- function(
+    roi,
+    thresholds,
+    forest_mask = NULL,
+    weighted_mean = FALSE,
+    gfc_folder = "data/GFC",
+    gfc_dataset_year = "latest"
+) {
+  # Initialize values
+  forest_cover <- numeric()
 
-  if (!inherits(fmask, 'SpatRaster')) {
-    ras <- TCtileNames(roi)
-    roi <- sf::st_as_sf(roi)
+  # Verify gfc_folder exists, create if it doesn't
+  if (!dir.exists(gfc_folder)) {
+    dir.create(gfc_folder, recursive = TRUE)
+    message(paste("Created directory:", gfc_folder))
+  }
 
-    if (weighted_mean) {
-      vls <- matrix(ncol = 2, nrow = 0)
-      for (f in ras) {
-        if (file.exists(f)) {
-          tryCatch({
-            raster_obj <- terra::rast(f)
-            extracted_vals <- terra::extract(raster_obj, roi, weights = TRUE, normalizeWeights = FALSE)
-            if (!is.null(extracted_vals) && length(extracted_vals[[2]]) > 0) {
-              vls <- rbind(vls, extracted_vals[[2]])
-            }
-          }, error = function(e) {
-            message("Error extracting values from ", f, ": ", e$message)
-          })
-        }
+  if (gfc_dataset_year == "latest") {
+    gfc_dataset_year <- 2023
+  }
+
+  if (!gfc_dataset_year %in% seq(2023, 2015)) {
+    stop("Invalid gfc_dataset_year. Please use a year between 2015 and 2023.")
+  }
+
+  dataset_str <- paste0("GFC-", gfc_dataset_year, "-v1.", (gfc_dataset_year-2018) + 6)
+
+  # Use custom forest mask if provided
+  if (!is.null(forest_mask)) {
+    tryCatch({
+      extracted_vals <- terra::extract(forest_mask, sf::st_as_sf(roi))[[1]]
+      if (!is.null(extracted_vals)) {
+        # Convert to binary forest cover (1 = forest, 0 = non-forest)
+        extracted_vals <- ifelse(extracted_vals != 1, 0, 1)
+        forest_cover <- mean(extracted_vals, na.rm = TRUE)
       }
-
-      if (nrow(vls) > 0) {
-        ids <- which(!is.na(vls[,1]))
-        vls <- vls[ids,]
-        if (length(vls) == 2) vls <- matrix(vls, ncol = 2)
-
-        for (threshold in thresholds) {
-          tmp <- vls
-          tmp[,1] <- ifelse(tmp[,1] > threshold, 1.0, 0.0)
-          if (sum(tmp[,2]) > 0) {
-            TCs <- c(TCs, sum(apply(tmp, 1, prod)) / sum(tmp[,2]))
-          }
-        }
-      }
-    } else {
-      vls <- numeric()
-      for (f in ras) {
-        if (file.exists(f)) {
-          tryCatch({
-            raster_obj <- terra::rast(f)
-            extracted_vals <- terra::extract(raster_obj, roi)
-            if (!is.null(extracted_vals) && length(extracted_vals[[2]]) > 0) {
-              vls <- c(vls, extracted_vals[[2]])
-            }
-          }, error = function(e) {
-            message("Error extracting values from ", f, ": ", e$message)
-          })
-        }
-      }
-
-      if (length(vls) > 0) {
-        for (threshold in thresholds) {
-          TCs <- c(TCs, mean(ifelse(vls > threshold, 1.0, 0.0), na.rm = TRUE))
-        }
-      }
-    }
+    }, error = function(e) {
+      message("Error extracting values from forest_mask: ", e$message)
+    })
   } else {
-    vls <- terra::extract(fmask, roi)[[1]]
-    if (!is.null(vls)) {
-      vls <- ifelse(vls != 1, 0, 1)
-      TCs <- mean(vls)
+    # Get Hansen GFC tree cover tile names for the ROI
+    #ras <- TCtileNames(roi, gfc_dataset_year)
+    gfcTile <- suppressMessages(suppressWarnings(gfcanalysis::calc_gfc_tiles(roi)))
+    gfcanalysis::download_tiles(gfcTile, gfc_folder, images = "treecover2000", dataset = dataset_str)
+
+    # Get overlapping tile/s (up to 4 possible tiles)
+    bb <- sf::st_bbox(roi)
+    crds <- expand.grid(x = bb[c(1, 3)], y = bb[c(2, 4)])
+    fnms <- character(4)
+
+    for (i in 1:nrow(crds)) {
+      lon <- 10 * (crds[i, 1] %/% 10)
+      lat <- 10 * (crds[i, 2] %/% 10) + 10
+      LtX <- ifelse(lon < 0, "W", "E")
+      LtY <- ifelse(lat < 0, "S", "N")
+      WE <- paste0(sprintf('%03d', abs(lon)), LtX)
+      NS <- paste0(sprintf('%02d', abs(lat)), LtY)
+
+      fnms[i] <- paste0("Hansen_", dataset_str, "_treecover2000_", NS, "_", WE, ".tif")
+    }
+
+    # Process each tile
+    forest_cover_all <- lapply(unique(fnms), function(f) {
+      # Print the current file being processed
+      message("Processing tile: ", f)
+
+      # Verify if the file was downloaded successfully
+      if (!file.exists(file.path(gfc_folder, f))) {
+        stop(paste0("Failed to download ", f, ". Please try again later or check the input arguments."))
+      }
+
+      # Try to extract values from the raster
+      tryCatch({
+        raster_obj <- terra::rast(file.path(gfc_folder, f))
+
+        message("Extracting values for ROI...")
+        extracted_vals <- terra::extract(raster_obj, sf::st_as_sf(roi), weights = weighted_mean, normalizeWeights = FALSE)
+        colnames(extracted_vals)[2] <- "treecover"
+
+        message("Extraction complete")
+      }, error = function(e) {
+        message("Error extracting values from ", f, ": ", e$message)
+        return(NULL)
+      })
+
+      # Return extracted values
+      return(extracted_vals)
+    })
+
+    # Combine all extracted values
+    combined_vals <- dplyr::bind_rows(forest_cover_all)
+
+    # Calculate forest cover for each threshold
+    if (!is.null(combined_vals) && nrow(combined_vals) > 0) {
+      for (threshold in thresholds) {
+        if (weighted_mean) {
+          # Weighted mean case
+          tmp <- combined_vals
+          tmp$treecover <- ifelse(tmp$treecover > threshold, 1.0, 0.0)
+          if (sum(tmp$weight) > 0) {
+            forest_cover <- c(forest_cover, sum(tmp$treecover * tmp$weight) / sum(tmp$weight))
+          }
+        } else {
+          # Unweighted mean case
+          tmp <- combined_vals$treecover
+          tmp <- ifelse(tmp > threshold, 1.0, 0.0)
+          forest_cover <- c(forest_cover, mean(tmp, na.rm = TRUE))
+        }
+      }
     }
   }
 
-  return(TCs[1])
+  return(forest_cover)
 }
+
+
+
 
 
 
@@ -476,7 +551,6 @@ sampleTreeCover <- function(roi, thresholds, weighted_mean = FALSE, fmask = NA) 
 #   expect_equal(old_result_own, new_result_own, tolerance=1e-6)
 #   expect_equal(new_result_own, 457.403, tolerance=1e-6)
 #
-#
 #   # Real-world agb_raster (same AGB as with own=FALSE)
 #   agb_raster <- rast(AGBtileNames(roi_sf))
 #
@@ -485,8 +559,6 @@ sampleTreeCover <- function(roi, thresholds, weighted_mean = FALSE, fmask = NA) 
 #   new_result_own <- sampleAGBmap(roi_sf, weighted_mean=FALSE, own=TRUE, agb_raster=agb_raster)
 #   expect_equal(old_result_own, new_result_own, tolerance=1e-6)
 #   expect_equal(new_result_own, 89, tolerance=1e-6)
-#
-#
 #
 #   # Test with own=FALSE, 1 tile
 #   old_result_tiles <- old_sampleAGBmap(roi_sf, wghts=FALSE, own=FALSE)
@@ -507,22 +579,21 @@ sampleTreeCover <- function(roi, thresholds, weighted_mean = FALSE, fmask = NA) 
 #   new_result_roi2_tiles <- sampleAGBmap(roi2_sf, weighted_mean=FALSE, own=FALSE)
 #   expect_equal(old_result_roi2_tiles, new_result_roi2_tiles, tolerance=1e-6)
 #
-#
-#
 # })
 
 # test_that("Old and new sampleTreeCover functions produce consistent results", {
-#   #roi <- st_polygon(list(rbind(c(0,0), c(1,0), c(1,1), c(0,1), c(0,0))))
-#   #roi_sf <- st_sfc(roi, crs = 4326)
-#   roi <- st_polygon(list(rbind(c(687300,8907200), c(688300,8907200), c(688300,8908200), c(687300,8908200), c(687300,8907200))))
-#   roi_sf <- st_sfc(roi, crs = 32719)
+#
+#   # Mexico
+#   roi <- st_polygon(list(rbind(c(-100.5,18), c(-101,19), c(-101,19), c(-100.5,19), c(-100.5,18))))
+#   roi_sf <- st_sfc(roi, crs = 4326)
+#
 #
 #   thresholds <- 10
 #
 #   # Forest mask raster
 #   #fmask <- rast(nrows=10, ncols=10, xmin=0, xmax=1, ymin=0, ymax=1, vals=sample(0:1, 100, replace=TRUE))
-#   fmask_raster <- raster::raster('data/SustainableLandscapeBrazil_v04/SLB_CVmaps/BON_A01_2018_CV_100m.tif')
-#   fmask_terra <- terra::rast('data/SustainableLandscapeBrazil_v04/SLB_CVmaps/BON_A01_2018_CV_100m.tif')
+#   fmask_raster <- raster::raster('data/treecover2010_v3_100m/treecover2020_20N_100W.tif')
+#   fmask_terra <- terra::rast('data/treecover2010_v3_100m/treecover2020_20N_100W.tif')
 #
 #
 #

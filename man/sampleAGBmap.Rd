@@ -10,7 +10,7 @@ sampleAGBmap(
   agb_raster = NULL,
   esacci_biomass_year = "latest",
   esacci_biomass_version = "latest",
-  output_dir = "data/ESACCI-BIOMASS",
+  esacci_folder = "data/ESACCI-BIOMASS",
   n_cores = 1,
   timeout = 600
 )
@@ -35,7 +35,7 @@ programme by the Biomass CCI team.}
 \item{esacci_biomass_version}{The ESA CCI BIOMASS AGB tiles version to use. Use either "v2.0", "v3.0", "v4.0",
 "v5.0", "v5.01" or "latest" (default).}
 
-\item{output_dir}{Directory to save downloaded ESA CCI BIOMASS AGB files. Default is the relative path "data/ESACCI-BIOMASS".}
+\item{esacci_folder}{Directory to save downloaded ESA CCI BIOMASS AGB files. Default is the relative path "data/ESACCI-BIOMASS".}
 
 \item{n_cores}{Number of cores to use for parallel download.}
 

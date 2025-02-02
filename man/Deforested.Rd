@@ -17,7 +17,7 @@ Deforested(
 
 \item{map_year}{Numeric value indicating the threshold year for deforestation. Plots with deforestation started at or before the \code{map_year} will be removed from the \verb{$non_deforested_plots} list element output. Any year in the 2001-2023 range.}
 
-\item{gfc_folder}{Character string specifying the directory to download GFC forest loss data.}
+\item{gfc_folder}{Character string specifying the directory to download GFC data.}
 
 \item{gfc_dataset_year}{Numeric value describing which version of the Hansen data to use: any year in the 2018-2023 range or "latest" (default).}
 

@@ -2,24 +2,58 @@
 % Please edit documentation in R/BlockMeans.R
 \name{sampleTreeCover}
 \alias{sampleTreeCover}
-\title{Sample block mean mapped forest over a polygon}
+\title{Sample block mean mapped forest cover over a region of interest}
 \usage{
-sampleTreeCover(roi, thresholds, weighted_mean = FALSE, fmask = NA)
+sampleTreeCover(
+  roi,
+  thresholds,
+  forest_mask = NULL,
+  weighted_mean = FALSE,
+  gfc_folder = "data/GFC",
+  gfc_dataset_year = "latest"
+)
 }
 \arguments{
 \item{roi}{An sf or SpatVector object representing the Region of Interest.}
 
-\item{thresholds}{Numeric vector of tree cover thresholds to apply.}
+\item{thresholds}{Numeric vector of tree cover thresholds percentages (e.g., c(10, 20, 30)) to calculate forest cover percentages.}
+
+\item{forest_mask}{A SpatRaster object with a custom forest cover mask. If NULL, Hansen GFC tree cover tiles will be downloaded and used.}
 
 \item{weighted_mean}{Logical, if TRUE the weighted mean is calculated considering the
 approximate fraction of each cell that is covered by the polygon (default is FALSE).}
 
-\item{fmask}{A SpatRaster object representing a custom forest mask (default is NA).}
+\item{gfc_folder}{Character string specifying the directory to download GFC data.}
+
+\item{gfc_dataset_year}{Numeric value describing which version of the Hansen data to use: any year in the 2018-2023 range or "latest" (default).}
 }
 \value{
-Numeric vector of tree cover percentages for each threshold.
+Numeric value representing the mean forest cover for the polygon.
 }
 \description{
 This function samples the block mean mapped forest cover over a given polygon.
-It can use either predefined tree cover tiles or a custom forest mask.
+It can use either a custom forest cover mask provided as input or download and use
+Global Forest Change (GFC) tree cover tiles (Hansen et al., 2013).
+}
+\examples{
+# Load required libraries
+library(sf)
+
+# Define a region of interest (ROI) in the Amazon Rainforest
+roi_amazon <- st_polygon(list(rbind(
+  c(-62.2159, -3.4653), c(-62.2059, -3.4653),
+  c(-62.2059, -3.4553), c(-62.2159, -3.4553),
+  c(-62.2159, -3.4653)
+)))
+roi_sf_amazon <- st_sfc(roi_amazon, crs = 4326)
+
+# Example 1: Calculate forest cover for the Amazon ROI (unweighted)
+sampleTreeCover(roi_sf_amazon, thresholds = c(10, 20, 30))
+
+# Example 2: Calculate forest cover for the Amazon ROI (weighted)
+sampleTreeCover(roi_sf_amazon, thresholds = c(10, 20, 30), weighted_mean = TRUE)
+
+}
+\references{
+M. C. Hansen et al., High-Resolution Global Maps of 21st-Century Forest Cover Change. Science342,850-853(2013). \href{https://doi.org/10.1126/science.1244693}{DOI:10.1126/science.1244693}
 }

@@ -27,7 +27,7 @@
 #'
 #' @param plt A data frame or sf object containing plot data. For data frame input format, longitude and latitude coordinates should be placed under "POINT_X" and "POINT_Y" columns respectively in WGS 84 CRS.
 #' @param map_year Numeric value indicating the threshold year for deforestation. Plots with deforestation started at or before the `map_year` will be removed from the `$non_deforested_plots` list element output. Any year in the 2001-2023 range.
-#' @param gfc_folder Character string specifying the directory to download GFC forest loss data.
+#' @param gfc_folder Character string specifying the directory to download GFC data.
 #' @param gfc_dataset_year Numeric value describing which version of the Hansen data to use: any year in the 2018-2023 range or "latest" (default).
 #' @param defo_threshold Numeric value indicating the deforestation threshold. Plots with a deforestation area proportion larger than the set `defo_threshold` will be removed from the `$non_deforested_plots` list element output. Default is 5%.
 #'
@@ -108,7 +108,7 @@ Deforested <- function(plt, map_year, gfc_folder = "data/GFC", gfc_dataset_year 
     #cat(paste('processing:', round((res / 0.00001 * res / 0.00001) / 10000, 2), 'ha')) # checker
 
     # Downloads respective forest loss tile/s from squared plots
-    dir.create(file.path(gfc_folder), showWarnings = FALSE)
+    #dir.create(file.path(gfc_folder), showWarnings = FALSE)
     #setwd(file.path(gfc_folder))
     gfcTile <- suppressMessages(suppressWarnings(gfcanalysis::calc_gfc_tiles(pol)))
     gfcanalysis::download_tiles(gfcTile, gfc_folder, images = "lossyear", dataset = dataset_str)
