@@ -39,6 +39,7 @@
 #' @importFrom terra rast extract
 #' @importFrom dplyr select setdiff
 #' @importFrom gfcanalysis calc_gfc_tiles download_tiles
+#' @import gfcanalysis
 #'
 #' @export
 #'
