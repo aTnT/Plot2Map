@@ -53,6 +53,8 @@
 #'
 Deforested <- function(plt, map_year, gfc_folder = "data/GFC", gfc_dataset_year = "latest", defo_threshold = 0.05) {
 
+  library(gfcanalysis)
+
   # Refactored version, more radical changes (changing to terra, sf ecosystem, etc)
 
   # Verify gfc_folder exists, create if it doesn't
