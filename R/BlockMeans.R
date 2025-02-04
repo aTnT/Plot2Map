@@ -7,6 +7,8 @@
 # 01/02/2025:
 # Automatic donwload of ESA CCI Biomass tile data if not available locally
 # Increased 25x the speed in the weighted mean case calculation (with no parallelism yet)
+# 03/02/2025:
+# Added weighted_mean = TRUE case when agb_raster or forest_mask is not NULL for both sampleAGBmap and sampleTreeCover.
 
 ## Notes:
 # `AGBown` and `own` arguments are redundant, if there's no problem with not breaking old legacy code, `own` argument shall be removed.
@@ -36,7 +38,7 @@
 #'
 #' @return Numeric value representing the mean AGB for the polygon.
 #'
-#' @import parallel pblapply
+#' @import parallel pbapply
 #' @importFrom sf st_as_sf
 #' @importFrom terra rast extract
 #'
@@ -73,34 +75,35 @@ sampleAGBmap <- function(
     timeout = 600
 ) {
 
-  #AGB <- NA
+  # Initialize AGB value
+  AGB <- NA
 
+  # Use custom AGB raster if provided
   if (!is.null(agb_raster)) {
     agb_raster[agb_raster == 0] <- NA
-    #vls <- matrix(ncol = 2, nrow = 0)
-
-
-    # TO DO: this case assumes weighted_mean = TRUE (not optional)
 
     tryCatch({
-      extracted_vals <- terra::extract(agb_raster, sf::st_as_sf(roi), weights = TRUE, normalizeWeights = FALSE)
-      if (!is.null(extracted_vals) && length(extracted_vals[[2]]) > 0) {
-        #vls <- rbind(vls, extracted_vals[[2]])
+      # Extract values with or without weights based on weighted_mean
+      extracted_vals <- terra::extract(agb_raster, sf::st_as_sf(roi), weights = weighted_mean, normalizeWeights = FALSE)
+
+      if (!is.null(extracted_vals) && nrow(extracted_vals) > 0) {
+        # Remove rows with NA values in the AGB column
+        ids <- which(!is.na(extracted_vals[, 2]))
+        vls <- extracted_vals[ids, ]
+
+        if (weighted_mean) {
+          # Weighted mean case
+          if (length(vls) > 2) {
+            AGB <- sum(vls[, 2] * vls[, 3]) / sum(vls[, 3])
+          }
+        } else {
+          # Unweighted mean case
+          AGB <- mean(vls[, 2], na.rm = TRUE)
+        }
       }
     }, error = function(e) {
       message("Error extracting values from agb_raster: ", e$message)
     })
-
-    #if (nrow(vls) > 0) {
-    if (nrow(extracted_vals) > 0) {
-      ids <- which(!is.na(extracted_vals[,2]))
-      vls <- extracted_vals[ids,]
-      if (length(vls) == 2) {
-        AGB <- mean(vls[,2], na.rm = TRUE)
-      } else if (length(vls) > 2) {
-        AGB <- sum(apply(vls[,2:3], 1, prod)) / sum(vls[,3])
-      }
-    }
   } else {
 
     # Get ESA CCI AGB raster data:
@@ -233,19 +236,17 @@ sampleAGBmap <- function(
 #' # Load required libraries
 #' library(sf)
 #'
-#' # Define a region of interest (ROI) in the Amazon Rainforest
-#' roi_amazon <- st_polygon(list(rbind(
-#'   c(-62.2159, -3.4653), c(-62.2059, -3.4653),
-#'   c(-62.2059, -3.4553), c(-62.2159, -3.4553),
-#'   c(-62.2159, -3.4653)
-#' )))
-#' roi_sf_amazon <- st_sfc(roi_amazon, crs = 4326)
+#' # Define a region of interest (ROI) in the Daintree forest
+#' roi_daintree <- st_polygon(list(rbind(c(145.3833, -16.2500), c(145.3933, -16.2500),
+#'                                       c(145.3933, -16.2400), c(145.3833, -16.2400),
+#'                                       c(145.3833, -16.2500))))
+#' roi_sf_daintree <- st_sfc(roi_daintree, crs = 4326)
 #'
-#' # Example 1: Calculate forest cover for the Amazon ROI (unweighted)
-#' sampleTreeCover(roi_sf_amazon, thresholds = c(10, 20, 30))
+#' # Example 1: Calculate forest cover (unweighted)
+#' sampleTreeCover(roi_sf_daintree, thresholds = c(10, 20, 30))
 #'
-#' # Example 2: Calculate forest cover for the Amazon ROI (weighted)
-#' sampleTreeCover(roi_sf_amazon, thresholds = c(10, 20, 30), weighted_mean = TRUE)
+#' # Example 2: Calculate forest cover (weighted)
+#' sampleTreeCover(roi_sf_daintree, thresholds = c(10, 20, 30), weighted_mean = TRUE)
 #'
 sampleTreeCover <- function(
     roi,
@@ -272,23 +273,40 @@ sampleTreeCover <- function(
     stop("Invalid gfc_dataset_year. Please use a year between 2015 and 2023.")
   }
 
-  dataset_str <- paste0("GFC-", gfc_dataset_year, "-v1.", (gfc_dataset_year-2018) + 6)
+  dataset_str <- paste0("GFC-", gfc_dataset_year, "-v1.", (gfc_dataset_year - 2018) + 6)
 
   # Use custom forest mask if provided
   if (!is.null(forest_mask)) {
     tryCatch({
-      extracted_vals <- terra::extract(forest_mask, sf::st_as_sf(roi))[[1]]
-      if (!is.null(extracted_vals)) {
-        # Convert to binary forest cover (1 = forest, 0 = non-forest)
-        extracted_vals <- ifelse(extracted_vals != 1, 0, 1)
-        forest_cover <- mean(extracted_vals, na.rm = TRUE)
+      if (weighted_mean) {
+        # Extract values with weights
+        extracted_vals <- terra::extract(forest_mask, sf::st_as_sf(roi), weights = TRUE, normalizeWeights = FALSE)
+        if (!is.null(extracted_vals) && nrow(extracted_vals) > 0) {
+          # Calculate forest cover for each threshold
+          for (threshold in thresholds) {
+            tmp <- extracted_vals
+            tmp[, 2] <- ifelse(tmp[, 2] > threshold, 1.0, 0.0)  # Convert to binary based on threshold
+            if (sum(tmp[, 3]) > 0) {
+              forest_cover <- c(forest_cover, sum(tmp[, 2] * tmp[, 3]) / sum(tmp[, 3]))
+            }
+          }
+        }
+      } else {
+        # Unweighted case
+        extracted_vals <- terra::extract(forest_mask, sf::st_as_sf(roi))[[1]]
+        if (!is.null(extracted_vals)) {
+          # Calculate forest cover for each threshold
+          for (threshold in thresholds) {
+            tmp <- ifelse(extracted_vals > threshold, 1.0, 0.0)  # Convert to binary based on threshold
+            forest_cover <- c(forest_cover, mean(tmp, na.rm = TRUE))
+          }
+        }
       }
     }, error = function(e) {
       message("Error extracting values from forest_mask: ", e$message)
     })
   } else {
     # Get Hansen GFC tree cover tile names for the ROI
-    #ras <- TCtileNames(roi, gfc_dataset_year)
     gfcTile <- suppressMessages(suppressWarnings(gfcanalysis::calc_gfc_tiles(roi)))
     gfcanalysis::download_tiles(gfcTile, gfc_folder, images = "treecover2000", dataset = dataset_str)
 
@@ -361,6 +379,146 @@ sampleTreeCover <- function(
 
   return(forest_cover)
 }
+
+
+
+
+# sampleTreeCover <- function(
+#     roi,
+#     thresholds,
+#     forest_mask = NULL,
+#     weighted_mean = FALSE,
+#     gfc_folder = "data/GFC",
+#     gfc_dataset_year = "latest"
+# ) {
+#   # Initialize values
+#   forest_cover <- numeric()
+#
+#   # Verify gfc_folder exists, create if it doesn't
+#   if (!dir.exists(gfc_folder)) {
+#     dir.create(gfc_folder, recursive = TRUE)
+#     message(paste("Created directory:", gfc_folder))
+#   }
+#
+#   if (gfc_dataset_year == "latest") {
+#     gfc_dataset_year <- 2023
+#   }
+#
+#   if (!gfc_dataset_year %in% seq(2023, 2015)) {
+#     stop("Invalid gfc_dataset_year. Please use a year between 2015 and 2023.")
+#   }
+#
+#   dataset_str <- paste0("GFC-", gfc_dataset_year, "-v1.", (gfc_dataset_year-2018) + 6)
+#
+#   # Use custom forest mask if provided
+#   if (!is.null(forest_mask)) {
+#     tryCatch({
+#       if (weighted_mean) {
+#         # Extract values with weights
+#         extracted_vals <- terra::extract(forest_mask, sf::st_as_sf(roi), weights = TRUE, normalizeWeights = FALSE)
+#         if (!is.null(extracted_vals) && nrow(extracted_vals) > 0) {
+#           # Convert to binary forest cover (1 = forest, 0 = non-forest)
+#           extracted_vals[, 2] <- ifelse(extracted_vals[, 2] != 1, 0, 1)
+#           # Calculate weighted mean for each threshold
+#           for (threshold in thresholds) {
+#             tmp <- extracted_vals
+#             tmp[, 2] <- ifelse(tmp[, 2] > threshold, 1.0, 0.0)
+#             if (sum(tmp[, 3]) > 0) {
+#               forest_cover <- c(forest_cover, sum(tmp[, 2] * tmp[, 3]) / sum(tmp[, 3]))
+#             }
+#           }
+#         }
+#       } else {
+#         # Unweighted case
+#         extracted_vals <- terra::extract(forest_mask, sf::st_as_sf(roi))[[1]]
+#         if (!is.null(extracted_vals)) {
+#           # Convert to binary forest cover (1 = forest, 0 = non-forest)
+#           extracted_vals <- ifelse(extracted_vals != 1, 0, 1)
+#           # Calculate mean for each threshold
+#           for (threshold in thresholds) {
+#             tmp <- ifelse(extracted_vals > threshold, 1.0, 0.0)
+#             forest_cover <- c(forest_cover, mean(tmp, na.rm = TRUE))
+#           }
+#         }
+#       }
+#     }, error = function(e) {
+#       message("Error extracting values from forest_mask: ", e$message)
+#     })
+#   } else {
+#     # Get Hansen GFC tree cover tile names for the ROI
+#     #ras <- TCtileNames(roi, gfc_dataset_year)
+#     gfcTile <- suppressMessages(suppressWarnings(gfcanalysis::calc_gfc_tiles(roi)))
+#     gfcanalysis::download_tiles(gfcTile, gfc_folder, images = "treecover2000", dataset = dataset_str)
+#
+#     # Get overlapping tile/s (up to 4 possible tiles)
+#     bb <- sf::st_bbox(roi)
+#     crds <- expand.grid(x = bb[c(1, 3)], y = bb[c(2, 4)])
+#     fnms <- character(4)
+#
+#     for (i in 1:nrow(crds)) {
+#       lon <- 10 * (crds[i, 1] %/% 10)
+#       lat <- 10 * (crds[i, 2] %/% 10) + 10
+#       LtX <- ifelse(lon < 0, "W", "E")
+#       LtY <- ifelse(lat < 0, "S", "N")
+#       WE <- paste0(sprintf('%03d', abs(lon)), LtX)
+#       NS <- paste0(sprintf('%02d', abs(lat)), LtY)
+#
+#       fnms[i] <- paste0("Hansen_", dataset_str, "_treecover2000_", NS, "_", WE, ".tif")
+#     }
+#
+#     # Process each tile
+#     forest_cover_all <- lapply(unique(fnms), function(f) {
+#       # Print the current file being processed
+#       message("Processing tile: ", f)
+#
+#       # Verify if the file was downloaded successfully
+#       if (!file.exists(file.path(gfc_folder, f))) {
+#         stop(paste0("Failed to download ", f, ". Please try again later or check the input arguments."))
+#       }
+#
+#       # Try to extract values from the raster
+#       tryCatch({
+#         raster_obj <- terra::rast(file.path(gfc_folder, f))
+#
+#         message("Extracting values for ROI...")
+#         extracted_vals <- terra::extract(raster_obj, sf::st_as_sf(roi), weights = weighted_mean, normalizeWeights = FALSE)
+#         colnames(extracted_vals)[2] <- "treecover"
+#
+#         message("Extraction complete")
+#       }, error = function(e) {
+#         message("Error extracting values from ", f, ": ", e$message)
+#         return(NULL)
+#       })
+#
+#       # Return extracted values
+#       return(extracted_vals)
+#     })
+#
+#     # Combine all extracted values
+#     combined_vals <- dplyr::bind_rows(forest_cover_all)
+#
+#     # Calculate forest cover for each threshold
+#     if (!is.null(combined_vals) && nrow(combined_vals) > 0) {
+#       for (threshold in thresholds) {
+#         if (weighted_mean) {
+#           # Weighted mean case
+#           tmp <- combined_vals
+#           tmp$treecover <- ifelse(tmp$treecover > threshold, 1.0, 0.0)
+#           if (sum(tmp$weight) > 0) {
+#             forest_cover <- c(forest_cover, sum(tmp$treecover * tmp$weight) / sum(tmp$weight))
+#           }
+#         } else {
+#           # Unweighted mean case
+#           tmp <- combined_vals$treecover
+#           tmp <- ifelse(tmp > threshold, 1.0, 0.0)
+#           forest_cover <- c(forest_cover, mean(tmp, na.rm = TRUE))
+#         }
+#       }
+#     }
+#   }
+#
+#   return(forest_cover)
+# }
 
 
 
@@ -583,6 +741,8 @@ sampleTreeCover <- function(
 
 # test_that("Old and new sampleTreeCover functions produce consistent results", {
 #
+#   skip("APIs now very different between old and new framework")
+#
 #   # Mexico
 #   roi <- st_polygon(list(rbind(c(-100.5,18), c(-101,19), c(-101,19), c(-100.5,19), c(-100.5,18))))
 #   roi_sf <- st_sfc(roi, crs = 4326)
@@ -629,7 +789,7 @@ sampleTreeCover <- function(
 # })
 #
 # # Test internal consistency
-# test_that("sample#' @import stringrAGBmap function behaves consistently", {
+# test_that("sampleAGBmap function behaves consistently", {
 #   roi <- st_polygon(list(rbind(c(0,0), c(1,0), c(1,1), c(0,1), c(0,0))))
 #   roi_sf <- st_sfc(roi, crs = 4326)
 #
@@ -658,8 +818,8 @@ sampleTreeCover <- function(
 #   expect_type(result_mask, "double")
 #   expect_length(result_mask, 1)
 # })
-
-
+#
+#
 # test_that("sampleAGBmap function behaves consistently - 1 tile cases", {
 #   # Amazon Rainforest
 #   roi_amazon <- st_polygon(list(rbind(c(-62.2159, -3.4653), c(-62.2059, -3.4653),
@@ -701,11 +861,32 @@ sampleTreeCover <- function(
 #
 #   expect_type(result_amazon, "double")
 # })
-
-
-
-
-
+#
+#
+# test_that("sampleAGBmap function behaves consistently - agb_raster case", {
+#   # Amazon Rainforest
+#   roi_amazon <- st_polygon(list(rbind(c(-62.2159, -3.4653), c(-62.2059, -3.4653),
+#                                       c(-62.2059, -3.4553), c(-62.2159, -3.4553),
+#                                       c(-62.2159, -3.4653))))
+#   roi_sf_amazon <- st_sfc(roi_amazon, crs = 4326)
+#
+#   agb_raster = terra::rast("data/ESACCI-BIOMASS/N00W070_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2021-fv5.0.tif")
+#
+#   result_amazon_tile <- sampleAGBmap(roi_sf_amazon)
+#   result_amazon_agb_raster <- sampleAGBmap(roi_sf_amazon, agb_raster = agb_raster)
+#
+#   result_amazon_tile_weighted_mean <- sampleAGBmap(roi_sf_amazon, weighted_mean = TRUE)
+#   result_amazon_agb_raster_weighted_mean <- sampleAGBmap(roi_sf_amazon, agb_raster = agb_raster, weighted_mean = TRUE)
+#
+#   expect_equal(result_amazon_tile, result_amazon_agb_raster)
+#   expect_equal(result_amazon_tile_weighted_mean, result_amazon_agb_raster_weighted_mean)
+#
+# })
+#
+#
+#
+#
+#
 # test_that("sampleTreeCover function behaves consistently", {
 #   # Daintree Rainforest
 #   roi_daintree <- st_polygon(list(rbind(c(145.3833, -16.2500), c(145.3933, -16.2500),
@@ -721,13 +902,36 @@ sampleTreeCover <- function(
 #
 #   thresholds <- c(10, 30, 50)
 #
-#   result_daintree <- sampleTreeCover(roi_sf_daintree, thresholds, wghts=FALSE, fmask=NA)
-#   result_sumatra <- sampleTreeCover(roi_sf_sumatra, thresholds, wghts=FALSE, fmask=NA)
+#   result_daintree <- sampleTreeCover(roi_sf_daintree, thresholds)
+#   result_sumatra <- sampleTreeCover(roi_sf_sumatra, thresholds)
+#   result_sumatra_weighted_mean <- sampleTreeCover(roi_sf_sumatra, thresholds, weighted_mean = TRUE)
 #
 #   expect_type(result_daintree, "double")
 #   expect_type(result_sumatra, "double")
+#   expect_type(result_sumatra_weighted_mean, "double")
 #   expect_length(result_daintree, length(thresholds))
 #   expect_length(result_sumatra, length(thresholds))
+#   expect_length(result_sumatra_weighted_mean, length(thresholds))
+#
 # })
 
 
+
+# test_that("sampleTreeCover function behaves consistently - forest_mask case", {
+#   # Daintree Rainforest
+#   roi_daintree <- st_polygon(list(rbind(c(145.3833, -16.2500), c(145.3933, -16.2500),
+#                                         c(145.3933, -16.2400), c(145.3833, -16.2400),
+#                                         c(145.3833, -16.2500))))
+#   roi_sf_daintree <- st_sfc(roi_daintree, crs = 4326)
+#
+#   forest_mask = terra::rast("data/GFC/Hansen_GFC-2023-v1.11_treecover2000_10S_140E.tif")
+#
+#   result_daintree <- sampleTreeCover(roi_sf_daintree, thresholds)
+#   result_daintree_forest_mask <- sampleTreeCover(roi_sf_daintree, thresholds, forest_mask = forest_mask)
+#   result_daintree_weighted_mean <- sampleTreeCover(roi_sf_daintree, thresholds, weighted_mean = TRUE)
+#   result_daintree_forest_mask_weighted_mean <- sampleTreeCover(roi_sf_daintree, thresholds, forest_mask = forest_mask, weighted_mean = TRUE)
+#
+#   expect_equal(result_daintree, result_daintree_forest_mask)
+#   expect_equal(result_daintree_weighted_mean, result_daintree_forest_mask_weighted_mean)
+#
+# })

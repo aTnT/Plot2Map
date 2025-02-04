@@ -45,11 +45,11 @@
 #' @references M. C. Hansen et al., High-Resolution Global Maps of 21st-Century Forest Cover Change. Science342,850-853(2013). [DOI:10.1126/science.1244693](https://doi.org/10.1126/science.1244693)
 #'
 #' @examples
-#' \dontrun{
-#'   plot_data <- data.frame(POINT_X = c(-3.1, -3.2), POINT_Y = c(51.5, 51.6),
-#'                           SIZE_HA = c(1, 1.5), PLOT_ID = c(1, 2))
-#'   result <- Deforested(plot_data, map_year = 2010)
-#' }
+#' # 4 plots without and 4 plots with deforestation:
+#' plots_sample <- c(1, 2, 3, 4, 182, 200, 323, 6765)
+#' sampled_plots <- plots[plots_sample,]
+#' Deforested(sampled_plots, 2010)
+#'
 Deforested <- function(plt, map_year, gfc_folder = "data/GFC", gfc_dataset_year = "latest", defo_threshold = 0.05) {
 
   # Refactored version, more radical changes (changing to terra, sf ecosystem, etc)
@@ -529,5 +529,4 @@ Deforested <- function(plt, map_year, gfc_folder = "data/GFC", gfc_dataset_year 
 #   # Check deforestation filtering
 #   expect_true(all(result[[2]]$defo <= 0.05))
 # })
-
 

@@ -39,19 +39,17 @@ Global Forest Change (GFC) tree cover tiles (Hansen et al., 2013).
 # Load required libraries
 library(sf)
 
-# Define a region of interest (ROI) in the Amazon Rainforest
-roi_amazon <- st_polygon(list(rbind(
-  c(-62.2159, -3.4653), c(-62.2059, -3.4653),
-  c(-62.2059, -3.4553), c(-62.2159, -3.4553),
-  c(-62.2159, -3.4653)
-)))
-roi_sf_amazon <- st_sfc(roi_amazon, crs = 4326)
+# Define a region of interest (ROI) in the Daintree forest
+roi_daintree <- st_polygon(list(rbind(c(145.3833, -16.2500), c(145.3933, -16.2500),
+                                      c(145.3933, -16.2400), c(145.3833, -16.2400),
+                                      c(145.3833, -16.2500))))
+roi_sf_daintree <- st_sfc(roi_daintree, crs = 4326)
 
-# Example 1: Calculate forest cover for the Amazon ROI (unweighted)
-sampleTreeCover(roi_sf_amazon, thresholds = c(10, 20, 30))
+# Example 1: Calculate forest cover (unweighted)
+sampleTreeCover(roi_sf_daintree, thresholds = c(10, 20, 30))
 
-# Example 2: Calculate forest cover for the Amazon ROI (weighted)
-sampleTreeCover(roi_sf_amazon, thresholds = c(10, 20, 30), weighted_mean = TRUE)
+# Example 2: Calculate forest cover (weighted)
+sampleTreeCover(roi_sf_daintree, thresholds = c(10, 20, 30), weighted_mean = TRUE)
 
 }
 \references{
