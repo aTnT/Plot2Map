@@ -7,12 +7,13 @@
 process_pair(
   id,
   year,
-  forest_loss_threshold,
+  treecover_threshold,
   output_folder,
   treecover_files,
   lossyear_files,
   treecover_ids,
-  lossyear_ids
+  lossyear_ids,
+  baseline
 )
 }
 \arguments{
@@ -20,7 +21,7 @@ process_pair(
 
 \item{year}{The year for which to compute tree cover}
 
-\item{forest_loss_threshold}{The threshold for forest loss}
+\item{treecover_threshold}{The threshold for tree cover}
 
 \item{output_folder}{The folder to save output rasters}
 
@@ -31,9 +32,11 @@ process_pair(
 \item{treecover_ids}{IDs for tree cover files}
 
 \item{lossyear_ids}{IDs for forest loss files}
+
+\item{baseline}{Baseline year for tree cover dataset (2000 or 2010)}
 }
 \value{
-A SpatRaster object representing the computed tree cover
+A file path to a geotiff raster representing the computed tree cover
 }
 \description{
 Process a single pair of tree cover and forest loss files

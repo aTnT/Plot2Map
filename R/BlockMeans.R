@@ -256,6 +256,7 @@ sampleTreeCover <- function(
     gfc_folder = "data/GFC",
     gfc_dataset_year = "latest"
 ) {
+
   # Initialize values
   forest_cover <- numeric()
 

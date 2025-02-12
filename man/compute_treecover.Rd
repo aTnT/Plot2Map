@@ -2,15 +2,16 @@
 % Please edit documentation in R/treecover.R
 \name{compute_treecover}
 \alias{compute_treecover}
-\title{Compute Tree Cover for a Specific Year}
+\title{Compute tree cover forest mask for a specific year}
 \usage{
 compute_treecover(
   year,
   gfc_folder = "data/GFC",
-  forest_loss_threshold = NULL,
+  treecover_threshold = NULL,
   coords = NULL,
-  output_folder = NULL,
-  num_cores = 1
+  output_folder = "data/treecover_calc",
+  num_cores = 1,
+  baseline = 2010
 )
 }
 \arguments{
@@ -18,46 +19,64 @@ compute_treecover(
 
 \item{gfc_folder}{Character. Path to the folder containing GFC dataset files. Default is "data/GFC".}
 
-\item{forest_loss_threshold}{Numeric. Optional threshold for forest loss (0-100). If provided, only areas with
-forest loss values >= this threshold will be considered as loss. Default is NULL (no threshold).}
+\item{treecover_threshold}{Numeric. Optional threshold for tree cover (0-100) at baseline year. If provided, only areas with
+tree cover values >= this threshold will be considered. Default is NULL (no threshold).}
 
 \item{coords}{Character. Coordinates of the tile to process, e.g., "10N_020E". If NULL, processes all available tiles.}
 
-\item{output_folder}{Character. Path to the folder where output rasters should be saved. If NULL, rasters are not saved to disk. Default is NULL.}
+\item{output_folder}{Character. Path to the folder where output rasters should be saved.}
 
 \item{num_cores}{Integer. Number of cores to use for parallel processing.}
+
+\item{baseline}{Integer. Baseline year for tree cover dataset. Can be 2010 (default) or 2000.}
 }
 \value{
-If coords is specified or only one tile is processed, returns a single SpatRaster object.
-Otherwise, returns a list of SpatRaster objects, each representing tree cover for the specified year for different tiles.
+A list. If coords is specified, only one tile is processed and returns a file path to a single raster.
+Otherwise, returns a set of file paths, each representing the tree cover at baseline for the specified year for different tiles.
+The rasters are computed taking the tree cover values from the baseline rasters, removing pixels where forest loss was recorded at or before the
+provided year. If a tree cover threshold is provided, all tree cover pixels below the threshold are set to NA. Rasters are saved as a GeoTIFF file
+saved in the output_folder.
 }
 \description{
-This function computes a tree cover layer for a given year based on the Hansen Global Forest Change (GFC) dataset.
-It uses the tree cover from 2000 as a baseline and subtracts forest loss up to the specified year.
+This function computes a tree cover forest mask layer for a given year based on a 2000 tree cover baseline - the Hansen Global Forest Change (GFC) dataset
+or a 2010 tree cover baseline - the GLAD 2010 Tree Canopy Cover dataset.
 }
 \details{
-The function uses two pattern matched (matched by GFC dataset year, version and lat, log coordinates)
-types of input files stored in the specified gfc_folder, for example:
+This function computes a tree cover forest mask by leveraging a baseline tree cover and forest loss data.
+It uses two primary types of input files:
 \enumerate{
-\item Tree cover 2000: "Hansen_GFC-2023-v1.11_treecover2000_*.tif"
+\item Tree cover data, which serves as the baseline:
 \itemize{
-\item Values represent percentage of tree cover (0-100\%)
+\item For the 2000 baseline, the function uses files matching the pattern "Hansen_GFC-2023-v1.11_treecover2000_\emph{.tif".
+\item For the 2010 baseline, the function uses files matching the pattern "treecover2010_}.tif".
+\item Tree cover values represent the percentage of tree cover (0-100\%).
 }
-\item Forest loss year: "Hansen_GFC-2023-v1.11_lossyear_*.tif"
+\item Forest loss year data:
 \itemize{
-\item Values: 0 (no loss) or 1-23 (loss year 2001-2023)
+\item The function uses files matching the pattern "Hansen_GFC-2023-v1.11_lossyear_*.tif".
+\item Values in these files indicate the year of forest loss (1-23, corresponding to years 2001-2023), or 0 if no loss occurred.
 }
+}
+The function applies the following steps:
+\enumerate{
+\item It reads the tree cover and forest loss rasters for the specified year and location.
+\item If a \code{treecover_threshold} is provided, all tree cover pixels with values below the threshold are set to NA.
+\item It removes pixels where forest loss was recorded at or before the specified year.
+\item The resulting raster represents a tree cover forest mask for the specified year, with areas of low tree cover or forest loss masked out.
+\item The function saves the resulting raster as a GeoTIFF file in the \code{output_folder}.
 }
 }
 \examples{
 \dontrun{
-# Compute tree cover for 2015 for all available tiles
+# Compute all tiles tree cover for 2015 using 2010 baseline
 treecover_2015 <- compute_treecover(2015)
 
-# Compute tree cover for 2020 for a specific tile with a forest loss threshold of 30\% and save output
+# Compute 30\% thresholded tree cover for the 10N, 20E tile for 2005 using
+# 2000 tree cover baseline
 treecover_2020 <- compute_treecover(2020,
-                                    forest_loss_threshold = 30,
+                                    treecover_threshold = 30,
                                     coords = "10N_020E",
-                                    output_folder = "data/GFC_calc")
+                                    output_folder = "data/treecover_calc",
+                                    baseline = 2000)
 }
 }

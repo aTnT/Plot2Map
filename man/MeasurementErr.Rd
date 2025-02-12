@@ -10,28 +10,6 @@ MeasurementErr(plot, xy, region = "World")
 \item{plot}{A data frame containing tree-level data.}
 
 \item{xy}{A data frame containing plot locations.}
-
-\item{region}{Region (or vector of region) of interest of your sample. By default, Region is
-set to 'World', but you can restrict the WD estimates to a single region :
-\itemize{
-\item \code{AfricaExtraTrop}: Africa (extra tropical)
-\item \code{AfricaTrop}: Africa (tropical)
-\item \code{Australia}: Australia
-\item \code{AustraliaTrop}: Australia (tropical)
-\item \code{CentralAmericaTrop}: Central America (tropical)
-\item \code{China}: China
-\item \code{Europe}: Europe
-\item \code{India}: India
-\item \code{Madagascar}: Madagascar
-\item \code{Mexico}: Mexico
-\item \code{NorthAmerica}: North America
-\item \code{Oceania}: Oceania
-\item \code{SouthEastAsia}: South-East Asia
-\item \code{SouthEastAsiaTrop}: South-East Asia (tropical)
-\item \code{SouthAmericaExtraTrop}: South America (extra tropical)
-\item \code{SouthAmericaTrop}: South America (tropical)
-\item \code{World}: World
-}}
 }
 \value{
 A data frame with plot-level AGB estimates and standard deviations, including columns:
