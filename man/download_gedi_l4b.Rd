@@ -2,22 +2,77 @@
 % Please edit documentation in R/GEDIL4B.R
 \name{download_gedi_l4b}
 \alias{download_gedi_l4b}
-\title{Download GEDI L4B Gridded Biomass Data}
+\title{Download and Process GEDI L4B Gridded Biomass Data}
 \usage{
-download_gedi_l4b(file_url, gedi_folder = "data/GEDI_L4B", max_tries = 3)
+download_gedi_l4b(
+  roi = NULL,
+  gedi_l4b_folder = "data/GEDI_L4B/",
+  collection = "GEDI_L4B_Gridded_Biomass_V2_1_2299_2.1",
+  resolution = 0.01,
+  band = "MU"
+)
 }
 \arguments{
-\item{file_url}{The URL of the GEDI L4B file to download.}
+\item{roi}{An sf object representing the region of interest. If NULL, the global extent of available GEDI L4B data is used.}
 
-\item{max_tries}{The maximum number of retry attempts for the download.}
+\item{gedi_l4b_folder}{Character, the folder to save the downloaded GeoTIFF file. Default is "data/GEDI_L4B/".}
 
-\item{output_path}{The local path where the file should be saved.}
+\item{collection}{Character, the STAC collection ID for GEDI L4B data.
+Default is "GEDI_L4B_Gridded_Biomass_V2_1_2299_2.1".}
+
+\item{resolution}{Numeric, the spatial resolution of the output GeoTIFF in degrees. Default is 0.01.}
+
+\item{band}{Character, the band to filter for. See options in the Details section below. Default is "MU".}
 }
 \value{
-A message indicating whether the download was successful or not.
+Character, the file path to the processed GeoTIFF file.
 }
 \description{
-This function downloads GEDI L4B Gridded Biomass data from the ORNL DAAC.
-It uses the httr2 package for the HTTP request and handles authentication
-using the earthdatalogin package if necessary.
+Downloads, processes, and saves GEDI L4B Gridded Biomass data for a specified region of interest.
+The function retrieves data via the ORNL DAAC STAC API, filters for a specified band,
+creates a data cube, and saves the result as a GeoTIFF.
+}
+\details{
+This function requires a valid Earthdata Login account and the corresponding
+credentials Ensure that you have set up your Earthdata Login credentials
+by either:
+
+\itemize{
+\item{Setting the EDL_USER and EDL_PASS environment variables in a .Renviron file.}
+\item{Running \code{earthdatalogin::edl_netrc(username = EDL_USER, password = EDL_PASS)}
+with your Earthdata Login username and password.}
+}
+The available bands are based on GEDI L4B Gridded Biomass Density Version 2.1 documentation:
+
+\itemize{
+\item{"MU": Mean aboveground biomass density (MU): Estimated mean
+AGBD for the grid cell, including forest and non-forest}
+\item{"SE": Mean aboveground biomass density standard error (SE):
+Standard Error of the mean estimate, combining sampling and
+modeling uncertainty}
+\item{"PE": Standard error as a fraction of the estimated mean AGBD.
+If >100\%, the cell values are truncated to 100.}
+\item{"V1": Variance component 1 (V1)}
+\item{"V2": Variance component 2 (V2)}
+\item{"QF": Quality flag}
+\item{"NS": Number of samples}
+\item{"MI": Mode of interference}
+\item{"PS": Prediction stratum}
+\item{"NC": Number of clusters}
+}
+
+Consult the reference below for more details about the bands.
+}
+\examples{
+\dontrun{
+  # Example usage with a defined ROI:
+  # Define ROI over the Amazon Basin
+  roi <- sf::st_as_sf(data.frame(y = c(-10, 0), x = c(-70, -60)), coords = c("x", "y"), crs = 4326)
+  # Downloads biomass data for the defined region of interest
+  output_file <- download_gedi_l4b(roi = roi, band = "MU")
+  print(output_file)
+}
+}
+\references{
+\href{https://doi.org/10.3334/ORNLDAAC/2299}{Dubayah, R., et al. (2022). GEDI L4B Gridded Biomass Data, Version 2.1. NASA Earthdata.}
 }
