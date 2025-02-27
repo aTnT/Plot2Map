@@ -1,4 +1,4 @@
-#' Download and Process GEDI L4B Gridded Biomass Data
+#' Download and process GEDI L4B gridded biomass data
 #'
 #' Downloads, processes, and saves GEDI L4B Gridded Biomass data for a specified region of interest.
 #'   The function retrieves data via the ORNL DAAC STAC API, filters for a specified band,
@@ -8,8 +8,9 @@
 #' @param gedi_l4b_folder Character, the folder to save the downloaded GeoTIFF file. Default is "data/GEDI_L4B/".
 #' @param collection Character, the STAC collection ID for GEDI L4B data.
 #'   Default is "GEDI_L4B_Gridded_Biomass_V2_1_2299_2.1".
-#' @param resolution Numeric, the spatial resolution of the output GeoTIFF in degrees. Default is 0.01.
-#' @param band Character, the band to filter for. See options in the Details section below. Default is "MU".
+#' @param gedi_l4b_resolution Numeric, the spatial resolution of the processed output GeoTIFF in degrees. The native resolution of the GEDI L4B gridded dataset is 1 km,
+#' approximately 0.001 degrees at the equator. Default is 0.001.
+#' @param gedi_l4b_band Character, the band to filter for. See options in the Details section below. Default is "MU".
 #'
 #' @return Character, the file path to the processed GeoTIFF file.
 #'
@@ -58,12 +59,12 @@
 #'   # Define ROI over the Amazon Basin
 #'   roi <- sf::st_as_sf(data.frame(y = c(-10, 0), x = c(-70, -60)), coords = c("x", "y"), crs = 4326)
 #'   # Downloads biomass data for the defined region of interest
-#'   output_file <- download_gedi_l4b(roi = roi, band = "MU")
+#'   output_file <- download_gedi_l4b(roi = roi, gedi_l4b_band = "MU")
 #'   print(output_file)
 #' }
 download_gedi_l4b <- function(roi = NULL, gedi_l4b_folder = "data/GEDI_L4B/",
                               collection = "GEDI_L4B_Gridded_Biomass_V2_1_2299_2.1",
-                              resolution = 0.01, band = "MU") {
+                              gedi_l4b_resolution = 0.001, gedi_l4b_band = "MU") {
 
   # Check required packages
   required_pkgs <- c("earthdatalogin", "sf", "gdalcubes", "rstac", "terra")
@@ -94,7 +95,7 @@ download_gedi_l4b <- function(roi = NULL, gedi_l4b_folder = "data/GEDI_L4B/",
   bbox <- sf::st_bbox(roi)
 
   # Query STAC API
-  message("Querying STAC API for collection: ", collection, " for band: ", band)
+  message("Querying STAC API for collection: ", collection, " for band: ", gedi_l4b_band)
   stac_obj <- rstac::stac("https://cmr.earthdata.nasa.gov/stac/ORNL_CLOUD") |>
     rstac::stac_search(
       collections = collection,
@@ -109,10 +110,10 @@ download_gedi_l4b <- function(roi = NULL, gedi_l4b_folder = "data/GEDI_L4B/",
   }
 
   # Filter for the specified raster based on the `id` field
-  filt_features <- Filter(function(feature) grepl(band, feature$id), stac_obj$features)
+  filt_features <- Filter(function(feature) grepl(gedi_l4b_band, feature$id), stac_obj$features)
 
   if (length(filt_features) == 0) {
-    stop("No '", band, "' raster assets found in the STAC items.")
+    stop("No '", gedi_l4b_band, "' raster assets found in the STAC items.")
   }
 
   # Dynamically get the asset name:
@@ -142,8 +143,8 @@ download_gedi_l4b <- function(roi = NULL, gedi_l4b_folder = "data/GEDI_L4B/",
       bottom = bbox["ymin"],
       top = bbox["ymax"]
     ),
-    dx = resolution,
-    dy = resolution,
+    dx = gedi_l4b_resolution,
+    dy = gedi_l4b_resolution,
     nt = 1,  # Ensure only one time point is used
     srs = "EPSG:4326"
   )
@@ -155,7 +156,7 @@ download_gedi_l4b <- function(roi = NULL, gedi_l4b_folder = "data/GEDI_L4B/",
   }
 
   # Generate a prefix for the output files based on band
-  prefix <- paste0("GEDI_L4B_", band, "_")
+  prefix <- paste0("GEDI_L4B_", gedi_l4b_band, "_")
 
   # Write data to GeoTIFF files
   message("Writing data to GeoTIFF file(s)...")
@@ -191,7 +192,7 @@ download_gedi_l4b <- function(roi = NULL, gedi_l4b_folder = "data/GEDI_L4B/",
     stop("The raster contains only NA values. The data may be empty or invalid.")
   } else {
     message("Raster contains valid data.")
-    terra::plot(t, main = paste("GEDI L4B Biomass", band))
+    terra::plot(t, main = paste("GEDI L4B Biomass", gedi_l4b_band))
     summary_stats <- terra::global(t, fun = "mean", na.rm = TRUE)
     message("Mean value within ROI: ", summary_stats$mean)
   }

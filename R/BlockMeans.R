@@ -9,6 +9,10 @@
 # Increased 25x the speed in the weighted mean case calculation (with no parallelism yet)
 # 03/02/2025:
 # Added weighted_mean = TRUE case when agb_raster or forest_mask is not NULL for both sampleAGBmap and sampleTreeCover.
+# 27/02/25:
+# Added a new source parameter to specify whether to use ESA CCI BIOMASS or GEDI L4B data. When source = "gedi",
+# the function calls download_gedi_l4b to retrieve the GEDI L4B data before processing it.
+# The gedi_l4b_folder and gedi_l4b_band parameters allow users to specify the download folder and the desired GEDI L4B band.
 
 ## Notes:
 # `AGBown` and `own` arguments are redundant, if there's no problem with not breaking old legacy code, `own` argument shall be removed.
@@ -18,23 +22,19 @@
 
 
 
-
 #' Sample block mean mapped AGB over a region of interest
 #'
 #' This function samples the block mean mapped Above Ground Biomass (AGB) over a given polygon.
-#' It can use either a custom AGB map provided as input or download and use ESA CCI BIOMASS AGB tiles.
+#' It can use either a custom AGB map provided as input, download and use ESA CCI BIOMASS AGB tiles,
+#' or download and use GEDI L4B Gridded Biomass data.
 #'
 #' @param roi An sf or SpatVector object representing the Region of Interest.
 #' @param weighted_mean Logical, if TRUE the weighted mean is calculated considering the
 #'  approximate fraction of each cell that is covered by the polygon (default is FALSE).
-#' @param agb_raster A SpatRaster object with the custom AGB map. If NULL, ESA CCI BIOMASS AGB tiles will be downloaded and used.
-#' This dataset comprises estimates of forest above-ground biomass for the years 2010, 2015, 2016, 2017, 2018, 2019,
-#' 2020 and 2021. They are derived from a combination of Earth observation data, depending on the year, from the Copernicus
-#' Sentinel-1 mission, Envisat’s ASAR (Advanced Synthetic Aperture Radar) instrument and JAXA’s (Japan Aerospace Exploration
-#' Agency) Advanced Land Observing Satellite (ALOS-1 and ALOS-2), along with additional information from Earth observation
-#' sources. The data has been produced as part of the European Space Agency's (ESA's) Climate Change Initiative (CCI)
-#' programme by the Biomass CCI team.
+#' @param dataset Character, the dataset to use for AGB estimation. Options are "custom", "esacci", or "gedi". Default is "custom".
+#' @param agb_raster A SpatRaster object with the custom AGB map. If NULL, either ESA CCI BIOMASS AGB tiles or GEDI L4B data will be downloaded and used.
 #' @inheritParams download_esacci_biomass
+#' @inheritParams download_gedi_l4b
 #'
 #' @return Numeric value representing the mean AGB for the polygon.
 #'
@@ -45,6 +45,7 @@
 #' @export
 #'
 #' @references [Santoro, M.; Cartus, O. (2024): ESA Biomass Climate Change Initiative (Biomass_cci): Global datasets of forest above-ground biomass for the years 2010, 2015, 2016, 2017, 2018, 2019, 2020 and 2021, v5.01. NERC EDS Centre for Environmental Data Analysis, 22 August 2024.](https://dx.doi.org/10.5285/bf535053562141c6bb7ad831f5998d77)
+#' @references [Dubayah, R., et al. (2022). GEDI L4B Gridded Biomass Data, Version 2.1. NASA Earthdata.](https://doi.org/10.3334/ORNLDAAC/2299)
 #'
 #' @examples
 #' # Load required libraries
@@ -58,19 +59,23 @@
 #' )))
 #' roi_sf_congo <- st_sfc(roi_congo, crs = 4326)
 #'
-#' # Example 1: Calculate mean AGB for the Congo ROI (unweighted)
-#' sampleAGBmap(roi_sf_congo)
+#' # Example 1: Calculate mean AGB for the Congo ROI using ESA CCI BIOMASS (unweighted)
+#' sampleAGBmap(roi_sf_congo, dataset = "esacci")
 #'
-#' # Example 2: Calculate mean AGB for the Congo ROI (weighted)
-#' sampleAGBmap(roi_sf_congo, weighted_mean = TRUE)
+#' # Example 2: Calculate mean AGB for the Congo ROI using GEDI L4B (weighted)
+#' sampleAGBmap(roi_sf_congo, dataset = "gedi", weighted_mean = TRUE)
 #'
 sampleAGBmap <- function(
     roi,
     weighted_mean = FALSE,
     agb_raster = NULL,
+    dataset = "custom",
     esacci_biomass_year = "latest",
     esacci_biomass_version = "latest",
     esacci_folder = "data/ESACCI-BIOMASS",
+    gedi_l4b_folder = "data/GEDI_L4B/",
+    gedi_l4b_band = "MU",
+    gedi_l4b_resolution = 0.001,
     n_cores = 1,
     timeout = 600
 ) {
@@ -79,7 +84,7 @@ sampleAGBmap <- function(
   AGB <- NA
 
   # Use custom AGB raster if provided
-  if (!is.null(agb_raster)) {
+  if (!is.null(agb_raster) && dataset == "custom") {
     agb_raster[agb_raster == 0] <- NA
 
     tryCatch({
@@ -104,12 +109,11 @@ sampleAGBmap <- function(
     }, error = function(e) {
       message("Error extracting values from agb_raster: ", e$message)
     })
-  } else {
+  } else if (dataset == "esacci") {
 
     # Get ESA CCI AGB raster data:
-    esacci_biomass_args <- validate_esacci_biomass_args (esacci_biomass_year, esacci_biomass_version)
+    esacci_biomass_args <- validate_esacci_biomass_args(esacci_biomass_year, esacci_biomass_version)
 
-    #ras <- AGBtileNames(roi)
     ras <- ESACCIAGBtileNames(roi, esacci_biomass_args$esacci_biomass_year, esacci_biomass_args$esacci_biomass_version)
 
     AGB_all <- lapply(ras, function(f) {
@@ -201,10 +205,46 @@ sampleAGBmap <- function(
       AGB <- NA
     }
 
+  } else if (dataset == "gedi") {
+
+    # Download and process GEDI L4B data
+    gedi_tif_files <- download_gedi_l4b(roi = roi, gedi_l4b_folder = gedi_l4b_folder, gedi_l4b_band = gedi_l4b_band)
+
+    if (length(gedi_tif_files) == 0) {
+      stop("No GEDI L4B data was downloaded or processed.")
+    }
+
+    # Load the GEDI L4B raster
+    gedi_raster <- terra::rast(gedi_tif_files)
+
+    # Extract values with or without weights based on weighted_mean
+    extracted_vals <- terra::extract(gedi_raster, sf::st_as_sf(roi), weights = weighted_mean, normalizeWeights = FALSE)
+
+    if (!is.null(extracted_vals) && nrow(extracted_vals) > 0) {
+      # Remove rows with NA values in the AGB column
+      ids <- which(!is.na(extracted_vals[, 2]))
+      vls <- extracted_vals[ids, ]
+
+      if (weighted_mean) {
+        # Weighted mean case
+        if (length(vls) > 2) {
+          AGB <- sum(vls[, 2] * vls[, 3]) / sum(vls[, 3])
+        }
+      } else {
+        # Unweighted mean case
+        AGB <- mean(vls[, 2], na.rm = TRUE)
+      }
+    }
+  } else {
+    stop("Invalid dataset option. Please choose 'custom', 'esacci', or 'gedi'.")
   }
 
   return(AGB)
 }
+
+
+
+
 
 
 
@@ -739,7 +779,7 @@ sampleTreeCover <- function(
 #   expect_equal(old_result_roi2_tiles, new_result_roi2_tiles, tolerance=1e-6)
 #
 # })
-
+#
 # test_that("Old and new sampleTreeCover functions produce consistent results", {
 #
 #   skip("APIs now very different between old and new framework")
@@ -788,40 +828,9 @@ sampleTreeCover <- function(
 #   expect_equal(old_result_mask_terra, new_result_mask_terra, tolerance=1e-6)
 #
 # })
-#
-# # Test internal consistency
-# test_that("sampleAGBmap function behaves consistently", {
-#   roi <- st_polygon(list(rbind(c(0,0), c(1,0), c(1,1), c(0,1), c(0,0))))
-#   roi_sf <- st_sfc(roi, crs = 4326)
-#
-#   AGBown <- rast(nrows=10, ncols=10, xmin=0, xmax=1, ymin=0, ymax=1, vals=runif(100, 0, 500))
-#
-#   result_own <- new_sampleAGBmap(roi_sf, wghts=FALSE, own=TRUE)
-#   expect_type(result_own, "double")
-#   expect_true(!is.na(result_own))
-#
-#   result_tiles <- new_sampleAGBmap(roi_sf, wghts=FALSE, own=FALSE)
-#   expect_type(result_tiles, "double")
-# })
-#
-# test_that("sampleTreeCover function behaves consistently", {
-#   roi <- st_polygon(list(rbind(c(0,0), c(1,0), c(1,1), c(0,1), c(0,0))))
-#   roi_sf <- st_sfc(roi, crs = 4326)
-#
-#   thresholds <- c(10, 30, 50)
-#   fmask <- rast(nrows=10, ncols=10, xmin=0, xmax=1, ymin=0, ymax=1, vals=sample(0:1, 100, replace=TRUE))
-#
-#   result <- new_sampleTreeCover(roi_sf, thresholds, wghts=FALSE, fmask=NA)
-#   expect_type(result, "double")
-#   expect_length(result, length(thresholds))
-#
-#   result_mask <- new_sampleTreeCover(roi_sf, thresholds, wghts=FALSE, fmask=fmask)
-#   expect_type(result_mask, "double")
-#   expect_length(result_mask, 1)
-# })
-#
-#
-# test_that("sampleAGBmap function behaves consistently - 1 tile cases", {
+
+
+# test_that("sampleAGBmap function behaves consistently - 1 tile esacci dataset", {
 #   # Amazon Rainforest
 #   roi_amazon <- st_polygon(list(rbind(c(-62.2159, -3.4653), c(-62.2059, -3.4653),
 #                                       c(-62.2059, -3.4553), c(-62.2159, -3.4553),
@@ -835,10 +844,10 @@ sampleTreeCover <- function(
 #   roi_sf_congo <- st_sfc(roi_congo, crs = 4326)
 #
 #   # Test with both polygons
-#   result_amazon <- sampleAGBmap(roi_sf_amazon)
-#   result_amazon_weighted_mean <- sampleAGBmap(roi_sf_amazon, weighted_mean = TRUE)
-#   result_congo <- sampleAGBmap(roi_sf_congo)
-#   result_congo_weighted_mean <- sampleAGBmap(roi_sf_congo, weighted_mean = TRUE)
+#   result_amazon <- sampleAGBmap(roi_sf_amazon, dataset = "esacci")
+#   result_amazon_weighted_mean <- sampleAGBmap(roi_sf_amazon, weighted_mean = TRUE, dataset = "esacci")
+#   result_congo <- sampleAGBmap(roi_sf_congo, dataset = "esacci")
+#   result_congo_weighted_mean <- sampleAGBmap(roi_sf_congo, weighted_mean = TRUE, dataset = "esacci")
 #
 #   expect_type(result_amazon, "double")
 #   expect_type(result_congo, "double")
@@ -848,7 +857,8 @@ sampleTreeCover <- function(
 #   expect_true(result_congo != result_congo_weighted_mean)
 # })
 #
-# test_that("sampleAGBmap function behaves consistently - several tiles case", {
+#
+# test_that("sampleAGBmap function behaves consistently - several tiles esacci dataset", {
 #   # Amazon Rainforest
 #   roi_amazon <- st_polygon(list(rbind(c(-62.2159, -3.4653), c(-62.2059, -3.4653),
 #                                       c(-62.2059, -3.4553), c(-62.2159, -3.4553),
@@ -858,13 +868,57 @@ sampleTreeCover <- function(
 #
 #
 #   # Test with both polygons
-#   result_amazon <- sampleAGBmap(roi_sf_amazon)
+#   result_amazon <- sampleAGBmap(roi_sf_amazon, dataset = "esacci")
 #
 #   expect_type(result_amazon, "double")
 # })
 #
 #
-# test_that("sampleAGBmap function behaves consistently - agb_raster case", {
+# test_that("sampleAGBmap function behaves consistently - 1 tile gedi dataset", {
+#   # Amazon Rainforest
+#   roi_amazon <- st_polygon(list(rbind(c(-62.2159, -3.4653), c(-62.2059, -3.4653),
+#                                       c(-62.2059, -3.4553), c(-62.2159, -3.4553),
+#                                       c(-62.2159, -3.4653))))
+#   roi_sf_amazon <- st_sfc(roi_amazon, crs = 4326)
+#
+#   # Congo Rainforest
+#   roi_congo <- st_polygon(list(rbind(c(25.0089, 0.4735), c(25.0189, 0.4735),
+#                                      c(25.0189, 0.4835), c(25.0089, 0.4835),
+#                                      c(25.0089, 0.4735))))
+#   roi_sf_congo <- st_sfc(roi_congo, crs = 4326)
+#
+#   # Test with both polygons
+#   result_amazon <- sampleAGBmap(roi_sf_amazon, dataset = "gedi")
+#   result_amazon_weighted_mean <- sampleAGBmap(roi_sf_amazon, weighted_mean = TRUE, dataset = "gedi", gedi_l4b_band = "MU")
+#   result_congo <- sampleAGBmap(roi_sf_congo, dataset = "gedi")
+#   result_congo_weighted_mean <- sampleAGBmap(roi_sf_congo, weighted_mean = TRUE, dataset = "gedi", gedi_l4b_band = "MU")
+#
+#   expect_type(result_amazon, "double")
+#   expect_type(result_congo, "double")
+#   expect_type(result_amazon_weighted_mean, "double")
+#   expect_type(result_congo_weighted_mean, "double")
+#   expect_true(result_amazon != result_amazon_weighted_mean)
+#   expect_true(result_congo != result_congo_weighted_mean)
+# })
+#
+#
+# test_that("sampleAGBmap function behaves consistently - several tiles gedi dataset", {
+#   # Amazon Rainforest
+#   roi_amazon <- st_polygon(list(rbind(c(-62.2159, -3.4653), c(-62.2059, -3.4653),
+#                                       c(-62.2059, -3.4553), c(-62.2159, -3.4553),
+#                                       c(-62.2159, -3.4653))))
+#   roi_sf_amazon <- st_sfc(roi_amazon, crs = 4326)
+#   roi_sf_amazon <- st_buffer(roi_sf_amazon, dist = 4)
+#
+#
+#   # Test with both polygons
+#   result_amazon <- sampleAGBmap(roi_sf_amazon, dataset = "gedi")
+#
+#   expect_type(result_amazon, "double")
+# })
+#
+#
+# test_that("sampleAGBmap function behaves consistently - custom / agb_raster case", {
 #   # Amazon Rainforest
 #   roi_amazon <- st_polygon(list(rbind(c(-62.2159, -3.4653), c(-62.2059, -3.4653),
 #                                       c(-62.2059, -3.4553), c(-62.2159, -3.4553),
@@ -873,10 +927,10 @@ sampleTreeCover <- function(
 #
 #   agb_raster = terra::rast("data/ESACCI-BIOMASS/N00W070_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2021-fv5.0.tif")
 #
-#   result_amazon_tile <- sampleAGBmap(roi_sf_amazon)
+#   result_amazon_tile <- sampleAGBmap(roi_sf_amazon, dataset = "esacci")
 #   result_amazon_agb_raster <- sampleAGBmap(roi_sf_amazon, agb_raster = agb_raster)
 #
-#   result_amazon_tile_weighted_mean <- sampleAGBmap(roi_sf_amazon, weighted_mean = TRUE)
+#   result_amazon_tile_weighted_mean <- sampleAGBmap(roi_sf_amazon, dataset = "esacci", weighted_mean = TRUE)
 #   result_amazon_agb_raster_weighted_mean <- sampleAGBmap(roi_sf_amazon, agb_raster = agb_raster, weighted_mean = TRUE)
 #
 #   expect_equal(result_amazon_tile, result_amazon_agb_raster)

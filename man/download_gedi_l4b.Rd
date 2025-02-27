@@ -2,14 +2,14 @@
 % Please edit documentation in R/GEDIL4B.R
 \name{download_gedi_l4b}
 \alias{download_gedi_l4b}
-\title{Download and Process GEDI L4B Gridded Biomass Data}
+\title{Download and process GEDI L4B gridded biomass data}
 \usage{
 download_gedi_l4b(
   roi = NULL,
   gedi_l4b_folder = "data/GEDI_L4B/",
   collection = "GEDI_L4B_Gridded_Biomass_V2_1_2299_2.1",
-  resolution = 0.01,
-  band = "MU"
+  gedi_l4b_resolution = 0.001,
+  gedi_l4b_band = "MU"
 )
 }
 \arguments{
@@ -20,9 +20,10 @@ download_gedi_l4b(
 \item{collection}{Character, the STAC collection ID for GEDI L4B data.
 Default is "GEDI_L4B_Gridded_Biomass_V2_1_2299_2.1".}
 
-\item{resolution}{Numeric, the spatial resolution of the output GeoTIFF in degrees. Default is 0.01.}
+\item{gedi_l4b_resolution}{Numeric, the spatial resolution of the processed output GeoTIFF in degrees. The native resolution of the GEDI L4B gridded dataset is 1 km,
+approximately 0.001 degrees at the equator. Default is 0.001.}
 
-\item{band}{Character, the band to filter for. See options in the Details section below. Default is "MU".}
+\item{gedi_l4b_band}{Character, the band to filter for. See options in the Details section below. Default is "MU".}
 }
 \value{
 Character, the file path to the processed GeoTIFF file.
@@ -69,7 +70,7 @@ Consult the reference below for more details about the bands.
   # Define ROI over the Amazon Basin
   roi <- sf::st_as_sf(data.frame(y = c(-10, 0), x = c(-70, -60)), coords = c("x", "y"), crs = 4326)
   # Downloads biomass data for the defined region of interest
-  output_file <- download_gedi_l4b(roi = roi, band = "MU")
+  output_file <- download_gedi_l4b(roi = roi, gedi_l4b_band = "MU")
   print(output_file)
 }
 }

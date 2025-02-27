@@ -2,7 +2,7 @@
 % Please edit documentation in R/ESACCIBiomass.R
 \name{download_esacci_biomass}
 \alias{download_esacci_biomass}
-\title{Download ESA CCI Biomass GeoTIFF Data}
+\title{Download ESA CCI biomass GeoTIFF data}
 \usage{
 download_esacci_biomass(
   esacci_biomass_year = "latest",

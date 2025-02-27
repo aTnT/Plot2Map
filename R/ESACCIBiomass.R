@@ -1,5 +1,5 @@
 
-#' Download ESA CCI Biomass GeoTIFF Data
+#' Download ESA CCI biomass GeoTIFF data
 #'
 #' This function downloads ESA CCI Biomass GeoTIFF data from the CEDA Archive.
 #'

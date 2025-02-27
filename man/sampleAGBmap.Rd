@@ -8,9 +8,13 @@ sampleAGBmap(
   roi,
   weighted_mean = FALSE,
   agb_raster = NULL,
+  dataset = "custom",
   esacci_biomass_year = "latest",
   esacci_biomass_version = "latest",
   esacci_folder = "data/ESACCI-BIOMASS",
+  gedi_l4b_folder = "data/GEDI_L4B/",
+  gedi_l4b_band = "MU",
+  gedi_l4b_resolution = 0.001,
   n_cores = 1,
   timeout = 600
 )
@@ -21,13 +25,9 @@ sampleAGBmap(
 \item{weighted_mean}{Logical, if TRUE the weighted mean is calculated considering the
 approximate fraction of each cell that is covered by the polygon (default is FALSE).}
 
-\item{agb_raster}{A SpatRaster object with the custom AGB map. If NULL, ESA CCI BIOMASS AGB tiles will be downloaded and used.
-This dataset comprises estimates of forest above-ground biomass for the years 2010, 2015, 2016, 2017, 2018, 2019,
-2020 and 2021. They are derived from a combination of Earth observation data, depending on the year, from the Copernicus
-Sentinel-1 mission, Envisat’s ASAR (Advanced Synthetic Aperture Radar) instrument and JAXA’s (Japan Aerospace Exploration
-Agency) Advanced Land Observing Satellite (ALOS-1 and ALOS-2), along with additional information from Earth observation
-sources. The data has been produced as part of the European Space Agency's (ESA's) Climate Change Initiative (CCI)
-programme by the Biomass CCI team.}
+\item{agb_raster}{A SpatRaster object with the custom AGB map. If NULL, either ESA CCI BIOMASS AGB tiles or GEDI L4B data will be downloaded and used.}
+
+\item{dataset}{Character, the dataset to use for AGB estimation. Options are "custom", "esacci", or "gedi". Default is "custom".}
 
 \item{esacci_biomass_year}{The ESA CCI BIOMASS AGB tiles year to use. Use either 2010, 2015, 2016, 2017, 2018, 2019,
 2020, 2021 or "latest" (default).}
@@ -36,6 +36,13 @@ programme by the Biomass CCI team.}
 "v5.0", "v5.01" or "latest" (default).}
 
 \item{esacci_folder}{Directory to save downloaded ESA CCI BIOMASS AGB files. Default is the relative path "data/ESACCI-BIOMASS".}
+
+\item{gedi_l4b_folder}{Character, the folder to save the downloaded GeoTIFF file. Default is "data/GEDI_L4B/".}
+
+\item{gedi_l4b_band}{Character, the band to filter for. See options in the Details section below. Default is "MU".}
+
+\item{gedi_l4b_resolution}{Numeric, the spatial resolution of the processed output GeoTIFF in degrees. The native resolution of the GEDI L4B gridded dataset is 1 km,
+approximately 0.001 degrees at the equator. Default is 0.001.}
 
 \item{n_cores}{Number of cores to use for parallel download.}
 
@@ -46,7 +53,8 @@ Numeric value representing the mean AGB for the polygon.
 }
 \description{
 This function samples the block mean mapped Above Ground Biomass (AGB) over a given polygon.
-It can use either a custom AGB map provided as input or download and use ESA CCI BIOMASS AGB tiles.
+It can use either a custom AGB map provided as input, download and use ESA CCI BIOMASS AGB tiles,
+or download and use GEDI L4B Gridded Biomass data.
 }
 \examples{
 # Load required libraries
@@ -60,13 +68,15 @@ roi_congo <- st_polygon(list(rbind(
 )))
 roi_sf_congo <- st_sfc(roi_congo, crs = 4326)
 
-# Example 1: Calculate mean AGB for the Congo ROI (unweighted)
-sampleAGBmap(roi_sf_congo)
+# Example 1: Calculate mean AGB for the Congo ROI using ESA CCI BIOMASS (unweighted)
+sampleAGBmap(roi_sf_congo, dataset = "esacci")
 
-# Example 2: Calculate mean AGB for the Congo ROI (weighted)
-sampleAGBmap(roi_sf_congo, weighted_mean = TRUE)
+# Example 2: Calculate mean AGB for the Congo ROI using GEDI L4B (weighted)
+sampleAGBmap(roi_sf_congo, dataset = "gedi", weighted_mean = TRUE)
 
 }
 \references{
 \href{https://dx.doi.org/10.5285/bf535053562141c6bb7ad831f5998d77}{Santoro, M.; Cartus, O. (2024): ESA Biomass Climate Change Initiative (Biomass_cci): Global datasets of forest above-ground biomass for the years 2010, 2015, 2016, 2017, 2018, 2019, 2020 and 2021, v5.01. NERC EDS Centre for Environmental Data Analysis, 22 August 2024.}
+
+\href{https://doi.org/10.3334/ORNLDAAC/2299}{Dubayah, R., et al. (2022). GEDI L4B Gridded Biomass Data, Version 2.1. NASA Earthdata.}
 }
