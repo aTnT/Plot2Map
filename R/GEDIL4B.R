@@ -192,9 +192,9 @@ download_gedi_l4b <- function(roi = NULL, gedi_l4b_folder = "data/GEDI_L4B/",
     stop("The raster contains only NA values. The data may be empty or invalid.")
   } else {
     message("Raster contains valid data.")
-    terra::plot(t, main = paste("GEDI L4B Biomass", gedi_l4b_band))
-    summary_stats <- terra::global(t, fun = "mean", na.rm = TRUE)
-    message("Mean value within ROI: ", summary_stats$mean)
+    #terra::plot(t, main = paste("GEDI L4B Biomass", gedi_l4b_band))
+    #summary_stats <- terra::global(t, fun = "mean", na.rm = TRUE)
+    #message("Mean value within ROI: ", summary_stats$mean)
   }
 
   message("Successfully processed data to: ", gedi_l4b_folder)

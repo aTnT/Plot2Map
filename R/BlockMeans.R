@@ -208,7 +208,8 @@ sampleAGBmap <- function(
   } else if (dataset == "gedi") {
 
     # Download and process GEDI L4B data
-    gedi_tif_files <- download_gedi_l4b(roi = roi, gedi_l4b_folder = gedi_l4b_folder, gedi_l4b_band = gedi_l4b_band)
+    gedi_tif_files <- download_gedi_l4b(roi = roi, gedi_l4b_folder = gedi_l4b_folder, gedi_l4b_band = gedi_l4b_band,
+                                        gedi_l4b_resolution = gedi_l4b_resolution)
 
     if (length(gedi_tif_files) == 0) {
       stop("No GEDI L4B data was downloaded or processed.")
@@ -241,10 +242,6 @@ sampleAGBmap <- function(
 
   return(AGB)
 }
-
-
-
-
 
 
 
@@ -425,7 +422,7 @@ sampleTreeCover <- function(
 
 
 # sampleTreeCover <- function(
-#     roi,
+    #     roi,
 #     thresholds,
 #     forest_mask = NULL,
 #     weighted_mean = FALSE,
@@ -900,6 +897,23 @@ sampleTreeCover <- function(
 #   expect_true(result_amazon != result_amazon_weighted_mean)
 #   expect_true(result_congo != result_congo_weighted_mean)
 # })
+#
+# test_that("sampleAGBmap function behaves consistently - 1 tile gedi dataset, several resolution", {
+#   # Amazon Rainforest
+#   roi_amazon <- st_polygon(list(rbind(c(-62.2159, -3.4653), c(-62.2059, -3.4653),
+#                                       c(-62.2059, -3.4553), c(-62.2159, -3.4553),
+#                                       c(-62.2159, -3.4653))))
+#   roi_sf_amazon <- st_sfc(roi_amazon, crs = 4326)
+#
+#   # Test with both polygons
+#   result_amazon_1mdeg <- sampleAGBmap(roi_sf_amazon, dataset = "gedi", gedi_l4b_resolution = 0.001)
+#   result_amazon_10mdeg <- sampleAGBmap(roi_sf_amazon, dataset = "gedi", gedi_l4b_resolution = 0.01)
+#
+#   expect_type(result_amazon_1mdeg, "double")
+#   expect_type(result_amazon_10mdeg, "double")
+#   expect_true(result_amazon_1mdeg != result_amazon_10mdeg)
+# })
+#
 #
 #
 # test_that("sampleAGBmap function behaves consistently - several tiles gedi dataset", {
