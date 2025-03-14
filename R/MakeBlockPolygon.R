@@ -60,6 +60,11 @@
 #' sf::st_centroid(block2)
 
 MakeBlockPolygon <- function(x, y, size) {
+
+  if (length(size) != 1 | length(x) != 1 | length(y) != 1) {
+    stop("x, y and size shall be a one-dimensional numeric input")
+  }
+
   # Calculate the lower left corner of the cell
   xll <- size * (x %/% size)
   yll <- size * (y %/% size)
@@ -126,7 +131,7 @@ MakeBlockPolygon <- function(x, y, size) {
 
 
 # Tests:
-
+#
 # library(testthat)
 # library(sf)
 # library(terra)

@@ -2,44 +2,115 @@
 % Please edit documentation in R/InvDasymetry.R
 \name{invDasymetry}
 \alias{invDasymetry}
-\title{Inverse Dasymetric Mapping}
+\title{Inverse dasymetric mapping}
 \usage{
 invDasymetry(
+  plot_data = NULL,
   clmn = "ZONE",
   value = "Europe",
   aggr = NULL,
   minPlots = 1,
-  wghts = FALSE,
+  weighted_mean = FALSE,
   is_poly = TRUE,
-  own = TRUE,
-  fmask = NULL,
-  agbTilesDir = "data/ESACCI-BIOMASS-L4-AGB-MERGED-100m-2020-fv5.0"
+  parallel = FALSE,
+  n_cores = parallel::detectCores() - 1,
+  dataset = "custom",
+  agb_raster_path = NULL,
+  forest_mask_path = NULL,
+  thresholds = NULL,
+  esacci_biomass_year = "latest",
+  esacci_biomass_version = "latest",
+  esacci_folder = "data/ESACCI-BIOMASS",
+  gedi_l4b_folder = "data/GEDI_L4B/",
+  gedi_l4b_band = "MU",
+  gedi_l4b_resolution = 0.001,
+  timeout = 600
 )
 }
 \arguments{
-\item{clmn}{Character, column name for plot selection.}
+\item{plot_data}{data.frame, Plot dataset containing required columns.}
 
-\item{value}{Character, value to select in the column.}
+\item{clmn}{character, Column name for plot selection.}
 
-\item{aggr}{Numeric, aggregation factor in degrees (NULL for no aggregation).}
+\item{value}{character, Value to select in the specified column.}
 
-\item{minPlots}{Integer, minimum number of plots per aggregated cell.}
+\item{aggr}{numeric, Aggregation factor in degrees. NULL for no aggregation.}
 
-\item{wghts}{Logical, whether to use weights in sampling.}
+\item{minPlots}{integer, Minimum number of plots per aggregated cell.}
 
-\item{is_poly}{Logical, whether input plots are polygons.}
+\item{weighted_mean}{logical, Whether to use weighted mean for calculations.}
 
-\item{own}{Logical, whether to use own AGB map.}
+\item{is_poly}{logical, Whether input plots are polygons.}
 
-\item{fmask}{SpatRaster or NULL, forest mask raster.}
+\item{parallel}{logical, Enable parallel processing. Default is FALSE.}
 
-\item{agbTilesDir}{Character, AGB tiles directory.}
+\item{n_cores}{numeric, Number of cores to use for parallel processing.}
+
+\item{dataset}{character, Dataset for AGB estimation: "custom", "esacci", or "gedi". Default is "custom".}
+
+\item{agb_raster_path}{character, File path to the custom AGB raster.}
+
+\item{forest_mask_path}{character, File path to the forest mask raster.}
+
+\item{thresholds}{numeric vector or numeric, Thresholds for tree cover calculation. (e.g., c(10, 20, 30) or 15).}
+
+\item{esacci_biomass_year}{The ESA CCI BIOMASS AGB tiles year to use. Use either 2010, 2015, 2016, 2017, 2018, 2019,
+2020, 2021 or "latest" (default).}
+
+\item{esacci_biomass_version}{The ESA CCI BIOMASS AGB tiles version to use. Use either "v2.0", "v3.0", "v4.0",
+"v5.0", "v5.01" or "latest" (default).}
+
+\item{esacci_folder}{Directory to save downloaded ESA CCI BIOMASS AGB files. Default is the relative path "data/ESACCI-BIOMASS".}
+
+\item{gedi_l4b_folder}{Character, the folder to save the downloaded GeoTIFF file. Default is "data/GEDI_L4B/".}
+
+\item{gedi_l4b_band}{Character, the band to filter for. See options in the Details section below. Default is "MU".}
+
+\item{gedi_l4b_resolution}{Numeric, the spatial resolution of the processed output GeoTIFF in degrees. The native resolution of the GEDI L4B gridded dataset is 1 km,
+approximately 0.001 degrees at the equator. Default is 0.001.}
+
+\item{timeout}{Number of seconds for reaching file download timeout.}
 }
 \value{
-A data frame with plot/cell AGB values and related information.
+A data frame with the following columns:
+\item{plotAGB_forestTHs}{AGB values for different forest thresholds}
+\item{tfPlotAGB}{Tree-filtered plot AGB}
+\item{orgPlotAGB}{Original plot AGB}
+\item{mapAGB}{AGB from map sampling}
+\item{SIZE_HA}{Plot size in hectares}
+\item{x}{X-coordinate of plot}
+\item{y}{Y-coordinate of plot}
+\item{n}{Number of plots (only if aggregated)}
 }
 \description{
 This function performs inverse dasymetric mapping on plot data. It selects plots
 based on given criteria, optionally aggregates them, and calculates forest
-fraction and AGB (Above Ground Biomass) data for each plot or cell.
+fraction and Above Ground Biomass (AGB) data for each plot or cell.
+}
+\details{
+The function performs the following steps:
+\enumerate{
+\item Selects plots based on the specified criteria.
+\item Optionally aggregates plots if \code{aggr} is not NULL.
+\item Calculates forest fraction and AGB for each plot or cell.
+\item Samples AGB from custom raster or downloads and uses ESA CCI BIOMASS or GEDI L4B data.
+}
+}
+\note{
+\itemize{
+\item Ensure all required columns are present in the input data.
+\item For parallel processing, adjust \code{n_cores} based on your system's capabilities.
+\item Large datasets may require significant processing time and memory.
+}
+}
+\examples{
+\dontrun{
+result <- invDasymetry(plot_data = my_plots,
+                       clmn = "ZONE",
+                       value = "Europe",
+                       aggr = 0.1,
+                       parallel = TRUE,
+                       dataset = "esacci")
+}
+
 }

@@ -46,6 +46,10 @@
 #'   \item The function saves the resulting raster as a GeoTIFF file in the `output_folder`.
 #' }
 #'
+#' @references Hansen, M.C., Potapov, P.V., Moore, R., Hancher, M., Turubanova, S.A., Tyukavina, A., Thau, D., Stehman, S.V., Goetz, S.J., Loveland,
+#'  T.R., Kommareddy, A., Egorov, A., Chini, L., Justice, C.O., and Townshend, J.R.G., 2013, High-Resolution Global Maps of 21st-Century Forest Cover
+#'   Change: Science, v. 342, no. 6160, p. 850-853, at http://www.sciencemag.org/content/342/6160/850.abstract.
+#'
 #' @examples
 #' \dontrun{
 #' # Compute all tiles tree cover for 2015 using 2010 baseline
@@ -198,156 +202,103 @@ process_pair <- function(id, year, treecover_threshold, output_folder,
 }
 
 
-#' #' Compute tree cover for a specific year
-#' #'
-#' #' This function computes a tree cover layer for a given year based on the Hansen Global Forest Change (GFC) dataset.
-#' #' It uses the tree cover from 2000 as a baseline and removes cells with forest loss up to the specified year.
-#' #'
-#' #' @param year Integer. The year for which to compute the tree cover (2001-2023).
-#' #' @param gfc_folder Character. Path to the folder containing GFC dataset files. Default is "data/GFC".
-#' #' @param treecover_threshold Numeric. Optional threshold for tree cover (0-100) at baseline year (2000). If provided, only areas with
-#' #'        tree cover values >= this threshold will be considered. Default is NULL (no threshold).
-#' #' @param coords Character. Coordinates of the tile to process, e.g., "10N_020E". If NULL, processes all available tiles.
-#' #' @param output_folder Character. Path to the folder where output rasters should be saved. If NULL, rasters are not saved to disk. Default is NULL.
-#' #' @param num_cores Integer. Number of cores to use for parallel processing.
-#' #'
-#' #' @return If coords is specified or only one tile is processed, returns a single SpatRaster object.
-#' #'         Otherwise, returns a list of SpatRaster objects, each representing tree cover for the specified year for different tiles.
-#' #'
-#' #' @import terra stringr parallel pbapply
-#' #'
-#' #' @details
-#' #' The function uses two pattern matched (matched by GFC dataset year, version and lat, log coordinates)
-#' #'  types of input files stored in the specified gfc_folder, for example:
-#' #' 1. Tree cover 2000: "Hansen_GFC-2023-v1.11_treecover2000_*.tif"
-#' #'    - Values represent percentage of tree cover (0-100%)
-#' #' 2. Forest loss year: "Hansen_GFC-2023-v1.11_lossyear_*.tif"
-#' #'    - Values: 0 (no loss) or 1-23 (loss year 2001-2023)
-#' #'
-#' #' @examples
-#' #' \dontrun{
-#' #' # Compute tree cover for 2015 for all available tiles
-#' #' treecover_2015 <- compute_treecover(2015)
-#' #'
-#' #' # Compute tree cover for 2020 for a specific tile with a baseline tree cover threshold of 30% and save output
-#' #' treecover_2020 <- compute_treecover(2020,
-#' #'                                     treecover_threshold = 30,
-#' #'                                     coords = "10N_020E",
-#' #'                                     output_folder = "data/treecover_calc")
-#' #' }
-#' #' @export
-#' compute_treecover <- function(year, gfc_folder = "data/GFC", treecover_threshold = NULL,
-#'                               coords = NULL, output_folder = NULL, num_cores = 1) {
-#'   if (year < 2001 || year > 2023) {
-#'     stop("Year must be between 2001 and 2023.")
-#'   }
+#' Download Global 2010 Tree Cover 30m data
 #'
-#'   treecover_files <- list.files(gfc_folder, pattern = "treecover2000.*\\.tif$", full.names = TRUE)
-#'   lossyear_files <- list.files(gfc_folder, pattern = "lossyear.*\\.tif$", full.names = TRUE)
+#' This function downloads the Global 2010 Tree Cover 30m data within a specified region of interest
+#'  from the GLAD lab at the University of Maryland.
 #'
-#'   if (!is.null(coords)) {
-#'     treecover_files <- treecover_files[grep(coords, treecover_files)]
-#'     lossyear_files <- lossyear_files[grep(coords, lossyear_files)]
-#'     if (length(treecover_files) == 0 || length(lossyear_files) == 0) {
-#'       stop("No matching files found for the specified coordinates.")
-#'     }
-#'   }
+#' @param roi An sf object representing the region of interest. If NULL, the global extent is used.
+#' @param output_folder Directory to save downloaded files. Default is "data/GLAD_TCC_2010".
+#' @param n_cores Number of cores to use for parallel download. Default is 1.
+#' @param timeout Number of seconds for reaching file download timeout. Default is 1800.
 #'
-#'   extract_info <- function(filename) {
-#'     year_version <- str_extract(filename, "GFC-\\d{4}-v\\d+\\.\\d+")
-#'     coords <- str_extract(filename, "\\d{2}[NS]_\\d{3}[EW]")
-#'     list(year_version = year_version, coords = coords)
-#'   }
+#' @return A character vector of downloaded file paths.
 #'
-#'   treecover_info <- lapply(treecover_files, extract_info)
-#'   lossyear_info <- lapply(lossyear_files, extract_info)
+#' @import sf
+#' @import httr
+#' @import rvest
+#' @import pbapply
 #'
-#'   create_identifier <- function(info) {
-#'     paste(info$year_version, info$coords, sep = "_")
-#'   }
+#' @export
 #'
-#'   treecove
-#'   r_ids <- sapply(treecover_info, create_identifier)
-#'   lossyear_ids <- sapply(lossyear_info, create_identifier)
+#' @references [Hansen, M. C., Potapov, P. V., Moore, R., Hancher, M., Turubanova, S. A., Tyukavina, A., ... & Townshend, J. R. G. (2013). High-resolution global maps of 21st-century forest cover change. science, 342(6160), 850-853.](https://doi.org/10.1126/science.1244693)
 #'
-#'   common_ids <- intersect(treecover_ids, lossyear_ids)
+#' @examples
+#' \dontrun{
+#' roi <- st_as_sf(data.frame(x = c(-70, -60), y = c(-10, 0)), coords = c("x", "y"), crs = 4326)
+#' download_glad_tcc_2010(roi = roi)
+#'}
 #'
-#'   cl <- makeCluster(num_cores)
-#'   on.exit(stopCluster(cl))
-#'
-#'   clusterExport(cl, c("process_pair", "year", "treecover_threshold",
-#'                       "output_folder", "treecover_files", "lossyear_files",
-#'                       "treecover_ids", "lossyear_ids"),
-#'                 envir = environment())
-#'
-#'   clusterEvalQ(cl, {
-#'     library(terra)
-#'     library(stringr)
-#'   })
-#'
-#'
-#'   result_rasters <- pblapply(common_ids, function(id) {
-#'     process_pair(id, year, treecover_threshold, output_folder,
-#'                  treecover_files, lossyear_files, treecover_ids, lossyear_ids)
-#'   }, cl = cl)
-#'
-#'   names(result_rasters) <- common_ids
-#'   return(result_rasters)
-#' }
-#'
-#'
-#' #' Process a single pair of tree cover and forest loss files
-#' #'
-#' #' @param id The identifier for the file pair
-#' #' @param year The year for which to compute tree cover
-#' #' @param treecover_threshold The threshold for forest loss
-#' #' @param output_folder The folder to save output rasters
-#' #' @param treecover_files List of tree cover files
-#' #' @param lossyear_files List of forest loss files
-#' #' @param treecover_ids IDs for tree cover files
-#' #' @param lossyear_ids IDs for forest loss files
-#' #'
-#' #' @return A SpatRaster object representing the computed tree cover
-#' process_pair <- function(id, year, treecover_threshold, output_folder,
-#'                          treecover_files, lossyear_files, treecover_ids, lossyear_ids) {
-#'
-#'   treecover_file <- treecover_files[treecover_ids == id]
-#'   lossyear_file <- lossyear_files[lossyear_ids == id]
-#'
-#'   treecover_2000 <- rast(treecover_file)
-#'   forest_loss <- rast(lossyear_file)
-#'
-#'   if (!compareGeom(treecover_2000, forest_loss, stopOnError = FALSE)) {
-#'     forest_loss <- resample(forest_loss, treecover_2000)
-#'   }
-#'
-#'   year_2digit <- year %% 100
-#'
-#'   if (is.null(treecover_threshold)) {
-#'     forest_loss_binary <- forest_loss > 0 & forest_loss <= year_2digit
-#'   } else {
-#'     forest_loss_binary <- (forest_loss > 0 & forest_loss <= year_2digit) & (treecover_2000 >= treecover_threshold)
-#'   }
-#'
-#'   treecover_y <- treecover_2000 * (1 - forest_loss_binary)
-#'
-#'   if (!is.null(output_folder)) {
-#'     if (!dir.exists(output_folder)) {
-#'
-#'       dir.create(output_folder, recursive = TRUE)
-#'     }
-#'     original_filename <- basename(treecover_file)
-#'     filename_parts <- strsplit(original_filename, "_")[[1]]
-#'     new_filename <- paste0(
-#'       "Hansen_", filename_parts[2], "_treecover_calc_", year, "_",
-#'       filename_parts[length(filename_parts)-1], "_", filename_parts[length(filename_parts)]
-#'     )
-#'     output_path <- file.path(output_folder, new_filename)
-#'     writeRaster(treecover_y, output_path, overwrite=TRUE)
-#'   }
-#'
-#'   return(treecover_y)
-#' }
+download_glad_tcc_2010 <- function(roi = NULL,
+                                   output_folder = "data/GLAD_TCC_2010",
+                                   n_cores = 1,
+                                   timeout = 1800) {
+
+  base_url <- "https://glad.umd.edu/Potapov/TCC_2010/"
+
+  if (!dir.exists(output_folder)) {
+    dir.create(output_folder, recursive = TRUE)
+    message(paste("Created output directory:", output_folder))
+  }
+
+  page <- rvest::read_html(base_url)
+  file_links <- rvest::html_attr(rvest::html_nodes(page, "a"), "href")
+  tile_list <- grep("^treecover2010_.*\\.tif$", file_links, value = TRUE)
+
+
+  if (!is.null(roi)) {
+    bbox <- sf::st_bbox(roi)
+
+    intersects_roi <- function(tile) {
+      tryCatch({
+        # Remove prefix and suffix
+        tile <- gsub("treecover2010_", "", tile)
+        tile <- gsub(".tif", "", tile)
+
+        # Extract latitude and longitude using regex
+        lat <- as.numeric(sub("([0-9]+)([NS]).*", "\\1", tile)) * ifelse(grepl("N", tile), 1, -1)
+        lon <- as.numeric(sub(".*_([0-9]+)([EW])", "\\1", tile)) * ifelse(grepl("E", tile), 1, -1)
+
+        # Define bounding box for the tile
+        tile_bbox <- c(xmin = lon, ymin = lat, xmax = lon + 10, ymax = lat + 10)
+
+        # Check if the ROI intersects with the tile's bounding box
+        return(bbox["xmin"] < tile_bbox["xmax"] && bbox["xmax"] > tile_bbox["xmin"] &&
+                 bbox["ymin"] < tile_bbox["ymax"] && bbox["ymax"] > tile_bbox["ymin"])
+      }, error = function(e) {
+        return(FALSE)  # Skip this tile if any error occurs during processing
+      })
+    }
+
+    tile_list <- tile_list[sapply(tile_list, intersects_roi)]
+  }
+
+  download_tile <- function(tile) {
+    options(timeout = max(timeout, getOption("timeout")))
+
+    file_url <- paste0(base_url, tile)
+    output_file <- file.path(output_folder, tile)
+
+    tryCatch({
+      utils::download.file(file_url, output_file, mode = "wb", quiet = TRUE)
+      return(output_file)
+    }, error = function(e) {
+      warning(paste("Failed to download:", tile, "-", e$message))
+      return(NULL)
+    })
+  }
+
+  message(paste0("Downloading ", length(tile_list), " GLAD Tree Cover 2010 tile(s)..."))
+
+  downloaded_files <- pbapply::pblapply(tile_list, download_tile, cl = n_cores)
+
+  downloaded_files <- unlist(downloaded_files)
+  downloaded_files <- downloaded_files[!sapply(downloaded_files, is.null)]
+
+  return(downloaded_files)
+}
+
+
 
 ### Tests:
 # treecover_2020 <- compute_treecover(2020)

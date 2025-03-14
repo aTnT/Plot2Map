@@ -80,3 +80,8 @@ treecover_2020 <- compute_treecover(2020,
                                     baseline = 2000)
 }
 }
+\references{
+Hansen, M.C., Potapov, P.V., Moore, R., Hancher, M., Turubanova, S.A., Tyukavina, A., Thau, D., Stehman, S.V., Goetz, S.J., Loveland,
+T.R., Kommareddy, A., Egorov, A., Chini, L., Justice, C.O., and Townshend, J.R.G., 2013, High-Resolution Global Maps of 21st-Century Forest Cover
+Change: Science, v. 342, no. 6160, p. 850-853, at http://www.sciencemag.org/content/342/6160/850.abstract.
+}
