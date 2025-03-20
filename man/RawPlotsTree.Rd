@@ -4,7 +4,7 @@
 \alias{RawPlotsTree}
 \title{Format Tree-Level Plot Data}
 \usage{
-RawPlotsTree(plots = plots)
+RawPlotsTree(plots)
 }
 \arguments{
 \item{plots}{A data frame containing tree-level plot data with Latitude, Longitude coordinates.}
