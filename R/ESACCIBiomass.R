@@ -110,7 +110,69 @@ download_esacci_biomass <- function(esacci_biomass_year = "latest",
 
 
 
-# Helper function used for args validation
+
+
+#' Generate ESA-CCI AGB tile names
+#'
+#' This function generates file names for ESA-CCI AGB tiles based on a given polygon.
+#'
+#' @param pol An sf or SpatVector object representing the polygon of interest.
+#' @param esacci_biomass_year The ESACCI BIOMASS AGB tiles year to use. Use either 2010, 2015, 2016, 2017, 2018, 2019,
+#' 2020, 2021 or "latest" (default).
+#' @param esacci_biomass_version The ESACCI BIOMASS AGB tiles version to use. Use either "v2.0", "v3.0", "v4.0",
+#' "v5.0", "v5.01" or "latest" (default).
+#'
+#' @return A character vector of unique file names for ESA-CCI AGB tiles.
+#'
+#' @import stringr
+#' @importFrom sf st_bbox
+#' @importFrom terra ext xmin xmax ymin ymax
+#'
+#' @export
+ESACCIAGBtileNames <- function(pol,
+                               esacci_biomass_year = "latest",
+                               esacci_biomass_version = "latest") {
+
+  esacci_args <- validate_esacci_biomass_args(esacci_biomass_year, esacci_biomass_version)
+  esacci_biomass_year <- esacci_args$esacci_biomass_year
+  esacci_biomass_version <- esacci_args$esacci_biomass_version
+
+  if (inherits(pol, "SpatVector")) {
+    bb <- terra::ext(pol)
+    bb_vec <- c(terra::xmin(bb), terra::ymin(bb), terra::xmax(bb), terra::ymax(bb))
+  } else if (inherits(pol, "sf")) {
+    bb_vec <- sf::st_bbox(pol)
+  } else {
+    stop("The object representing the polygon of interest must be of class SpatVector from terra package or any sf object.")
+  }
+
+  crds <- expand.grid(x = c(bb_vec[1], bb_vec[3]), y = c(bb_vec[2], bb_vec[4]))
+  fnms <- character(nrow(crds))
+
+  for (i in 1:nrow(crds)) {
+    lon <- 10 * (crds$x[i] %/% 10)
+    lat <- 10 * (crds$y[i] %/% 10) + 10
+    LtX <- ifelse(lon < 0, "W", "E")
+    LtY <- ifelse(lat < 0, "S", "N")
+    WE <- paste0(LtX, sprintf('%03d', abs(lon)))
+    NS <- paste0(LtY, sprintf('%02d', abs(lat)))
+
+    if (esacci_biomass_version == "v5.01") {
+      esacci_biomass_version <- "v5.0"
+    }
+
+    fnms[i] <- paste0(NS, WE, "_ESACCI-BIOMASS-L4-AGB-MERGED-100m-", esacci_biomass_year, "-f", esacci_biomass_version, ".tif")
+  }
+  unique(setdiff(fnms, grep("1000m|AGB_SD|aux", fnms, value = TRUE)))
+}
+
+
+
+
+
+
+#' Helper function used for args validation
+#' @export
 validate_esacci_biomass_args <- function (esacci_biomass_year, esacci_biomass_version) {
 
   # Validate and process input parameters

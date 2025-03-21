@@ -17,6 +17,9 @@
 # validate the new function.
 
 
+# For some raeson we need to load this library at package load to avoid a "gfc_tiles not found" error:
+library(gfcanalysis)
+
 
 #' Remove deforested plots by overlaying plots with Global Forest Change data
 #'
@@ -38,7 +41,6 @@
 #' @importFrom sf st_as_sf st_buffer st_bbox st_coordinates
 #' @importFrom terra rast extract
 #' @importFrom dplyr select setdiff
-#' @importFrom gfcanalysis calc_gfc_tiles download_tiles
 #' @import gfcanalysis
 #'
 #' @export
@@ -52,8 +54,6 @@
 #' Deforested(sampled_plots, 2010)
 #'
 Deforested <- function(plt, map_year, gfc_folder = "data/GFC", gfc_dataset_year = "latest", defo_threshold = 0.05) {
-
-  library(gfcanalysis)
 
   # Refactored version, more radical changes (changing to terra, sf ecosystem, etc)
 
@@ -114,7 +114,7 @@ Deforested <- function(plt, map_year, gfc_folder = "data/GFC", gfc_dataset_year 
     #dir.create(file.path(gfc_folder), showWarnings = FALSE)
     #setwd(file.path(gfc_folder))
     gfcTile <- suppressMessages(suppressWarnings(gfcanalysis::calc_gfc_tiles(pol)))
-    gfcanalysis::download_tiles(gfcTile, gfc_folder, images = "lossyear", dataset = dataset_str)
+    gfcanalysis::download_tiles(gfcTile, gfc_folder, images = "lossyear", dataset = dataset_str, timeout = 1000)
 
     # Get overlapping tile/s (up to 4 possible tiles)
     bb <- sf::st_bbox(pol)

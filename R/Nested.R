@@ -5,7 +5,7 @@
 # - Replacing sp with sf package
 
 
-#' Format Tree-Level Data from Nested Plots
+#' Format tree-level data from nested plots
 #'
 #' This function processes tree-level data from nested plots, combining centroid information
 #' with tree measurements using a unique ID from these datasets.

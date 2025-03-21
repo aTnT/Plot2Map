@@ -30,10 +30,11 @@
 #' @importFrom BIOMASS correctTaxo getWoodDensity modelHD retrieveH AGBmonteCarlo
 #'
 #' @examples
+#' \dontrun{
 #' plotsTree <- utils::read.csv(sample_file("SampleTree.csv"))
 #' xyTree <- utils::read.csv(sample_file("SampleTreeXY.csv"))
 #' plot_uncertainties <- MeasurementErr(plotsTree, xyTree, region = "Asia")
-#'
+#' }
 #' @export
 MeasurementErr <- function(plot, xy, region = "World") {
 

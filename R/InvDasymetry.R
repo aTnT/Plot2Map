@@ -21,7 +21,7 @@
 #   Why:
 # 1.
 #   } else if (plot_data$SIZE_HA[i] >= 1) {
-#     treeCovers <- rep(1, length(thresholds))
+#     treeCovers <- rep(1, length(threshold))
 # 2. Where does this data come from:
 # plot_data$AGB_T_HA_UW[i] , plot_data$varPlot ... and other hardcoded columns in plot_data
 # if these columns are not present the function fails
@@ -46,13 +46,13 @@
 #' @param dataset character, Dataset for AGB estimation: "custom", "esacci", or "gedi". Default is "custom".
 #' @param agb_raster_path character, File path to the custom AGB raster.
 #' @param forest_mask_path character, File path to the forest mask raster.
-#' @param thresholds numeric vector or numeric, Thresholds for tree cover calculation. (e.g., c(10, 20, 30) or 15).
+#' @param threshold numeric, Threshold (0-100) for tree cover calculation and forest masking (e.g. 0 or 10).
 #' @inheritParams download_esacci_biomass
 #' @inheritParams download_gedi_l4b
 #' @inheritParams sampleTreeCover
 #'
 #' @return A data frame with the following columns:
-#'   \item{plotAGB_forestTHs}{AGB values for different forest thresholds}
+#'   \item{plotAGB_forestTHs}{AGB values for the forest threshold}
 #'   \item{tfPlotAGB}{Tree-filtered plot AGB}
 #'   \item{orgPlotAGB}{Original plot AGB}
 #'   \item{mapAGB}{AGB from map sampling}
@@ -101,7 +101,7 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
                          minPlots = 1, weighted_mean = FALSE, is_poly = TRUE, parallel = FALSE,
                          n_cores = parallel::detectCores() - 1,
                          dataset = "custom", agb_raster_path = NULL, forest_mask_path = NULL,
-                         thresholds = NULL,
+                         threshold = 0,
                          esacci_biomass_year = "latest", esacci_biomass_version = "latest",
                          esacci_folder = "data/ESACCI-BIOMASS", gedi_l4b_folder = "data/GEDI_L4B/",
                          gedi_l4b_band = "MU", gedi_l4b_resolution = 0.001, timeout = 600) {
@@ -200,8 +200,9 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
     doParallel::registerDoParallel(cl)
   }
 
-  export_vars <- c("MakeBlockPolygon", "sampleTreeCover", "sampleAGBmap", "is_poly", "aggr",
-                   "plot_data", "rsl", "thresholds", "weighted_mean", "dataset",
+  export_vars <- c("MakeBlockPolygon", "sampleTreeCover", "sampleAGBmap",
+                   "ESACCIAGBtileNames", "download_esacci_biomass", "validate_esacci_biomass_args",
+                   "is_poly", "aggr", "plot_data", "rsl", "threshold", "weighted_mean", "dataset",
                    "agb_raster_path", "forest_mask_path",
                    "esacci_biomass_year", "esacci_biomass_version", "esacci_folder",
                    "gedi_l4b_folder", "gedi_l4b_band", "gedi_l4b_resolution", "n_cores", "timeout")
@@ -218,6 +219,14 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
     .export = if (parallel) export_vars else NULL,
     .errorhandling = "stop"
   ) %op% {
+
+    # Load all package dependencies if developing
+    if (Sys.getenv("R_PACKAGE_DEVEL") == "TRUE") {
+      devtools::load_all()
+    } else {
+      library(Plot2Map)
+      library(gfcanalysis)
+    }
 
     if (!parallel) setTxtProgressBar(pb, i)
 
@@ -238,28 +247,37 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
 
     if (is.null(aggr)) {
       if (is.na(plot_data$SIZE_HA[i])) {
-        treeCovers <- sampleTreeCover(roi = pol, thresholds = thresholds, weighted_mean = weighted_mean, forest_mask = forest_mask_local)
+        treeCovers <- safe_sampleTreeCover(roi = pol, thresholds = threshold, weighted_mean = weighted_mean, forest_mask = forest_mask_local)
       } else if (plot_data$SIZE_HA[i] >= 1) {
-        treeCovers <- rep(1, length(thresholds))
+        treeCovers <- rep(1, length(threshold))
       } else {
-        treeCovers <- sampleTreeCover(roi = pol, thresholds = thresholds, weighted_mean = weighted_mean, forest_mask = forest_mask_local)
+        treeCovers <- safe_sampleTreeCover(roi = pol, thresholds = threshold, weighted_mean = weighted_mean, forest_mask = forest_mask_local)
       }
     } else {
-      treeCovers <- sampleTreeCover(roi = pol, thresholds = thresholds, weighted_mean = weighted_mean, forest_mask = forest_mask_local)
+      treeCovers <- safe_sampleTreeCover(roi = pol, thresholds = threshold, weighted_mean = weighted_mean, forest_mask = forest_mask_local)
     }
 
     wghts2 <- ifelse(is.null(aggr), FALSE, weighted_mean)
 
     if (!is.null(aggr)) {
       c(treeCovers * plot_data$AGB_T_HA[i], plot_data$AGB_T_HA_ORIG[i],
-        sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset, agb_raster = agb_raster_local,
+        # sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset, agb_raster = agb_raster_local,
+        #              esacci_biomass_year = esacci_biomass_year, esacci_biomass_version = esacci_biomass_version,
+        #              esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder, gedi_l4b_band = gedi_l4b_band,
+        #              gedi_l4b_resolution = gedi_l4b_resolution, n_cores = 1, timeout = timeout),
+        # plot_data$SIZE_HA[i], plot_data$n[i], plot_data$POINT_X[i], plot_data$POINT_Y[i])
+        safe_sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset, agb_raster = agb_raster_local,
                      esacci_biomass_year = esacci_biomass_year, esacci_biomass_version = esacci_biomass_version,
                      esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder, gedi_l4b_band = gedi_l4b_band,
                      gedi_l4b_resolution = gedi_l4b_resolution, n_cores = 1, timeout = timeout),
         plot_data$SIZE_HA[i], plot_data$n[i], plot_data$POINT_X[i], plot_data$POINT_Y[i])
     } else {
       c(treeCovers * plot_data$AGB_T_HA[i], plot_data$AGB_T_HA[i], plot_data$AGB_T_HA_ORIG[i],
-        sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset, agb_raster = agb_raster_local,
+        # sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset, agb_raster = agb_raster_local,
+        #              esacci_biomass_year = esacci_biomass_year, esacci_biomass_version = esacci_biomass_version,
+        #              esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder, gedi_l4b_band = gedi_l4b_band,
+        #              gedi_l4b_resolution = gedi_l4b_resolution, n_cores = 1, timeout = timeout),
+        safe_sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset, agb_raster = agb_raster_local,
                      esacci_biomass_year = esacci_biomass_year, esacci_biomass_version = esacci_biomass_version,
                      esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder, gedi_l4b_band = gedi_l4b_band,
                      gedi_l4b_resolution = gedi_l4b_resolution, n_cores = 1, timeout = timeout),
@@ -284,9 +302,52 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
 
 
 
+# Sometimes we get a download error (timeout?), so we run this helpers instead:
+safe_sampleAGBmap <- function(roi, weighted_mean, dataset, agb_raster,
+                              esacci_biomass_year, esacci_biomass_version,
+                              esacci_folder, gedi_l4b_folder,
+                              gedi_l4b_band, gedi_l4b_resolution,
+                              n_cores, timeout) {
+  max_tries <- 3
+  wait_time <- 2
+  for (try in 1:max_tries) {
+    tryCatch({
+      result <- sampleAGBmap(roi=roi, weighted_mean=weighted_mean, dataset=dataset, agb_raster=agb_raster,
+                             esacci_biomass_year=esacci_biomass_year, esacci_biomass_version=esacci_biomass_version,
+                             esacci_folder=esacci_folder, gedi_l4b_folder=gedi_l4b_folder,
+                             gedi_l4b_band=gedi_l4b_band,
+                             gedi_l4b_resolution=gedi_l4b_resolution,
+                             n_cores=n_cores, timeout=timeout)
+      return(result)
+    }, error=function(e) {
+      if (try < max_tries) {
+        warning(paste("Error in sampleAGBmap:", e$message, ". Retrying in", wait_time, "seconds."))
+        Sys.sleep(wait_time)
+      } else {
+        stop(paste("sampleAGBmap failed after", max_tries, "tries:", e$message))
+      }
+    })
+  }
+}
 
 
-
+safe_sampleTreeCover <- function(roi, thresholds, weighted_mean, forest_mask) {
+  max_tries <- 3
+  wait_time <- 2
+  for (try in 1:max_tries) {
+    tryCatch({
+      result <- sampleTreeCover(roi = roi, thresholds = thresholds, weighted_mean = weighted_mean, forest_mask = forest_mask)
+      return(result)
+    }, error=function(e) {
+      if (try < max_tries) {
+        warning(paste("Error in sampleTreeCover:", e$message, ". Retrying in", wait_time, "seconds."))
+        Sys.sleep(wait_time)
+      } else {
+        stop(paste("sampleTreeCover failed after", max_tries, "tries:", e$message))
+      }
+    })
+  }
+}
 
 
 
@@ -539,7 +600,7 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
 #   result_no_aggr <- invDasymetry(plot_data = plot_data, clmn = "ZONE", value = "Europe", aggr = NULL,
 #                                  minPlots = 1, weighted_mean = FALSE, is_poly = FALSE,
 #                                  dataset = "custom", agb_raster = agb_raster_test, forest_mask = fmask_test,
-#                                  thresholds = 10,
+#                                  threshold = 10,
 #                                  esacci_biomass_year = "latest", esacci_biomass_version = "latest",
 #                                  esacci_folder = test_dir,
 #                                  gedi_l4b_folder = test_dir,

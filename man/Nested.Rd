@@ -2,7 +2,7 @@
 % Please edit documentation in R/Nested.R
 \name{Nested}
 \alias{Nested}
-\title{Format Tree-Level Data from Nested Plots}
+\title{Format tree-level data from nested plots}
 \usage{
 Nested(centroids_sf, tree_table)
 }

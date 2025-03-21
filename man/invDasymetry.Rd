@@ -17,7 +17,7 @@ invDasymetry(
   dataset = "custom",
   agb_raster_path = NULL,
   forest_mask_path = NULL,
-  thresholds = NULL,
+  threshold = 0,
   esacci_biomass_year = "latest",
   esacci_biomass_version = "latest",
   esacci_folder = "data/ESACCI-BIOMASS",
@@ -52,7 +52,7 @@ invDasymetry(
 
 \item{forest_mask_path}{character, File path to the forest mask raster.}
 
-\item{thresholds}{numeric vector or numeric, Thresholds for tree cover calculation. (e.g., c(10, 20, 30) or 15).}
+\item{threshold}{numeric, Threshold (0-100) for tree cover calculation and forest masking (e.g. 0 or 10).}
 
 \item{esacci_biomass_year}{The ESA CCI BIOMASS AGB tiles year to use. Use either 2010, 2015, 2016, 2017, 2018, 2019,
 2020, 2021 or "latest" (default).}
@@ -73,7 +73,7 @@ approximately 0.001 degrees at the equator. Default is 0.001.}
 }
 \value{
 A data frame with the following columns:
-\item{plotAGB_forestTHs}{AGB values for different forest thresholds}
+\item{plotAGB_forestTHs}{AGB values for the forest threshold}
 \item{tfPlotAGB}{Tree-filtered plot AGB}
 \item{orgPlotAGB}{Original plot AGB}
 \item{mapAGB}{AGB from map sampling}
@@ -98,14 +98,21 @@ The function performs the following steps:
 }
 \note{
 \itemize{
-\item Ensure all required columns are present in the input data.
+\item Ensure all required columns are present in the input plot data.
 \item For parallel processing, adjust \code{n_cores} based on your system's capabilities.
 \item Large datasets may require significant processing time and memory.
 }
 }
 \examples{
 \dontrun{
-result <- invDasymetry(plot_data = my_plots,
+# Create a sample dataset of 10 plots:
+set.seed(42)
+sampled_plots <- plots[sample(nrow(plots), 10), ]
+plot_data <- Deforested(sampled_plots, gfc_folder = test_dir,  map_year = test_year)
+plot_data <- BiomePair(sampled_plots$non_deforested_plots)
+plot_data <- TempApply(plot_data, test_year)
+
+result <- invDasymetry(plot_data = plot_data,
                        clmn = "ZONE",
                        value = "Europe",
                        aggr = 0.1,
