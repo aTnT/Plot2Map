@@ -25,9 +25,14 @@ estimate of growth-age relationships.
 \examples{
 set.seed(42)
 sample_plots <- plots[sample(nrow(plots), 10), ]
-sample_plots <- BiomePair(sample_plots)
-resultApply <- TempApply(sample_plots, 2004)
-head(resultApply)
-resultVar <- TempVar(sample_plots, 2004)
-head(resultVar)
+sample_plots
+
+sample_plots_gez <- BiomePair(sample_plots)
+sample_plots_gez
+
+resultApply <- TempApply(sample_plots_gez, 2004)
+resultApply
+
+resultVar <- TempVar(sample_plots_gez, 2004)
+resultVar
 }

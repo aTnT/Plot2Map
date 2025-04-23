@@ -29,11 +29,16 @@
 #' @examples
 #' set.seed(42)
 #' sample_plots <- plots[sample(nrow(plots), 10), ]
-#' sample_plots <- BiomePair(sample_plots)
-#' resultApply <- TempApply(sample_plots, 2004)
-#' head(resultApply)
-#' resultVar <- TempVar(sample_plots, 2004)
-#' head(resultVar)
+#' sample_plots
+#'
+#' sample_plots_gez <- BiomePair(sample_plots)
+#' sample_plots_gez
+#'
+#' resultApply <- TempApply(sample_plots_gez, 2004)
+#' resultApply
+#'
+#' resultVar <- TempVar(sample_plots_gez, 2004)
+#' resultVar
 TempApply <- function(plt, map_year, gez = "all") {
 
   plt <- check_and_convert_plt(plt, ez=TRUE)
@@ -117,6 +122,8 @@ TempApply <- function(plt, map_year, gez = "all") {
 }
 
 
+
+
 #' Calculate temporal variance in plot biomass
 #'
 #' This function calculates the temporal variance in plot biomass based on growth rate
@@ -131,14 +138,20 @@ TempApply <- function(plt, map_year, gez = "all") {
 #' @importFrom utils read.csv
 #'
 #' @export
+#'
 #' @examples
 #' set.seed(42)
 #' sample_plots <- plots[sample(nrow(plots), 10), ]
-#' sample_plots <- BiomePair(sample_plots)
-#' resultApply <- TempApply(sample_plots, 2004)
-#' head(resultApply)
-#' resultVar <- TempVar(sample_plots, 2004)
-#' head(resultVar)
+#' sample_plots
+#'
+#' sample_plots_gez <- BiomePair(sample_plots)
+#' sample_plots_gez
+#'
+#' resultApply <- TempApply(sample_plots_gez, 2004)
+#' resultApply
+#'
+#' resultVar <- TempVar(sample_plots_gez, 2004)
+#' resultVar
 TempVar <- function(plt, map_year, gez = "all") {
 
   plt <- check_and_convert_plt(plt, ez=TRUE)
@@ -199,6 +212,8 @@ TempVar <- function(plt, map_year, gez = "all") {
                              above$AGB_T_HA_ORIG, above$AGB_T_HA) #retain original if it gets negative
 
     #combine all: static and recomputed
+    static$AGB_T_HA_ORIG <- static$AGB_T_HA # added 11/04/25
+
     plt.new <- dplyr::bind_rows(below, above, static)
 
     # Checker of rows
@@ -212,16 +227,20 @@ TempVar <- function(plt, map_year, gez = "all") {
     plt.new$sdGrowth <- abs(plt.new$AGB_T_HA - plt.new$AGB_T_HA_ORIG)
     retain <- c(names(plt0), 'sdGrowth')
     plt.new <- plt.new[, (names(plt.new) %in% retain)]
-    plt.new$AGB_T_HA <- plt.old$AGB_T_HA
+    #plt.new$AGB_T_HA <- plt.old$AGB_T_HA # this is wrong
     plt.new$sdGrowth <- ifelse(is.na(plt.new$sdGrowth), mean(plt.new$sdGrowth, na.rm = TRUE), plt.new$sdGrowth)
     plt.new$sdGrowth <- ifelse(is.nan(plt.new$sdGrowth), mean(plt.new$sdGrowth, na.rm = TRUE), plt.new$sdGrowth)
+
+
     return(plt.new)
   }
 }
 
 
 
-#
+
+
+
 # old_TempApply <- function(df, domain, year){
 #   dataDir <- "data"
 #   gr <- read.csv(paste0(dataDir,'/GR_Uniques.csv'))
@@ -360,45 +379,59 @@ TempVar <- function(plt, map_year, gez = "all") {
 # # Tests:
 # library(testthat)
 #
-# # Test comparison between old and new versions
-# test_that("Old and new TempApply functions produce consistent results", {
+# # Test old Apply and Var versions yield the same AGB_T_HA output
+# test_that("Test old Apply and Var versions yield the same AGB_T_HA output", {
 #   # Create sample data
-#   test_data <- data.frame(
-#     GEZ = c("Tropical", "Tropical", "Temperate"),
-#     ZONE = c("Africa", "S.America", "Europe"),
-#     FAO.ecozone = c("Tropical rainforest", "Tropical moist forest", "Temperate oceanic forest"),
-#     AVG_YEAR = c(2005, 2015, 2010),
-#     AGB_T_HA = c(200, 150, 100)
-#   )
+#   set.seed(12345)
+#   test_data <- plots[sample(nrow(plots), 10), ]
+#   test_data <- BiomePair(test_data)
+#   test_data_ta <- old_TempApply(test_data, "Subtropical", 2010)
 #
 #   # Run both versions
-#   old_result <- old_TempApply(test_data, "Tropical", 2010)
-#   new_result <- TempApply(test_data, "Tropical", 2010)
+#   app_result <- old_TempApply(test_data, "Subtropical", 2010)
+#   var_result <- old_TempVar(test_data, "Subtropical", 2010)
 #
 #   # Compare results
 #   expect_equal(old_result$AGB_T_HA, new_result$AGB_T_HA, tolerance = 1e-6)
 #   expect_equal(old_result$AGB_T_HA_ORIG, new_result$AGB_T_HA_ORIG, tolerance = 1e-6)
 # })
 #
-# test_that("Old and new TempVar functions produce consistent results", {
+#
+# # Test comparison between old and new versions
+# test_that("Old and new TempApply functions produce consistent results", {
 #   # Create sample data
-#   test_data <- data.frame(
-#     GEZ = c("Tropical", "Tropical", "Temperate"),
-#     ZONE = c("Africa", "S.America", "Europe"),
-#     FAO.ecozone = c("Tropical rainforest", "Tropical moist forest", "Temperate oceanic forest"),
-#     AVG_YEAR = c(2005, 2015, 2010),
-#     AGB_T_HA = c(200, 150, 100),
-#     AGB_T_HA_ORIG = c(190, 160, 100)
-#   )
+#   set.seed(12345)
+#   test_data <- plots[sample(nrow(plots), 10), ]
+#   test_data <- BiomePair(test_data)
 #
 #   # Run both versions
-#   old_result <- old_TempVar(test_data, "Tropical", 2010)
-#   new_result <- TempVar(test_data, "Tropical", 2010)
+#   old_result <- old_TempApply(test_data, "Subtropical", 2010)
+#   new_result <- TempApply(test_data, 2010, "Subtropical")
+#
+#   # Compare results
+#   expect_equal(old_result$AGB_T_HA, new_result$AGB_T_HA, tolerance = 1e-6)
+#   expect_equal(old_result$AGB_T_HA_ORIG, new_result$AGB_T_HA_ORIG, tolerance = 1e-6)
+# })
+#
+#
+#
+# test_that("Old and new TempVar functions produce consistent results", {
+#
+#   # Create sample data
+#   set.seed(12345)
+#   test_data <- plots[sample(nrow(plots), 10), ]
+#   test_data <- BiomePair(test_data)
+#   test_data_ta <- old_TempApply(test_data, "Subtropical", 2010)
+#
+#   # Run both versions
+#   old_result <- old_TempVar(df = test_data_ta, domain = "Subtropical", year = 2010)
+#   new_result <- TempVar(test_data, 2010, "Subtropical")
 #
 #   # Compare results
 #   expect_equal(old_result$AGB_T_HA, new_result$AGB_T_HA, tolerance = 1e-6)
 #   expect_equal(old_result$sdGrowth, new_result$sdGrowth, tolerance = 1e-6)
 # })
+#
 #
 # # Test internal consistency
 # test_that("TempApply function behaves consistently", {
@@ -445,7 +478,8 @@ TempVar <- function(plt, map_year, gez = "all") {
 #   resultVar <- TempVar(test_data, 2005)
 #
 #   # Check output structure
-#   expect_equal(sort(resultApply$AGB_T_HA_ORIG), sort(resultVar$AGB_T_HA))
+#   #expect_equal(sort(resultApply$AGB_T_HA_ORIG), sort(resultVar$AGB_T_HA))
+#   expect_equal(sort(resultApply$AGB_T_HA), sort(resultVar$AGB_T_HA))
 #
 # })
 

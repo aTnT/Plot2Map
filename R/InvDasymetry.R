@@ -119,10 +119,16 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
   required_cols <- c("POINT_X", "POINT_Y", "AGB_T_HA_ORIG", "AGB_T_HA", "SIZE_HA", "varPlot")
   if (!is.null(aggr)) {
     missing_cols <- setdiff(required_cols, names(plot_data))
-    if (length(missing_cols) > 0) {
+    if (length(missing_cols) > 0 & missing_cols != "varPlot") {
       stop(paste("When aggr is not NULL, plot_data must contain:", paste(missing_cols, collapse = ", ")))
     }
+    if (length(missing_cols) > 0 & missing_cols == "varPlot") {
+      warning(paste("\"varPlot\" column was not found in the plot_data dataset, it will be estimated"))
+    }
+
+    ### TO DO: Call function that adds varPlot to plot_data here
   }
+
 
   # Create SpatRaster objects from file paths
   agb_raster <- if (!is.null(agb_raster_path)) terra::rast(agb_raster_path) else NULL
@@ -134,6 +140,75 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
   ndx <- which(plot_data[, clm] == value)
   if (length(ndx) == 0) stop("No records satisfy the selection criterion.")
   plot_data <- plot_data[ndx, ]
+
+
+#
+#   # Arnan email 070425:
+#
+#   # aggregate if aggr != NULL
+#   if(!is.null(aggr)){ #if there's agg
+#     # aggregate to aggr degree cells
+#     plots$Xnew <- aggr * (0.5 + plots$POINT_X %/% aggr)
+#     plots$Ynew <- aggr * (0.5 + plots$POINT_Y %/% aggr) #changes XY
+#
+#     #aggregatioN!
+#     #    plots$varTot <- plots$sdTree^2
+#
+#     plots$inv <- 1/plots$varTot
+#     plots$sdMap <- 1 ###since there's a function to estimate SD at 0.1 below
+#
+#     plotsTMP <- aggregate(plots[,c('AGB_T_HA_ORIG', 'SIZE_HA')],
+#                           list(plots$Xnew, plots$Ynew),  mean, na.rm=T) ## AGGREGATION!!!!!!!!!!!!!!!!!
+#
+#
+#     plotsTMP <- cbind(plotsTMP,aggregate(plots[,c('BIO','CODE', 'OPEN', 'VER', 'INVENTORY', 'TIER')],
+#                                          list(plots$Xnew, plots$Ynew),   modalClass))
+#
+#     plotsTMP <- plotsTMP[,-c(5,6)] #remove excess X and Y
+#     plotsTMP <- cbind(plotsTMP, aggregate(plots[,"varTot"],
+#                                           list(plots$Xnew, plots$Ynew), function(x) 1/sum(1/x))[3])
+#
+#     plotsTMP <- cbind(plotsTMP, aggregate(plots[,"sdMap"],
+#                                           list(plots$Xnew, plots$Ynew), function(x) 1/sum(1/x))[3])
+#
+#     plotsTMP <- plotsTMP[with(plotsTMP, order(Group.2, Group.1)), ] #order to match
+#     x <- ddply(plots, .(paste(plots$Ynew, plots$Xnew)),
+#                function(x) data.frame(Xnew=mean(x$Xnew),
+#                                       Ynew=mean(x$Ynew),
+#                                       AGB_T_HA=weighted.mean(x$AGB_T_HA, x$inv ,na.rm=T)))
+#     x <- x[with(x, order(Ynew, Xnew)), ] #order to match
+#     tail(x)
+#     tail(plotsTMP)
+#
+#     plotsTMP$AGB_T_HA <- x$AGB_T_HA
+#
+#     names(plotsTMP) <- c("POINT_X","POINT_Y",'AGB_T_HA_ORIG', 'SIZE_HA', 'BIO',
+#                          'CODE', 'OPEN', 'VER', 'INVENTORY','TIER', 'varPlot','varMap','AGB_T_HA')
+#
+#     # only keep plots satisfying minPlots criterion -- aggregated plots
+#     if(minPlots > 1){
+#       blockCOUNT <- aggregate(plots[,c("AGB_T_HA")], list(plots$Xnew, plots$Ynew),
+#                               function(x) length(na.omit(x)))
+#
+#       ndx <- which(blockCOUNT$x >= minPlots)
+#       plotsTMP1 <- plotsTMP[ndx,]
+#       if(nrow(plotsTMP1) < 2){plotsTMP1 <- plotsTMP[1:2,]}
+#       plotsTMP1$n <- subset(blockCOUNT,blockCOUNT$x >= minPlots)[[3]] #add plots inside
+#       print(plotsTMP1)
+#     }
+#     plots <- plotsTMP1
+#     rsl <- aggr
+#   } else {
+#     # determine resolution output
+#     fname <- list.files(agbTilesFolder, "*.tif")[1]
+#     rsl <- xres(raster(file.path(agbTilesFolder, fname)))
+#     plots$n <- 1
+#     plots$varPlot <- plots$varTot
+#     plots$varMap <- plots$sdMap^2
+#   }
+
+
+
 
   # Aggregate if aggr != NULL
   if (!is.null(aggr)) {

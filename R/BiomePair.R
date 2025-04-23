@@ -2,6 +2,8 @@
 # 07/12/2024:
 # Uses terra package functions consistently for spatial operations.
 # Assumes that the shapefiles are included in the data directory.
+# 10/04/2025:
+# Added (commented) checks/tests that X and Y points are contained within geometry
 
 
 #' Assign ecological zones and continents to plot locations
@@ -36,10 +38,27 @@ BiomePair <- function(plt) {
   li <- terra::vect(system.file(file.path("data", "eco_zone.shp"), package="Plot2Map"))
   re <- terra::vect(system.file(file.path("data", "world_region.shp"), package="Plot2Map"))
 
-  # Prepare points for intersection
+  # # Prepare points for intersection
   p <- plots0
   p$POINT_X <- plt$POINT_X
   p$POINT_Y <- plt$POINT_Y
+
+  # # Check if points are contained within plots0 geometry
+  # is_contained <- terra::is.related(terra::vect(matrix(c(p$POINT_X, p$POINT_Y),
+  #                                                      ncol=2),
+  #                                               type="points"),
+  #                                   plots0,
+  #                                   "within")
+  #
+  # # Add validation check and warning
+  # if (!all(is_contained)) {
+  #   warning("Some points (POINT_X, POINT_Y) are not contained within plots0 geometry")
+  #   # Optionally subset to valid points only
+  #   p <- p[is_contained, ]
+  #   if (nrow(p) == 0) {
+  #     stop("No valid points remaining after containment check")
+  #   }
+  # }
 
   # Intersect polygons with points
   intFez0 <- terra::intersect(p, li)
@@ -66,6 +85,7 @@ BiomePair <- function(plt) {
 
   return(as.data.frame(df))
 }
+
 
 
 # ### FUNCTION TO GET THE CORRESPONDING ZONES AND BIOMES OF PLOT LOCATIONS USING PRE-PROCESSED SHAPEFILES
