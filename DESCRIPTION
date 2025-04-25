@@ -2,12 +2,11 @@ Package: Plot2Map
 Title: Above Ground Biomass Plot to Map Comparison
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+    person("Arnan", "Araza", , "arnan.araza@wur.nl", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-0412-2351"))
 Description: Plot2Map is a workflow for automating aboveground biomass plot to map comparison. It filters deforested plots, adjusts plot biomass temporally to align with map years, corrects for forest fraction at support units, and compares adjusted plots with biomass maps. The package handles various support units and incorporates growth increment data for temporal adjustments.
 URL: https://greendata-demo.s3.eu-north-1.amazonaws.com/docs/index.html
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
@@ -16,5 +15,6 @@ Depends:
 LazyData: true
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
