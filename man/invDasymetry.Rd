@@ -73,8 +73,8 @@ approximately 0.001 degrees at the equator. Default is 0.001.}
 }
 \value{
 A data frame with the following columns:
-\item{plotAGB_forestTHs}{AGB values for the forest threshold}
-\item{tfPlotAGB}{Tree-filtered plot AGB}
+\item{plotAGB_\link{threshold}}{AGB values for the given forest threshold (e.g., plotAGB_10 if threshold=10)}
+\item{tfPlotAGB}{Tree-filtered plot AGB (only when not aggregated)}
 \item{orgPlotAGB}{Original plot AGB}
 \item{mapAGB}{AGB from map sampling}
 \item{SIZE_HA}{Plot size in hectares}

@@ -14,6 +14,9 @@
 # - Each worker creates its own SpatRaster object from the file paths, avoiding serialization of external pointers.
 # - Converting sf geometries to WKT ensures plot_data is serializable
 # Progress bar was added (non-parallel processing)
+# 30/04/2025:
+# Fixed column naming to use actual threshold value (e.g., "plotAGB_10" instead of "plotAGB_forestTHs")
+# Updated documentation to reflect correct column naming pattern
 
 
 ## Notes:
@@ -52,8 +55,8 @@
 #' @inheritParams sampleTreeCover
 #'
 #' @return A data frame with the following columns:
-#'   \item{plotAGB_forestTHs}{AGB values for the forest threshold}
-#'   \item{tfPlotAGB}{Tree-filtered plot AGB}
+#'   \item{plotAGB_[threshold]}{AGB values for the given forest threshold (e.g., plotAGB_10 if threshold=10)}
+#'   \item{tfPlotAGB}{Tree-filtered plot AGB (only when not aggregated)}
 #'   \item{orgPlotAGB}{Original plot AGB}
 #'   \item{mapAGB}{AGB from map sampling}
 #'   \item{SIZE_HA}{Plot size in hectares}
@@ -364,9 +367,9 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
   FFAGB <- as.data.frame(FFAGB)
 
   if (!is.null(aggr)) {
-    names(FFAGB) <- c(paste0("plotAGB_", "forestTHs"), "orgPlotAGB", "mapAGB", "SIZE_HA", "n", "x", "y")
+    names(FFAGB) <- c(paste0("plotAGB_", threshold), "orgPlotAGB", "mapAGB", "SIZE_HA", "n", "x", "y")
   } else {
-    names(FFAGB) <- c(paste0("plotAGB_", "forestTHs"), "tfPlotAGB", "orgPlotAGB", "mapAGB", "SIZE_HA", "x", "y")
+    names(FFAGB) <- c(paste0("plotAGB_", threshold), "tfPlotAGB", "orgPlotAGB", "mapAGB", "SIZE_HA", "x", "y")
   }
 
   if (!parallel) close(pb)

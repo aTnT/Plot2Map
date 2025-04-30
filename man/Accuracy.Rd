@@ -4,7 +4,7 @@
 \alias{Accuracy}
 \title{Calculate accuracy metrics for AGB estimates}
 \usage{
-Accuracy(df = plotsBACC, intervals = 8, dir = resultsFolder, str = "")
+Accuracy(df, intervals = 8, dir = "results", str = "")
 }
 \arguments{
 \item{df}{Dataframe containing plot and map AGB data. Defaults to \code{plotsBACC}.}
@@ -25,7 +25,19 @@ root mean squared differences (RMSD), variances, and other statistics per AGB bi
 and overall, saving the results to a CSV file.
 }
 \examples{
-\dontrun{
-  Accuracy(df = mydata, intervals = 7, dir = "results/", str = "test")
+\donttest{
+# Example with the right column structure
+# (Output of invDasymetry would include plotAGB_10 column)
+example_agb_data <- data.frame(
+  plotAGB_10 = c(120, 150, 180, 200, 220),
+  mapAGB = c(110, 140, 190, 180, 240),
+  SIZE_HA = c(0.5, 0.75, 1.0, 1.2, 0.9),
+  x = c(1, 2, 3, 4, 5),
+  y = c(10, 20, 30, 40, 50)
+)
+
+# Run accuracy assessment
+results <- Accuracy(df = example_agb_data, intervals = 6)
+print(results)
 }
 }

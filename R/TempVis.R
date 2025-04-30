@@ -2,6 +2,11 @@
 # 06/01/2025:
 # Exlicit dplyr:: function calls to avoid potential conflicts.
 # Removed setwd() calls and used full file paths instead.
+# 25/04/2025:
+# Added uncertainty visualisation functions:
+# - created pie charts showing the relative contribution of measurement, sampling,
+# and growth uncertainties
+# - plotUncertaintyByBin displays boxplots of uncertainty distribution across AGB bins
 
 ## Notes:
 # 06/01/2025:

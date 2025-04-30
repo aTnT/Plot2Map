@@ -2,7 +2,16 @@
 # 07/03/2025:
 # Replaced plyr functions with dplyr equivalents.
 # Removed redundant operations and simplified the code structure where possible.
-
+# 25/04/2025:
+# Added function to calculate accuracy metrics for AGB estimates accounting for uncertainty:
+  # - extends the standard accuracy metrics with uncertainty-weighted statistics
+  # - Calculates agreement percentage (plot-map difference within uncertainty bounds)
+  # - Computes uncertainty-weighted RMSE and bias
+  # - Provides detailed uncertainty information by biomass bin
+# 30/04/2025:
+# Made function more flexible to detect and use any column with "plotAGB_" prefix
+# Added dynamic column detection and robust error handling for missing columns
+# Updated examples to ensure they work with the improved flexibility
 
 #' Calculate accuracy metrics for AGB estimates
 #'
@@ -20,12 +29,26 @@
 #'
 #' @import dplyr
 #' @import tidyr
+#' @importFrom rlang sym
 #'
+#' @export
 #' @examples
-#' \dontrun{
-#'   Accuracy(df = mydata, intervals = 7, dir = "results/", str = "test")
+#' \donttest{
+#' # Example with the right column structure
+#' # (Output of invDasymetry would include plotAGB_10 column)
+#' example_agb_data <- data.frame(
+#'   plotAGB_10 = c(120, 150, 180, 200, 220),
+#'   mapAGB = c(110, 140, 190, 180, 240),
+#'   SIZE_HA = c(0.5, 0.75, 1.0, 1.2, 0.9),
+#'   x = c(1, 2, 3, 4, 5),
+#'   y = c(10, 20, 30, 40, 50)
+#' )
+#'
+#' # Run accuracy assessment
+#' results <- Accuracy(df = example_agb_data, intervals = 6)
+#' print(results)
 #' }
-Accuracy <- function(df = plotsBACC, intervals = 8, dir = resultsFolder, str = '') {
+Accuracy <- function(df, intervals = 8, dir = "results", str = '') {
   df$sdMap <- 1
   df$sdPlot <- 1
 
@@ -41,29 +64,46 @@ Accuracy <- function(df = plotsBACC, intervals = 8, dir = resultsFolder, str = '
     bins.str <- c('0-100', '100-150', '150-200', '200-250', '250-300', '>300')
   }
 
+  # Find column with plotAGB_ prefix
+  plotAGB_col <- grep("^plotAGB_", names(df), value = TRUE)[1]
+  if (is.na(plotAGB_col)) {
+    stop("No column with prefix 'plotAGB_' found in the dataframe")
+  }
+  
   # Assign grouping of AGB values for plot and map separately per bin
   grp1 <- df |>
-    dplyr::mutate(group = cut(plotAGB_10, breaks = bins))
+    dplyr::mutate(group = cut(!!rlang::sym(plotAGB_col), breaks = bins))
 
   # Aggregate the mean AGB of bins
   agg.plot <- grp1 |>
     dplyr::group_by(group) |>
-    dplyr::summarise(plotAGB_10 = mean(plotAGB_10), .groups = 'drop')
+    dplyr::summarise(!!rlang::sym("plotAGB") := mean(!!rlang::sym(plotAGB_col)), .groups = 'drop')
 
   agg.map <- grp1 |>
     dplyr::group_by(group) |>
     dplyr::summarise(mapAGB = mean(mapAGB, na.rm = TRUE), .groups = 'drop')
 
-  # Calculate accuracy metrics
-  grp2 <- grp1[, c('plotAGB_10', 'mapAGB', 'sdPlot', 'sdMap', 'group')]
+  # Calculate accuracy metrics - select dynamically
+  cols_to_keep <- c(plotAGB_col, 'mapAGB', 'sdPlot', 'sdMap', 'group')
+  cols_to_keep <- intersect(cols_to_keep, names(grp1))
+  grp2 <- grp1[, cols_to_keep]
+  
+  # Rename plotAGB column for easier reference in calculations
+  names(grp2)[names(grp2) == plotAGB_col] <- "plotAGB_calc"
 
   msd <- grp2 |>
     dplyr::group_by(group) |>
-    dplyr::summarise(val = mean((plotAGB_10 - mapAGB)^2), .groups = 'drop')
+    dplyr::summarise(val = mean((plotAGB_calc - mapAGB)^2), .groups = 'drop')
 
-  check <- grp2 |>
-    dplyr::group_by(group) |>
-    dplyr::summarise(val = (mean((plotAGB_10 - mapAGB)^2) - mean(sdPlot^2)) - mean(sdMap^2, na.rm = TRUE), .groups = 'drop')
+  # Check if sdPlot and sdMap columns exist
+  if (all(c("sdPlot", "sdMap") %in% names(grp2))) {
+    check <- grp2 |>
+      dplyr::group_by(group) |>
+      dplyr::summarise(val = (mean((plotAGB_calc - mapAGB)^2) - mean(sdPlot^2)) - mean(sdMap^2, na.rm = TRUE), .groups = 'drop')
+  } else {
+    # Create dummy check if columns don't exist
+    check <- data.frame(group = msd$group, val = NA)
+  }
 
   plotvar <- grp2 |>
     dplyr::group_by(group) |>
@@ -97,11 +137,11 @@ Accuracy <- function(df = plotsBACC, intervals = 8, dir = resultsFolder, str = '
   lastrow <- data.frame(
     bins = 'total',
     plot_count = sum(df.new$plot_count, na.rm = TRUE),
-    plot = mean(df$plotAGB_10, na.rm = TRUE),
+    plot = mean(df[[plotAGB_col]], na.rm = TRUE),
     map = mean(df$mapAGB, na.rm = TRUE),
-    msd = mean((df$plotAGB_10 - df$mapAGB)^2, na.rm = TRUE),
-    plot_var = mean(df$sdPlot^2, na.rm = TRUE),
-    map_var = mean(df$sdMap^2, na.rm = TRUE)
+    msd = mean((df[[plotAGB_col]] - df$mapAGB)^2, na.rm = TRUE),
+    plot_var = if("sdPlot" %in% names(df)) mean(df$sdPlot^2, na.rm = TRUE) else NA,
+    map_var = if("sdMap" %in% names(df)) mean(df$sdMap^2, na.rm = TRUE) else NA
   )
   lastrow$checker <- (lastrow$msd + lastrow$plot_var) - lastrow$map_var
   df.new <- rbind(df.new, lastrow)
@@ -248,8 +288,4 @@ Accuracy <- function(df = plotsBACC, intervals = 8, dir = resultsFolder, str = '
 #   write.csv(df.new1, paste0(dir,'/acc_',str, '.csv'), row.names = F)
 #   return(df.new1)
 # }
-
-
-
-
 
