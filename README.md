@@ -260,9 +260,15 @@ Plot2Map also provides tools for calculating and incorporating uncertainty in yo
 uncertainty_results <- calculateTotalUncertainty(sampled_plots, 
                                                map_year = 2023,
                                                map_resolution = 100)
+# Calculating tree measurement uncertainty using RF model
+# Calculating sampling uncertainty using Rejou-Mechain approach
+# Using existing growth uncertainty (sdGrowth) values
+# Total uncertainty calculated for plot data of type: point                                               
 
 # Print the uncertainty components
 print(uncertainty_results$uncertainty_components)
+# measurement    sampling      growth 
+#   0.2323145   0.2530749   0.5146106 
 ```
 
 ### Working with Different Plot Types

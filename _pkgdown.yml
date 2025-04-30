@@ -1,0 +1,28 @@
+url: https://atnt.github.io/Plot2Map/
+
+authors:
+  Arnan Araza:
+    href: https://github.com/arnanaraza
+  André Tavares:
+    href: https://github.com/aTnT
+
+citation: |
+  Araza et al., A comprehensive framework for assessing the accuracy and uncertainty
+  of global above-ground biomass maps, Remote Sensing of Environment, Volume 272,
+  2022, 112917, ISSN 0034-4257, https://doi.org/10.1016/j.rse.2022.112917.
+
+template:
+  bootstrap: 5
+  math-rendering: mathjax
+  light-switch: true
+  bslib:
+    primary: "#C9B7A8"
+    border-radius: 0.5rem
+    btn-border-radius: 0.25rem
+    danger: "#004C34"
+    base_font: {google: "Roboto"}
+    heading_font: {google: "Roboto"}
+    code_font: {google: "JetBrains Mono"}
+
+development:
+  mode: auto
