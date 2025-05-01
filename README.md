@@ -20,7 +20,6 @@ devtools::install_github("aTnT/Plot2Map")
 - Validation of global AGB maps
 - Support for custom forest masks
 - Aggregation of results at different spatial scales
-- Visualization tools for results (scatter plots, binned comparisons)
 
 
 ## Usage
@@ -378,10 +377,7 @@ print(accuracy_stats)
 
 ## Vignettes
 
-* Getting started with Plot2Map
 * Plot data preparation
-* Uncertainty quantification
-* Map bias assessment and correction
 
 
 

@@ -25,4 +25,9 @@ template:
       google: JetBrains Mono
 development:
   mode: auto
+  
+destination: docs
+exclude:
+  - "reference/data/"
+  - "**/ESACCI-BIOMASS/"
 
