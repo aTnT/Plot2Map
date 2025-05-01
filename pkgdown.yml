@@ -1,0 +1,10 @@
+pandoc: 3.1.11
+pkgdown: 2.1.2
+pkgdown_sha: ~
+articles:
+  introduction: introduction.html
+  plot-data-preparation: plot-data-preparation.html
+last_built: 2025-05-01T17:40Z
+urls:
+  reference: https://atnt.github.io/Plot2Map/reference
+  article: https://atnt.github.io/Plot2Map/articles
