@@ -44,4 +44,5 @@ Imports:
     terra,
     tidyr,
     units,
-    utils
+    utils,
+    devtools
