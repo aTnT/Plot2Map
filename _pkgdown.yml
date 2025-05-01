@@ -25,9 +25,6 @@ template:
       google: JetBrains Mono
 development:
   mode: auto
-articles:
-  - title: "Articles"
-    contents: 
-      - plot-data-preparation
+
 
 
