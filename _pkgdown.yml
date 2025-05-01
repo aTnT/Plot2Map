@@ -27,10 +27,9 @@ template:
   path: ~
   params:
     ignore:
-      - "reference/data"
-      - "**/ESACCI-BIOMASS"
+    - reference/data
+    - '**/ESACCI-BIOMASS'
 development:
   mode: auto
-
 destination: docs
 
