@@ -28,7 +28,7 @@ A data.frame with the following columns:
 \item{\code{AGB_T_HA}}{Adjusted biomass values for the specified \code{map_year}.}
 \item{\code{AGB_T_HA_ORIG}}{Original biomass values before adjustment.}
 \item{\code{sdGrowth}}{Temporal standard deviation of the biomass adjustment.}
-\item{All other columns from the input \code{plt}.}
+\item{\code{Other}}{All other columns from the input \code{plt}.}
 }
 }
 \description{
