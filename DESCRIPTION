@@ -6,7 +6,7 @@ Authors@R: c(
     person("André", "Tavares", , "andre@skylabanalytics.com", role = c("aut", "cre"))
   )
 Description: Plot2Map is a workflow for automating aboveground biomass plot to map comparison. It filters deforested plots, adjusts plot biomass temporally to align with map years, corrects for forest fraction at support units, and compares adjusted plots with biomass maps. The package handles various support units and incorporates growth increment data for temporal adjustments.
-URL: https://greendata-demo.s3.eu-north-1.amazonaws.com/docs/index.html
+URL: https://aTnT.github.io/Plot2Map/
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
