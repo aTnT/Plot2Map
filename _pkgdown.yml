@@ -1,4 +1,4 @@
-url: https://aTnT.github.io/Plot2Map/
+url: https://atnt.github.io/Plot2Map/
 authors:
   Arnan Araza:
     href: https://github.com/arnanaraza
@@ -25,6 +25,4 @@ template:
       google: JetBrains Mono
 development:
   mode: auto
-
-
 
