@@ -1,4 +1,4 @@
-url: https://aTnT.github.io/Plot2Map/
+url: https://atnt.github.io/Plot2Map/
 authors:
   Arnan Araza:
     href: https://github.com/arnanaraza
@@ -23,11 +23,14 @@ template:
       google: Roboto
     code_font:
       google: JetBrains Mono
+  assets: []
+  path: ~
+  params:
+    ignore:
+      - "reference/data"
+      - "**/ESACCI-BIOMASS"
 development:
   mode: auto
-  
+
 destination: docs
-exclude:
-  - "reference/data/"
-  - "**/ESACCI-BIOMASS/"
 
