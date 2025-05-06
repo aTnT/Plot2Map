@@ -89,25 +89,29 @@ of the changes in AGB distribution.</p>
 <span class="r-in"><span><span class="va">sample_plots</span> <span class="op">&lt;-</span> <span class="va">plots</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">plots</span><span class="op">)</span>, <span class="fl">10</span><span class="op">)</span>, <span class="op">]</span></span></span>
 <span class="r-in"><span><span class="va">sample_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="BiomePair.html">BiomePair</a></span><span class="op">(</span><span class="va">sample_plots</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sample_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="TempApply.html">TempApply</a></span><span class="op">(</span><span class="va">sample_plots</span>, <span class="fl">2004</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>file("") only supports open = "w+" and open = "w+b": using the former</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in read.table(file = file, header = header, sep = sep, quote = quote,     dec = dec, fill = fill, comment.char = comment.char, ...):</span> no lines available in input</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Growth rates applied correspondingly per eco-region.</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sample_plots</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   PLOT_ID AGB_T_HA AVG_YEAR SIZE_HA    POINT_X   POINT_Y      ZONE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1    AUS1 53.69000     2004   0.160 145.868368 -20.69546 Australia</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2     EU1 67.79700     2008   0.015  15.218726  59.81792    Europe</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3     EU2 87.87177     2001   0.196   1.305915  42.59214    Europe</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4     EU2 94.59592     2007   0.196  -7.182390  37.34714    Europe</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5     EU2 45.56841     2007   0.196  -7.216243  37.34765    Europe</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6     EU2 58.63558     2006   0.196  -1.066234  39.61600    Europe</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 FAO.ecozone         GEZ</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1        Tropical shrubland    Tropical</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2  Boreal coniferous forest      Boreal</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Temperate mountain system   Temperate</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4    Subtropical dry forest Subtropical</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5    Subtropical dry forest Subtropical</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6    Subtropical dry forest Subtropical</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   PLOT_ID AGB_T_HA AVG_YEAR SIZE_HA   POINT_X  POINT_Y   ZONE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1     EU2 97.17177     2001   0.196  1.305915 42.59214 Europe</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2     EU2 62.49786     2000   0.196 -3.988935 40.33963 Europe</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3     EU2 57.64102     2003   0.196 -2.707056 42.68534 Europe</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4     EU1 63.39700     2008   0.015 15.218726 59.81792 Europe</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5     EU2 82.59592     2007   0.196 -7.182390 37.34714 Europe</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6     EU2 33.56841     2007   0.196 -7.216243 37.34765 Europe</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   FAO.ecozone         GEZ AGB_T_HA_ORIG</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   Temperate mountain system   Temperate      87.87177</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2      Subtropical dry forest Subtropical      46.49786</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Subtropical mountain system Subtropical      55.14102</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4    Boreal coniferous forest      Boreal      67.79700</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5      Subtropical dry forest Subtropical      94.59592</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6      Subtropical dry forest Subtropical      45.56841</span>
 <span class="r-in"><span><span class="fu">HistoShift</span><span class="op">(</span><span class="va">sample_plots</span>, <span class="fl">2004</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in `$&lt;-.data.frame`(`*tmp*`, "AGB_T_HA_ORIG", value = logical(0)):</span> replacement has 0 rows, data has 10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   agb_Mgha_bins n_pre n_post agb_Mgha_pre agb_Mgha_post</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1       (20,40]     1      2     37.31206      35.44024</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2       (40,60]     5      3     51.90657      53.98887</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3       (60,80]     1      2     67.79700      62.94743</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4      (80,100]     2      2     91.23385      89.88385</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5     (140,160]     1      1    150.97321     150.97321</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

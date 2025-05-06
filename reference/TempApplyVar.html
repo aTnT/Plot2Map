@@ -117,10 +117,21 @@ from <span class="pkg">Plot2Map</span> is used.</p></dd>
 <span class="r-in"><span>  <span class="va">sample_plots</span> <span class="op">&lt;-</span> <span class="va">plots</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">plots</span><span class="op">)</span>, <span class="fl">10</span><span class="op">)</span>, <span class="op">]</span></span></span>
 <span class="r-in"><span>  <span class="va">sample_plots_gez</span> <span class="op">&lt;-</span> <span class="fu"><a href="BiomePair.html">BiomePair</a></span><span class="op">(</span><span class="va">sample_plots</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">TempApplyVar</span><span class="op">(</span><span class="va">sample_plots_gez</span>, map_year <span class="op">=</span> <span class="fl">2004</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot open file 'data/GR_Uniques.csv': No such file or directory</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in file(file, "rt"):</span> cannot open the connection</span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'x' in selecting a method for function 'head': object 'result' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   PLOT_ID AGB_T_HA AVG_YEAR SIZE_HA   POINT_X  POINT_Y   ZONE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1     EU2 97.17177     2001   0.196  1.305915 42.59214 Europe</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2     EU2 62.49786     2000   0.196 -3.988935 40.33963 Europe</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3     EU2 57.64102     2003   0.196 -2.707056 42.68534 Europe</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4     EU1 63.39700     2008   0.015 15.218726 59.81792 Europe</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5     EU2 82.59592     2007   0.196 -7.182390 37.34714 Europe</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6     EU2 33.56841     2007   0.196 -7.216243 37.34765 Europe</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   FAO.ecozone         GEZ AGB_T_HA_ORIG sdGrowth</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   Temperate mountain system   Temperate      87.87177      9.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2      Subtropical dry forest Subtropical      46.49786     16.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Subtropical mountain system Subtropical      55.14102      2.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4    Boreal coniferous forest      Boreal      67.79700      4.4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5      Subtropical dry forest Subtropical      94.59592     12.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6      Subtropical dry forest Subtropical      45.56841     12.0</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
