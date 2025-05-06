@@ -375,7 +375,6 @@ calculateTotalUncertainty <- function(plot_data, map_year, map_resolution = 100,
       if (!requireNamespace("ranger", quietly = TRUE)) {
         stop("The ranger package is required but not installed. Please install it with: install.packages('ranger')")
       }
-
       # Load RF model from package data
       rf1_path <- sample_file("rf1.RData")
       if (!file.exists(rf1_path)) {
@@ -427,7 +426,6 @@ calculateTotalUncertainty <- function(plot_data, map_year, map_resolution = 100,
 
     # Try to load sampling error model
     rfSE <- NULL
-
     # First check if ranger is available
     if (!requireNamespace("ranger", quietly = TRUE)) {
       stop("The ranger package is required but not installed. Please install it with: install.packages('ranger')")
@@ -443,12 +441,10 @@ calculateTotalUncertainty <- function(plot_data, map_year, map_resolution = 100,
         rfSE <- NULL
       }
     }
-
     # If no valid model exists, create a new one from the data
     if (is.null(rfSE)) {
       # Use provided se_data if available, otherwise load from file
       se <- NULL
-
       if (!is.null(se_data)) {
         # Use provided sampling error data
         message("Using provided sampling error data")
@@ -460,7 +456,6 @@ calculateTotalUncertainty <- function(plot_data, map_year, map_resolution = 100,
         if (!file.exists(se_file)) {
           stop("Sampling error data file 'se.csv' not found in package data. Please ensure the package is properly installed.")
         }
-
         # Load data from file
         tryCatch({
           se <- read.csv(se_file)
@@ -468,7 +463,6 @@ calculateTotalUncertainty <- function(plot_data, map_year, map_resolution = 100,
           stop(paste("Error reading sampling error data file:", e$message))
         })
       }
-
       # Verify and use the data
       tryCatch({
         # Verify the data has the required columns
@@ -495,7 +489,6 @@ calculateTotalUncertainty <- function(plot_data, map_year, map_resolution = 100,
     tryCatch({
       # Ensure we have valid data for prediction
       pred_data <- plot_data[, c('SIZE_HA', 'RS_HA', 'ratio')]
-
       # Check for NA or invalid values in prediction data
       if (any(is.na(pred_data))) {
         warning("NA values found in size ratio data. These will produce NA predictions.")
@@ -557,12 +550,10 @@ calculateTotalUncertainty <- function(plot_data, map_year, map_resolution = 100,
   # 4. Calculate total uncertainty with careful NA handling
   # Check for NA values in any component before calculating varPlot
   has_na_components <- is.na(plot_data$sdTree) | is.na(plot_data$sdSE) | is.na(plot_data$sdGrowth)
-
   if (any(has_na_components)) {
     warning(paste("Found", sum(has_na_components), "rows with NA in uncertainty components.",
                  "These will result in NA varPlot values."))
   }
-
   # Calculate variance and total standard deviation
   plot_data$varPlot <- plot_data$sdTree^2 + plot_data$sdSE^2 + plot_data$sdGrowth^2
   plot_data$sdTotal <- sqrt(plot_data$varPlot)
