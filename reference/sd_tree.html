@@ -182,10 +182,19 @@ set to 'World', but you can restrict the WD estimates to a single region :</p><u
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5 BSP1 14.36806 74.91944</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6 BSP1 14.36806 74.91944</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">plot_uncertainties</span> <span class="op">&lt;-</span> <span class="fu">MeasurementErr</span><span class="op">(</span><span class="va">plotsTree</span>, <span class="va">xyTree</span>, region <span class="op">=</span> <span class="st">"India"</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in MeasurementErr(plotsTree, xyTree, region = "India"):</span> could not find function "MeasurementErr"</span>
+<span class="r-in"><span><span class="va">plot_uncertainties</span> <span class="op">&lt;-</span> <span class="fu">sd_tree</span><span class="op">(</span><span class="va">plotsTree</span>, <span class="va">xyTree</span>, region <span class="op">=</span> <span class="st">"India"</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>DRYAD data only stored 289 wood density values in your region of interest. You could provide additional wood densities (parameter addWoodDensityData) or widen your region (region="World")</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> The reference dataset contains 289 wood density values</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Your taxonomic table contains 340 taxa</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> No tree height data found in original plot data. Calculating height using BIOMASS height-diameter model.</span>
 <span class="r-in"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">plot_uncertainties</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'x' in selecting a method for function 'head': object 'plot_uncertainties' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   PLOT_ID  POINT_X  POINT_Y SIZE_HA AVG_YEAR  AGB_T_HA    sdTree</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1    BSP1 74.91944 14.36806       1     1996 158.11926  9.800847</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   BSP10 74.69861 14.94722       1     1996 417.99472 22.585124</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  BSP100 75.82000 13.54722       1     1996  41.25254  3.934893</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  BSP101 75.43444 13.72639       1     1996 348.63751 38.003134</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  BSP102 74.88833 13.92361       1     1996 516.82368 39.705160</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  BSP104 74.90917 13.87000       1     1996 700.53039 74.854013</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

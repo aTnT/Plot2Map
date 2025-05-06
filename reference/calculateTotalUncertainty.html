@@ -73,36 +73,56 @@ and calculates missing components as needed.</p>
 
 
 <dl><dt id="arg-plot-data">plot_data<a class="anchor" aria-label="anchor" href="#arg-plot-data"></a></dt>
-<dd><p>A data frame containing plot data</p></dd>
+<dd><p>A data frame containing plot data. Required columns:</p><ul><li><p><code>PLOT_ID</code> - Plot identifier</p></li>
+<li><p><code>AGB_T_HA</code> - Above-ground biomass in tons per hectare</p></li>
+<li><p><code>SIZE_HA</code> - Plot size in hectares</p></li>
+<li><p><code>GEZ</code> - Global ecological zone (e.g., "Tropical", "Temperate", "Boreal", "Subtropical")</p></li>
+</ul><p>Additional columns required when <code>biome_info=TRUE</code>:</p><ul><li><p><code>ZONE</code> - Continental zone (e.g., "Europe", "Asia", "Africa")</p></li>
+<li><p><code>AVG_YEAR</code> - Year of plot measurement for temporal adjustment</p></li>
+</ul><p>If <code>sdTree</code>, <code>sdSE</code>, or <code>sdGrowth</code> columns exist, they will be preserved.</p></dd>
 
 
 <dt id="arg-map-year">map_year<a class="anchor" aria-label="anchor" href="#arg-map-year"></a></dt>
-<dd><p>Numeric value indicating the map year for temporal adjustment</p></dd>
+<dd><p>Numeric value indicating the map year for temporal adjustment. This is used
+to calculate growth uncertainty based on the time difference between plot measurement and map production.</p></dd>
 
 
 <dt id="arg-map-resolution">map_resolution<a class="anchor" aria-label="anchor" href="#arg-map-resolution"></a></dt>
-<dd><p>Numeric value indicating the map resolution in meters (default: 100)</p></dd>
+<dd><p>Numeric value indicating the map resolution in meters (default: 100).
+This affects sampling error calculations based on the difference between plot size and pixel size.</p></dd>
 
 
 <dt id="arg-biome-info">biome_info<a class="anchor" aria-label="anchor" href="#arg-biome-info"></a></dt>
-<dd><p>Logical indicating whether to use biome information for growth uncertainty (default: TRUE)</p></dd>
+<dd><p>Logical indicating whether to use biome information (GEZ column) for growth uncertainty
+calculation (default: TRUE). When TRUE, the function uses TempVar which requires 'ZONE', 'GEZ', and 'AVG_YEAR'
+columns to be present in the plot_data. If FALSE, the function requires that <code>sdGrowth</code> column
+be provided in the input data.</p></dd>
 
 
 <dt id="arg-se-data">se_data<a class="anchor" aria-label="anchor" href="#arg-se-data"></a></dt>
 <dd><p>Optional data frame with sampling error data that can be used instead of loading se.csv.
-Must contain columns: 'SIZE_HA', 'RS_HA', 'ratio', and 'cv'.</p></dd>
+Must contain columns:</p><ul><li><p><code>SIZE_HA</code> - Plot size in hectares</p></li>
+<li><p><code>RS_HA</code> - Pixel resolution in hectares</p></li>
+<li><p><code>ratio</code> - Ratio of plot size to pixel size</p></li>
+<li><p><code>cv</code> - Coefficient of variation (percent)</p></li>
+</ul></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list containing:</p><dl><dt>data</dt>
-<dd><p>The plot data with calculated uncertainty components</p></dd>
+<dd><p>The input plot data with additional uncertainty columns:</p><ul><li><p><code>sdTree</code> - Standard deviation from measurement error</p></li>
+<li><p><code>sdSE</code> - Standard deviation from sampling error</p></li>
+<li><p><code>sdGrowth</code> - Standard deviation from growth/temporal uncertainty</p></li>
+<li><p><code>varPlot</code> - Total variance (sum of squared standard deviations)</p></li>
+<li><p><code>sdTotal</code> - Total standard deviation (square root of varPlot)</p></li>
+</ul></dd>
 
 <dt>plot_type</dt>
-<dd><p>The detected plot data type</p></dd>
+<dd><p>The detected plot data type: "tree_level", "point", "polygon", "nested", or "lidar"</p></dd>
 
 <dt>uncertainty_components</dt>
-<dd><p>The relative contribution of each uncertainty component</p></dd>
+<dd><p>The relative contribution of each uncertainty component as a proportion of the total variance</p></dd>
 
 
 </dl></div>
@@ -119,72 +139,151 @@ and map production year, using growth rates specific to each ecological zone.</p
 $$varPlot = sdTree^2 + sdSE^2 + sdGrowth^2$$
 $$sdTotal = \sqrt{varPlot}$$</p>
     </div>
+    <div class="section level2">
+    <h2 id="calculation-process">Calculation Process<a class="anchor" aria-label="anchor" href="#calculation-process"></a></h2>
+
+
+
+<div class="section">
+<h3 id="step-measurement-error-sdtree-">Step 1: Measurement Error (sdTree)<a class="anchor" aria-label="anchor" href="#step-measurement-error-sdtree-"></a></h3>
+
+<ul><li><p><strong>For tree-level data</strong>: Uses BIOMASS package Monte Carlo simulations that account for wood density
+uncertainty, diameter measurement errors, and allometric model errors.</p></li>
+<li><p><strong>For plot-level data</strong>: Uses a random forest model trained on thousands of plots across biomes to
+predict measurement uncertainty based on plot AGB, plot size, and ecological zone.</p></li>
+<li><p>If a pre-existing sdTree column exists, its values are preserved.</p></li>
+</ul></div>
+
+<div class="section">
+<h3 id="step-sampling-error-sdse-">Step 2: Sampling Error (sdSE)<a class="anchor" aria-label="anchor" href="#step-sampling-error-sdse-"></a></h3>
+
+<ul><li><p>Uses a random forest model trained on geo-simulation data that relates plot-to-pixel size ratios to
+coefficient of variation.</p></li>
+<li><p>The model considers the relationship between plot size (SIZE_HA), remote sensing pixel size (RS_HA),
+and their ratio.</p></li>
+<li><p>The resulting coefficient of variation is converted to standard deviation by multiplying by mean AGB.</p></li>
+<li><p>Custom sampling error data can be provided through the <code>se_data</code> parameter.</p></li>
+</ul></div>
+
+<div class="section">
+<h3 id="step-growth-uncertainty-sdgrowth-">Step 3: Growth Uncertainty (sdGrowth)<a class="anchor" aria-label="anchor" href="#step-growth-uncertainty-sdgrowth-"></a></h3>
+
+<ul><li><p>If <code>biome_info = TRUE</code>, uses biome-specific growth rates and uncertainty from the TempVar function.</p></li>
+<li><p>The function considers the time difference between plot measurement year (AVG_YEAR) and map year.</p></li>
+<li><p>Each ecological zone (GEZ) is processed separately to apply biome-specific growth rates.</p></li>
+<li><p>If biome information isn't available or <code>biome_info = FALSE</code>, the function requires that <code>sdGrowth</code> column be provided in the input data.</p></li>
+</ul></div>
+
+<div class="section">
+<h3 id="step-total-uncertainty">Step 4: Total Uncertainty<a class="anchor" aria-label="anchor" href="#step-total-uncertainty"></a></h3>
+
+<ul><li><p>Combines all uncertainty components by summing their variances: <code>varPlot = sdTree^2 + sdSE^2 + sdGrowth^2</code></p></li>
+<li><p>Calculates total standard deviation as <code>sdTotal = sqrt(varPlot)</code></p></li>
+<li><p>Reports the relative contribution of each component to the total variance.</p></li>
+</ul></div>
+
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Create a sample dataset of 10 plots:</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">sampled_plots</span> <span class="op">&lt;-</span> <span class="va">plots</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">plots</span><span class="op">)</span>, <span class="fl">10</span><span class="op">)</span>, <span class="op">]</span></span></span>
-<span class="r-in"><span><span class="co"># For non-tree level data</span></span></span>
-<span class="r-in"><span><span class="va">sampled_plots2</span> <span class="op">&lt;-</span> <span class="fu"><a href="BiomePair.html">BiomePair</a></span><span class="op">(</span><span class="va">sampled_plots</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sampled_plots2</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA     POINT_X   POINT_Y      ZONE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1     AUS1  53.69000     2004   0.160 145.8683679 -20.69546 Australia</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2      EU1  67.79700     2008   0.015  15.2187262  59.81792    Europe</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3      EU2  87.87177     2001   0.196   1.3059145  42.59214    Europe</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4      EU2  94.59592     2007   0.196  -7.1823899  37.34714    Europe</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5      EU2  45.56841     2007   0.196  -7.2162433  37.34765    Europe</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6      EU2  58.63558     2006   0.196  -1.0662342  39.61600    Europe</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7      EU2  37.31206     2004   0.196  -5.1210978  40.02713    Europe</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8      EU2  46.49786     2000   0.196  -3.9889352  40.33963    Europe</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9      EU2 150.97321     2004   0.196  -0.1585048  42.63245    Europe</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10     EU2  55.14102     2003   0.196  -2.7070556  42.68534    Europe</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                    FAO.ecozone         GEZ</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1           Tropical shrubland    Tropical</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2     Boreal coniferous forest      Boreal</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3    Temperate mountain system   Temperate</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4       Subtropical dry forest Subtropical</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5       Subtropical dry forest Subtropical</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6       Subtropical dry forest Subtropical</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7       Subtropical dry forest Subtropical</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8       Subtropical dry forest Subtropical</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9    Temperate mountain system   Temperate</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10 Subtropical mountain system Subtropical</span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Example 1: Using existing plot data</span></span></span>
+<span class="r-in"><span><span class="co"># First load the sample plots dataset included with the package</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">plots</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">uncertainty_results</span> <span class="op">&lt;-</span> <span class="fu">calculateTotalUncertainty</span><span class="op">(</span><span class="va">sampled_plots2</span>, <span class="fl">2020</span>, <span class="fl">100</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Create a subset of plots for demonstration</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sample_plots</span> <span class="op">&lt;-</span> <span class="va">plots</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">plots</span><span class="op">)</span>, <span class="fl">5</span><span class="op">)</span>, <span class="op">]</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Add biome information (required for uncertainty calculation)</span></span></span>
+<span class="r-in"><span><span class="va">sample_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="BiomePair.html">BiomePair</a></span><span class="op">(</span><span class="va">sample_plots</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Apply TempApplyVar to adjust biomass to map year and calculate temporal variance</span></span></span>
+<span class="r-in"><span><span class="va">sample_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="TempApplyVar.html">TempApplyVar</a></span><span class="op">(</span><span class="va">sample_plots</span>, map_year <span class="op">=</span> <span class="fl">2020</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot open file 'data/GR_Uniques.csv': No such file or directory</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in file(file, "rt"):</span> cannot open the connection</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Calculate total uncertainty components for map year 2020</span></span></span>
+<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">calculateTotalUncertainty</span><span class="op">(</span><span class="va">sample_plots</span>, map_year <span class="op">=</span> <span class="fl">2020</span>, map_resolution <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating tree measurement uncertainty using RF model</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating sampling uncertainty using Rejou-Mechain approach</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Loading sampling error data from package file</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating growth uncertainty by biome</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>file("") only supports open = "w+" and open = "w+b": using the former</span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in read.table(file = file, header = header, sep = sep, quote = quote,     dec = dec, fill = fill, comment.char = comment.char, ...):</span> no lines available in input</span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">uncertainty_results</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'uncertainty_results' not found</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># For tree-level data with sdTree already calculated</span></span></span>
-<span class="r-in"><span><span class="va">plots_tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="sd_tree.html">sd_tree</a></span><span class="op">(</span><span class="va">plotTree</span>, <span class="va">xyTree</span>, <span class="st">"Asia"</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'x' in selecting a method for function 'subset': object 'plotTree' not found</span>
-<span class="r-in"><span><span class="va">uncertainty_results</span> <span class="op">&lt;-</span> <span class="fu">calculateTotalUncertainty</span><span class="op">(</span><span class="va">plots_tree</span>, <span class="fl">2020</span>, <span class="fl">100</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'plots_tree' not found</span>
+<span class="r-in"><span><span class="co"># View the results</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">data</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'x' in selecting a method for function 'head': object 'result' not found</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Using custom sampling error data</span></span></span>
-<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Create custom sampling error data</span></span></span>
+<span class="r-in"><span><span class="co"># See the relative contribution of each uncertainty component</span></span></span>
+<span class="r-in"><span><span class="va">result</span><span class="op">$</span><span class="va">uncertainty_components</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'result' not found</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example 2: Working with data that already has measurement uncertainty</span></span></span>
+<span class="r-in"><span><span class="co"># First process tree-level data to get measurement uncertainty</span></span></span>
+<span class="r-in"><span><span class="co"># Load sample tree data</span></span></span>
+<span class="r-in"><span><span class="va">tree_data</span> <span class="op">&lt;-</span> <span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="sample_file.html">sample_file</a></span><span class="op">(</span><span class="st">"SampleTree.csv"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">tree_locations</span> <span class="op">&lt;-</span> <span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="sample_file.html">sample_file</a></span><span class="op">(</span><span class="st">"SampleTreeXY.csv"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Calculate AGB and measurement uncertainty</span></span></span>
+<span class="r-in"><span><span class="va">tree_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="sd_tree.html">sd_tree</a></span><span class="op">(</span><span class="va">tree_data</span>, <span class="va">tree_locations</span>, region <span class="op">=</span> <span class="st">"World"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> The reference dataset contains 16467 wood density values</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Your taxonomic table contains 340 taxa</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> No tree height data found in original plot data. Calculating height using BIOMASS height-diameter model.</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Add required biome information</span></span></span>
+<span class="r-in"><span><span class="va">tree_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="BiomePair.html">BiomePair</a></span><span class="op">(</span><span class="va">tree_results</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Calculate total uncertainty with tree data</span></span></span>
+<span class="r-in"><span><span class="va">tree_uncertainty</span> <span class="op">&lt;-</span> <span class="fu">calculateTotalUncertainty</span><span class="op">(</span><span class="va">tree_results</span>, map_year <span class="op">=</span> <span class="fl">2020</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Using existing sdTree values for tree_level data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating sampling uncertainty using Rejou-Mechain approach</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading sampling error data from package file</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating growth uncertainty by biome</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>file("") only supports open = "w+" and open = "w+b": using the former</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in read.table(file = file, header = header, sep = sep, quote = quote,     dec = dec, fill = fill, comment.char = comment.char, ...):</span> no lines available in input</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example 3: Using custom sampling error data</span></span></span>
+<span class="r-in"><span><span class="co"># Create custom sampling error data (coefficient of variation by plot/pixel size ratio)</span></span></span>
 <span class="r-in"><span><span class="va">custom_se_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  SIZE_HA <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">1.0</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  RS_HA <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  ratio <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">1.0</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  cv <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">15</span>, <span class="fl">10</span>, <span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  SIZE_HA <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">1.0</span><span class="op">)</span>,  <span class="co"># Plot sizes in hectares</span></span></span>
+<span class="r-in"><span>  RS_HA <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span>,            <span class="co"># Remote sensing pixel size in hectares</span></span></span>
+<span class="r-in"><span>  ratio <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">1.0</span><span class="op">)</span>,   <span class="co"># Ratio of plot size to pixel size</span></span></span>
+<span class="r-in"><span>  cv <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">15</span>, <span class="fl">10</span>, <span class="fl">5</span><span class="op">)</span>             <span class="co"># Coefficient of variation (%)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Use custom data instead of loading from file</span></span></span>
-<span class="r-in"><span><span class="va">uncertainty_results</span> <span class="op">&lt;-</span> <span class="fu">calculateTotalUncertainty</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="va">sampled_plots2</span>, </span></span>
-<span class="r-in"><span>  map_year <span class="op">=</span> <span class="fl">2020</span>, </span></span>
+<span class="r-in"><span><span class="co"># Calculate uncertainty using custom sampling error model</span></span></span>
+<span class="r-in"><span><span class="va">custom_result</span> <span class="op">&lt;-</span> <span class="fu">calculateTotalUncertainty</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">sample_plots</span>,</span></span>
+<span class="r-in"><span>  map_year <span class="op">=</span> <span class="fl">2020</span>,</span></span>
 <span class="r-in"><span>  map_resolution <span class="op">=</span> <span class="fl">100</span>,</span></span>
 <span class="r-in"><span>  se_data <span class="op">=</span> <span class="va">custom_se_data</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating tree measurement uncertainty using RF model</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating sampling uncertainty using Rejou-Mechain approach</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Using provided sampling error data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating growth uncertainty by biome</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>file("") only supports open = "w+" and open = "w+b": using the former</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in read.table(file = file, header = header, sep = sep, quote = quote,     dec = dec, fill = fill, comment.char = comment.char, ...):</span> no lines available in input</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example 4: Using manual growth uncertainty values</span></span></span>
+<span class="r-in"><span><span class="co"># First, prepare data with manual sdGrowth values</span></span></span>
+<span class="r-in"><span><span class="va">manual_growth_plots</span> <span class="op">&lt;-</span> <span class="va">sample_plots</span></span></span>
+<span class="r-in"><span><span class="co"># Add manual growth uncertainty of 7% of AGB</span></span></span>
+<span class="r-in"><span><span class="va">manual_growth_plots</span><span class="op">$</span><span class="va">sdGrowth</span> <span class="op">&lt;-</span> <span class="va">manual_growth_plots</span><span class="op">$</span><span class="va">AGB_T_HA</span> <span class="op">*</span> <span class="fl">0.07</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Now calculate uncertainty with biome_info = FALSE</span></span></span>
+<span class="r-in"><span><span class="va">simple_result</span> <span class="op">&lt;-</span> <span class="fu">calculateTotalUncertainty</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">manual_growth_plots</span>,</span></span>
+<span class="r-in"><span>  map_year <span class="op">=</span> <span class="fl">2020</span>,</span></span>
+<span class="r-in"><span>  map_resolution <span class="op">=</span> <span class="fl">100</span>,</span></span>
+<span class="r-in"><span>  biome_info <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating tree measurement uncertainty using RF model</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Calculating sampling uncertainty using Rejou-Mechain approach</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading sampling error data from package file</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Using existing growth uncertainty (sdGrowth) values</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Total uncertainty calculated for plot data of type: point</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
