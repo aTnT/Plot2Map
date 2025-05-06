@@ -44,7 +44,7 @@ TempApply <- function(plt, map_year, gez = "all") {
   plt <- check_and_convert_plt(plt, ez=TRUE)
 
   # Read growth rate data and enforce data structure:
-  gr <- read.csv(system.file(file.path("data", "GR_Uniques.csv"), package = "Plot2Map"))
+  gr <- read.csv(sample_file("GR_Uniques.csv"))
   gr$GEZ <- as.character(gr$GEZ)
   gr$ZONE <- as.character(gr$ZONE)
   gr$FAO.ecozone <- as.character(gr$FAO.ecozone)
@@ -157,7 +157,7 @@ TempVar <- function(plt, map_year, gez = "all") {
   plt <- check_and_convert_plt(plt, ez=TRUE)
 
   # Read growth rate data and enforce data structure:
-  gr <- read.csv(system.file(file.path("data", "GR_SD.csv"), package = "Plot2Map"))
+  gr <- read.csv(sample_file("GR_SD.csv"))
   gr$GEZ <- as.character(gr$GEZ)
   gr$ZONE <- as.character(gr$ZONE)
   gr$FAO.ecozone <- as.character(gr$FAO.ecozone)

@@ -34,9 +34,9 @@ BiomePair <- function(plt) {
   # Convert input to terra vector
   plots0 <- terra::vect(plt, geom = c("POINT_X", "POINT_Y"))
 
-  # Load pre-processed shapefiles
-  li <- terra::vect(system.file(file.path("data", "eco_zone.shp"), package="Plot2Map"))
-  re <- terra::vect(system.file(file.path("data", "world_region.shp"), package="Plot2Map"))
+  # Load pre-processed shapefiles using sample_file function
+  li <- terra::vect(sample_file("eco_zone.shp"))
+  re <- terra::vect(sample_file("world_region.shp"))
 
   # # Prepare points for intersection
   p <- plots0

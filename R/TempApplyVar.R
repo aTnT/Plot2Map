@@ -41,18 +41,12 @@ TempApplyVar <- function(plt, map_year, gez = "all", gr = NULL, sds = NULL) {
 
   # Load growth rates
   if (is.null(gr)) {
-    path_gr <- system.file("data", "GR_Uniques.csv", package = "Plot2Map")
-    if (!file.exists(path_gr) || path_gr == "") {
-      path_gr <- file.path("data", "GR_Uniques.csv")
-    }
+    path_gr <- sample_file("GR_Uniques.csv")
     gr <- utils::read.csv(path_gr, stringsAsFactors = FALSE)
   }
   # Load growth SDs
   if (is.null(sds)) {
-    path_sd <- system.file("data", "GR_SD.csv", package = "Plot2Map")
-    if (!file.exists(path_sd) || path_sd == "") {
-      path_sd <- file.path("data", "GR_SD.csv")
-    }
+    path_sd <- sample_file("GR_SD.csv")
     sds <- utils::read.csv(path_sd, stringsAsFactors = FALSE)
   }
   # Ensure key columns are character
