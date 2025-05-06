@@ -81,7 +81,7 @@ head(plotsTree)
 xyTree <- utils::read.csv(sample_file("SampleTreeXY.csv"))
 head(xyTree)
 
-plot_uncertainties <- MeasurementErr(plotsTree, xyTree, region = "India")
+plot_uncertainties <- sd_tree(plotsTree, xyTree, region = "India")
 head(plot_uncertainties)
 
 }

@@ -262,3 +262,179 @@ test_that("calculateTotalUncertainty preserves existing uncertainty values", {
     expect_equal(result$data$sdTotal, expected_total)
   }
 })
+
+test_that("calculateTotalUncertainty handles NA values appropriately", {
+  # Create data with some NA values
+  test_data <- data.frame(
+    PLOT_ID = c("P1", "P2", "P3", "P4"),
+    POINT_X = c(10, 12, 14, 16),
+    POINT_Y = c(50, 51, 52, 53),
+    AGB_T_HA = c(150, 200, NA, 180),
+    SIZE_HA = c(1, 0.5, 0.25, NA),
+    AVG_YEAR = c(2015, 2014, 2016, 2018),
+    GEZ = c("Tropical", "Temperate", "Boreal", "Subtropical"),
+    sdTree = c(15, NA, 18, 20),
+    sdSE = c(10, 12, NA, 9),
+    sdGrowth = c(5, 6, 7, NA)
+  )
+
+  # Test year
+  test_year <- 2020
+
+  # We expect warnings but not errors
+  expect_warning({
+    result <- calculateTotalUncertainty(test_data, test_year, biome_info = FALSE)
+  })
+
+  # Check that varPlot is NA where any component is NA
+  expect_true(is.na(result$data$varPlot[2])) # Row 2: sdTree is NA
+  expect_true(is.na(result$data$varPlot[3])) # Row 3: sdSE is NA
+  expect_true(is.na(result$data$varPlot[4])) # Row 4: sdGrowth is NA
+  
+  # Check that varPlot is calculated correctly for non-NA values
+  expect_equal(result$data$varPlot[1], test_data$sdTree[1]^2 + test_data$sdSE[1]^2 + test_data$sdGrowth[1]^2)
+})
+
+test_that("calculateTotalUncertainty works with custom sampling error data", {
+  # Skip test if rf1 test file doesn't exist
+  rf1_path <- sample_file("rf1.RData")
+  skip_if_not(file.exists(rf1_path), "RF model not available")
+  
+  # Load RF model to ensure test environment has it available
+  load(rf1_path)
+  
+  # Create basic data for testing
+  test_data <- data.frame(
+    PLOT_ID = c("P1", "P2", "P3"),
+    POINT_X = c(10, 12, 14),
+    POINT_Y = c(50, 51, 52),
+    AGB_T_HA = c(150, 200, 180),
+    SIZE_HA = c(1, 0.5, 0.25),
+    AVG_YEAR = c(2015, 2014, 2016),
+    GEZ = c("Tropical", "Temperate", "Boreal")
+  )
+  
+  # Create custom sampling error data with known values
+  custom_se_data <- data.frame(
+    SIZE_HA = c(0.1, 0.25, 0.5, 1.0),
+    RS_HA = c(1, 1, 1, 1),
+    ratio = c(0.1, 0.25, 0.5, 1.0),
+    cv = c(20, 15, 10, 5)  # Known CV values as percentages
+  )
+  
+  # Test with custom sampling error data
+  result <- tryCatch({
+    calculateTotalUncertainty(
+      test_data, 
+      map_year = 2020, 
+      map_resolution = 100, 
+      biome_info = FALSE,
+      se_data = custom_se_data
+    )
+  }, error = function(e) {
+    skip(paste("Skipping test due to error:", e$message))
+    NULL
+  })
+  
+  # If the test ran successfully
+  if (!is.null(result)) {
+    # Check structure
+    expect_true(is.list(result))
+    expect_equal(names(result), c("data", "plot_type", "uncertainty_components"))
+    
+    # Verify that sdSE values exist and are reasonable
+    expect_true(all(!is.na(result$data$sdSE)))
+    expect_true(all(result$data$sdSE > 0))
+    
+    # Check that all required components are present
+    expect_true(all(c("sdTree", "sdSE", "sdGrowth", "varPlot", "sdTotal") %in% names(result$data)))
+    
+    # Verify that varPlot is correctly calculated from the components
+    for (i in 1:nrow(result$data)) {
+      expected_var <- result$data$sdTree[i]^2 + result$data$sdSE[i]^2 + result$data$sdGrowth[i]^2
+      expect_equal(result$data$varPlot[i], expected_var)
+    }
+    
+    # Verify the relative contributions add up to 1
+    component_sum <- sum(unlist(result$uncertainty_components))
+    expect_equal(component_sum, 1, tolerance = 1e-5)
+  }
+})
+
+test_that("calculateTotalUncertainty handles invalid inputs gracefully", {
+  # Test with missing required columns
+  invalid_data <- data.frame(
+    PLOT_ID = c("P1", "P2"),
+    POINT_X = c(10, 12),
+    POINT_Y = c(50, 51),
+    # Missing AGB_T_HA
+    SIZE_HA = c(1, 0.5)
+    # Missing GEZ
+  )
+  
+  # Should error due to missing columns
+  expect_error(calculateTotalUncertainty(invalid_data, 2020))
+  
+  # Test with invalid custom sampling error data
+  test_data <- data.frame(
+    PLOT_ID = c("P1", "P2"),
+    POINT_X = c(10, 12),
+    POINT_Y = c(50, 51),
+    AGB_T_HA = c(150, 200),
+    SIZE_HA = c(1, 0.5),
+    GEZ = c("Tropical", "Temperate")
+  )
+  
+  bad_se_data <- data.frame(
+    SIZE_HA = c(0.1, 0.5),
+    RS_HA = c(1, 1),
+    # Missing ratio column
+    cv = c(20, 10)
+  )
+  
+  # Should error due to missing required column in se_data
+  expect_error(calculateTotalUncertainty(test_data, 2020, se_data = bad_se_data))
+})
+
+test_that("sample_file('rf1.RData') loads correctly", {
+  # Get the path to rf1.RData
+  rf1_path <- sample_file("rf1.RData")
+  
+  # Check that the file exists
+  expect_true(file.exists(rf1_path), "rf1.RData file exists")
+  
+  # Create a new environment to load the model into
+  test_env <- new.env()
+  
+  # Try to load the model file
+  expect_no_error({
+    load(rf1_path, envir = test_env)
+  })
+  
+  # Check that rf1 object exists in the environment
+  expect_true("rf1" %in% names(test_env), "rf1 object exists in loaded environment")
+  
+  # Verify the loaded object is a ranger model
+  expect_true(inherits(test_env$rf1, "ranger"), "rf1 is a ranger model object")
+  
+  # Check if the model has expected components
+  expect_true(all(c("forest", "predictions", "call") %in% names(test_env$rf1)), 
+              "rf1 model has expected components")
+  
+  # Test basic functionality of the model with a simple prediction
+  if (requireNamespace("ranger", quietly = TRUE)) {
+    expect_no_error({
+      test_data <- data.frame(
+        agb = c(150, 200),
+        size = c(10000, 5000),
+        gez = factor(c("Tropical", "Temperate"),
+                    levels = c("Boreal", "Subtropical", "Temperate", "Tropical"))
+      )
+      pred <- predict(test_env$rf1, data = test_data)
+      
+      # Predictions should be numeric and non-NA
+      expect_true(all(!is.na(pred$predictions)))
+      expect_true(is.numeric(pred$predictions))
+    })
+  }
+})

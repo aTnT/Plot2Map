@@ -45,4 +45,5 @@ Imports:
     tidyr,
     units,
     utils,
-    devtools
+    devtools,
+    ranger
