@@ -8,7 +8,8 @@ calculateTotalUncertainty(
   plot_data,
   map_year,
   map_resolution = 100,
-  biome_info = TRUE
+  biome_info = TRUE,
+  se_data = NULL
 )
 }
 \arguments{
@@ -19,6 +20,9 @@ calculateTotalUncertainty(
 \item{map_resolution}{Numeric value indicating the map resolution in meters (default: 100)}
 
 \item{biome_info}{Logical indicating whether to use biome information for growth uncertainty (default: TRUE)}
+
+\item{se_data}{Optional data frame with sampling error data that can be used instead of loading se.csv.
+Must contain columns: 'SIZE_HA', 'RS_HA', 'ratio', and 'cv'.}
 }
 \value{
 A list containing:
@@ -32,6 +36,22 @@ A list containing:
 This function provides a unified framework for calculating uncertainty across different plot data types.
 It automatically detects the plot data type, preserves existing uncertainty components if present,
 and calculates missing components as needed.
+}
+\details{
+The function handles three primary sources of uncertainty:
+\itemize{
+\item \strong{Measurement uncertainty (sdTree)}: Derived from allometric equations, wood density estimates,
+and measurement error. For tree-level data, this is calculated by the BIOMASS package with Monte Carlo methods.
+For plot-level data, it's estimated using a random forest model trained on a large dataset.
+\item \strong{Sampling uncertainty (sdSE)}: Accounts for the sampling error introduced by differing
+plot sizes vs. pixel sizes, following the approach from Réjou-Méchain et al. (2014).
+\item \strong{Growth uncertainty (sdGrowth)}: Adjusts for temporal differences between plot measurement year
+and map production year, using growth rates specific to each ecological zone.
+}
+
+These components are combined using error propagation principles:
+\deqn{varPlot = sdTree^2 + sdSE^2 + sdGrowth^2}
+\deqn{sdTotal = \sqrt{varPlot}}
 }
 \examples{
 # Create a sample dataset of 10 plots:
@@ -47,4 +67,23 @@ print(uncertainty_results)
 # For tree-level data with sdTree already calculated
 plots_tree <- sd_tree(plotTree, xyTree, "Asia")
 uncertainty_results <- calculateTotalUncertainty(plots_tree, 2020, 100)
+
+# Using custom sampling error data
+\dontrun{
+# Create custom sampling error data
+custom_se_data <- data.frame(
+  SIZE_HA = c(0.1, 0.25, 0.5, 1.0),
+  RS_HA = c(1, 1, 1, 1),
+  ratio = c(0.1, 0.25, 0.5, 1.0),
+  cv = c(20, 15, 10, 5)
+)
+
+# Use custom data instead of loading from file
+uncertainty_results <- calculateTotalUncertainty(
+  sampled_plots2, 
+  map_year = 2020, 
+  map_resolution = 100,
+  se_data = custom_se_data
+)
+}
 }

@@ -2,13 +2,7 @@
 # 07/03/2025:
 # Replaced plyr functions with dplyr equivalents.
 # Removed redundant operations and simplified the code structure where possible.
-# 25/04/2025:
-# Added function to calculate accuracy metrics for AGB estimates accounting for uncertainty:
-  # - extends the standard accuracy metrics with uncertainty-weighted statistics
-  # - Calculates agreement percentage (plot-map difference within uncertainty bounds)
-  # - Computes uncertainty-weighted RMSE and bias
-  # - Provides detailed uncertainty information by biomass bin
-# 30/04/2025:
+# 05/05/2025:
 # Made function more flexible to detect and use any column with "plotAGB_" prefix
 # Added dynamic column detection and robust error handling for missing columns
 # Updated examples to ensure they work with the improved flexibility
@@ -69,7 +63,7 @@ Accuracy <- function(df, intervals = 8, dir = "results", str = '') {
   if (is.na(plotAGB_col)) {
     stop("No column with prefix 'plotAGB_' found in the dataframe")
   }
-  
+
   # Assign grouping of AGB values for plot and map separately per bin
   grp1 <- df |>
     dplyr::mutate(group = cut(!!rlang::sym(plotAGB_col), breaks = bins))
@@ -87,7 +81,7 @@ Accuracy <- function(df, intervals = 8, dir = "results", str = '') {
   cols_to_keep <- c(plotAGB_col, 'mapAGB', 'sdPlot', 'sdMap', 'group')
   cols_to_keep <- intersect(cols_to_keep, names(grp1))
   grp2 <- grp1[, cols_to_keep]
-  
+
   # Rename plotAGB column for easier reference in calculations
   names(grp2)[names(grp2) == plotAGB_col] <- "plotAGB_calc"
 

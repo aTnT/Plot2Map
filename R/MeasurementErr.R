@@ -17,6 +17,14 @@
 # 2. Use the S3 generic method predict() instead of ranger::predict() since the ranger package uses S3 methods for
 # predict functionality
 # 3. Access the results using $predictions from the prediction object returned by ranger
+# 06/05/2025:
+# Improved NA handling and error detection in calculateTotalUncertainty:
+# 1. Added explicit NA checks before varPlot calculation with appropriate warnings
+# 2. Implemented improved RF model loading with better error handling and environment isolation
+# 3. Enhanced sampling error prediction with input validation and error handling
+# 4. Added more informative error messages throughout the uncertainty calculation process
+# 5. Added se_data parameter to allow using custom sampling error data instead of loading from file
+# 6. Enhanced function documentation with detailed explanations of uncertainty components and calculations
 
 
 #' Calculate AGB and standard deviations from tree-level data
@@ -157,10 +165,27 @@ sd_tree <- function(plot, xy, region = "World") {
 #' It automatically detects the plot data type, preserves existing uncertainty components if present,
 #' and calculates missing components as needed.
 #'
+#' The function handles three primary sources of uncertainty:
+#' \itemize{
+#'   \item \strong{Measurement uncertainty (sdTree)}: Derived from allometric equations, wood density estimates,
+#'   and measurement error. For tree-level data, this is calculated by the BIOMASS package with Monte Carlo methods.
+#'   For plot-level data, it's estimated using a random forest model trained on a large dataset.
+#'   \item \strong{Sampling uncertainty (sdSE)}: Accounts for the sampling error introduced by differing 
+#'   plot sizes vs. pixel sizes, following the approach from Réjou-Méchain et al. (2014).
+#'   \item \strong{Growth uncertainty (sdGrowth)}: Adjusts for temporal differences between plot measurement year
+#'   and map production year, using growth rates specific to each ecological zone.
+#' }
+#'
+#' These components are combined using error propagation principles:
+#' \deqn{varPlot = sdTree^2 + sdSE^2 + sdGrowth^2}
+#' \deqn{sdTotal = \sqrt{varPlot}}
+#'
 #' @param plot_data A data frame containing plot data
 #' @param map_year Numeric value indicating the map year for temporal adjustment
 #' @param map_resolution Numeric value indicating the map resolution in meters (default: 100)
 #' @param biome_info Logical indicating whether to use biome information for growth uncertainty (default: TRUE)
+#' @param se_data Optional data frame with sampling error data that can be used instead of loading se.csv.
+#'        Must contain columns: 'SIZE_HA', 'RS_HA', 'ratio', and 'cv'.
 #' @return A list containing:
 #'   \describe{
 #'     \item{data}{The plot data with calculated uncertainty components}
@@ -182,7 +207,26 @@ sd_tree <- function(plot, xy, region = "World") {
 #' # For tree-level data with sdTree already calculated
 #' plots_tree <- sd_tree(plotTree, xyTree, "Asia")
 #' uncertainty_results <- calculateTotalUncertainty(plots_tree, 2020, 100)
-calculateTotalUncertainty <- function(plot_data, map_year, map_resolution = 100, biome_info = TRUE) {
+#' 
+#' # Using custom sampling error data
+#' \dontrun{
+#' # Create custom sampling error data
+#' custom_se_data <- data.frame(
+#'   SIZE_HA = c(0.1, 0.25, 0.5, 1.0),
+#'   RS_HA = c(1, 1, 1, 1),
+#'   ratio = c(0.1, 0.25, 0.5, 1.0),
+#'   cv = c(20, 15, 10, 5)
+#' )
+#' 
+#' # Use custom data instead of loading from file
+#' uncertainty_results <- calculateTotalUncertainty(
+#'   sampled_plots2, 
+#'   map_year = 2020, 
+#'   map_resolution = 100,
+#'   se_data = custom_se_data
+#' )
+#' }
+calculateTotalUncertainty <- function(plot_data, map_year, map_resolution = 100, biome_info = TRUE, se_data = NULL) {
 
   # Automatically determine plot type based on data structure and columns
   plot_type <- determineDataType(plot_data)
@@ -210,26 +254,44 @@ calculateTotalUncertainty <- function(plot_data, map_year, map_resolution = 100,
       plotsPred$gez <- factor(plotsPred$gez,
                               levels = c("Boreal", "Subtropical", "Temperate", "Tropical"))
 
+      # Check for ranger package availability first
+      if (!requireNamespace("ranger", quietly = TRUE)) {
+        stop("The ranger package is required but not installed. Please install it with: install.packages('ranger')")
+      }
+      
       # Load RF model from package data
       rf1_path <- sample_file("rf1.RData")
       if (!file.exists(rf1_path)) {
         stop("RF model file 'rf1.RData' not found in package data. Please ensure the package is properly installed.")
       }
-
-      # Try to load the model
+      
+      # Try to use existing model or load from file
+      rf_model_env <- new.env()
+      
       tryCatch({
-        load(rf1_path)
-        # Make sure ranger package is loaded
-        if (!requireNamespace("ranger", quietly = TRUE)) {
-          stop("The ranger package is needed but not installed")
+        # Load model into a separate environment to avoid global environment conflicts
+        load(rf1_path, envir = rf_model_env)
+        
+        if (!exists("rf1", envir = rf_model_env)) {
+          stop("The loaded RData file does not contain an 'rf1' model object")
         }
-        # Ensure the ranger package is loaded for S3 methods to work
-        requireNamespace("ranger")
-        # Predict measurement uncertainty (directly using S3 method)
-        predictions <- predict(rf1, data = plotsPred)
-        plot_data$sdTree <- predictions$predictions
+        
+        # Verify the loaded object is a ranger model
+        if (!inherits(rf_model_env$rf1, "ranger")) {
+          stop("The loaded 'rf1' object is not a ranger model")
+        }
+        
+        # Make prediction with appropriate error handling
+        predictions <- predict(rf_model_env$rf1, data = plotsPred)
+        
+        # Extract predictions with validation
+        if (!is.null(predictions) && !is.null(predictions$predictions)) {
+          plot_data$sdTree <- predictions$predictions
+        } else {
+          stop("RF model prediction failed to produce valid predictions")
+        }
       }, error = function(e) {
-        stop("Error loading or using RF model: ", e$message)
+        stop(paste("Error in RF model processing:", e$message))
       })
     }
   }
@@ -247,58 +309,100 @@ calculateTotalUncertainty <- function(plot_data, map_year, map_resolution = 100,
     plot_data$ratio <- as.numeric(plot_data$SIZE_HA) / plot_data$RS_HA
 
     # Try to load sampling error model
+    rfSE <- NULL
+    
+    # First check if ranger is available
+    if (!requireNamespace("ranger", quietly = TRUE)) {
+      stop("The ranger package is required but not installed. Please install it with: install.packages('ranger')")
+    }
+    
+    # Check for existing model in global environment
     if ("rfSE" %in% ls(envir = .GlobalEnv)) {
-      # Use existing model in global environment
       rfSE <- get("rfSE", envir = .GlobalEnv)
-    } else {
-
-      # Load se.csv from package data
-      se_file <- sample_file("se.csv")
-      if (!file.exists(se_file)) {
-        stop("Sampling error data file 'se.csv' not found in package data. Please ensure the package is properly installed.")
+      
+      # Verify that the model is a valid ranger object
+      if (!inherits(rfSE, "ranger")) {
+        warning("The global rfSE object is not a valid ranger model. Creating a new one.")
+        rfSE <- NULL
       }
-
-      # # Try to load the model
-      # tryCatch({
-      #   load(rf1_path)
-      #   # Predict measurement uncertainty
-      #   plot_data$sdTree <- predict(rf1, plotsPred)$predictions
-      # }, error = function(e) {
-      #   stop("Error loading or using RF model: ", e$message)
-      # })
-      #
-      #
-      #
-      # # Try to load the sampling error data
-      # se_file <- tryCatch({
-      #   #file.path(getOption("dataDir", "."), "se.csv")
-      #   # Load se.csv from package data
-      #   se_file <- sample_file("se.csv")
-      #   if (!file.exists(se_file)) {
-      #     stop("Sampling error data file 'se.csv' not found in package data. Please ensure the package is properly installed.")
-      #   }
-      # }, error = function(e) {
-      #   system.file(se_file, package = "Plot2Map")
-      # })
-
-      if (file.exists(se_file)) {
-        # Make sure ranger package is loaded
-        if (!requireNamespace("ranger", quietly = TRUE)) {
-          stop("The ranger package is needed but not installed")
-        }
-        se <- read.csv(se_file)
-        rfSE <- ranger::ranger(se$cv ~ ., data = se[, c('SIZE_HA', 'RS_HA', 'ratio')])
+    }
+    
+    # If no valid model exists, create a new one from the data
+    if (is.null(rfSE)) {
+      # Use provided se_data if available, otherwise load from file
+      se <- NULL
+      
+      if (!is.null(se_data)) {
+        # Use provided sampling error data
+        message("Using provided sampling error data")
+        se <- se_data
       } else {
-        stop("Cannot find sampling error data (se.csv). Please specify correct path or provide rfSE model")
+        # Load se.csv from package data
+        message("Loading sampling error data from package file")
+        se_file <- sample_file("se.csv")
+        if (!file.exists(se_file)) {
+          stop("Sampling error data file 'se.csv' not found in package data. Please ensure the package is properly installed.")
+        }
+        
+        # Load data from file
+        tryCatch({
+          se <- read.csv(se_file)
+        }, error = function(e) {
+          stop(paste("Error reading sampling error data file:", e$message))
+        })
       }
+      
+      # Verify and use the data
+      tryCatch({
+        # Verify the data has the required columns
+        required_cols <- c('SIZE_HA', 'RS_HA', 'ratio', 'cv')
+        if (is.null(se) || !all(required_cols %in% names(se))) {
+          stop(paste("Sampling error data doesn't contain all required columns:", 
+                    paste(required_cols, collapse = ", ")))
+        }
+        
+        # Train the ranger model
+        rfSE <- ranger::ranger(se$cv ~ ., data = se[, c('SIZE_HA', 'RS_HA', 'ratio')])
+        
+        # Verify model was created correctly
+        if (!inherits(rfSE, "ranger")) {
+          stop("Failed to create a valid ranger model for sampling error")
+        }
+      }, error = function(e) {
+        stop(paste("Error creating sampling error model:", e$message))
+      })
     }
 
     # Predict sampling error using random forest model
     # Convert to standard deviation by multiplying by mean AGB
-    # Ensure the ranger package is loaded for S3 methods to work
-    requireNamespace("ranger")
-    rfSE_pred <- predict(rfSE, data = plot_data[, c('SIZE_HA', 'RS_HA', 'ratio')])
-    plot_data$sdSE <- (rfSE_pred$predictions / 100) * mean(plot_data$AGB_T_HA, na.rm = TRUE)
+    tryCatch({
+      # Ensure we have valid data for prediction
+      pred_data <- plot_data[, c('SIZE_HA', 'RS_HA', 'ratio')]
+      
+      # Check for NA or invalid values in prediction data
+      if (any(is.na(pred_data))) {
+        warning("NA values found in size ratio data. These will produce NA predictions.")
+      }
+      
+      # Make prediction
+      rfSE_pred <- predict(rfSE, data = pred_data)
+      
+      if (is.null(rfSE_pred) || is.null(rfSE_pred$predictions)) {
+        stop("Sampling error model prediction failed to produce valid results")
+      }
+      
+      # Calculate mean AGB for scaling
+      mean_agb <- mean(plot_data$AGB_T_HA, na.rm = TRUE)
+      if (is.na(mean_agb)) {
+        warning("All AGB values are NA. Cannot calculate sdSE.")
+      }
+      
+      # Calculate standard deviation from coefficient of variation
+      plot_data$sdSE <- (rfSE_pred$predictions / 100) * mean_agb
+      
+    }, error = function(e) {
+      stop(paste("Error in sampling error prediction:", e$message))
+    })
   }
 
   # 3. Calculate or preserve growth uncertainty
@@ -333,7 +437,16 @@ calculateTotalUncertainty <- function(plot_data, map_year, map_resolution = 100,
     }
   }
 
-  # 4. Calculate total uncertainty
+  # 4. Calculate total uncertainty with careful NA handling
+  # Check for NA values in any component before calculating varPlot
+  has_na_components <- is.na(plot_data$sdTree) | is.na(plot_data$sdSE) | is.na(plot_data$sdGrowth)
+  
+  if (any(has_na_components)) {
+    warning(paste("Found", sum(has_na_components), "rows with NA in uncertainty components.",
+                 "These will result in NA varPlot values."))
+  }
+  
+  # Calculate variance and total standard deviation
   plot_data$varPlot <- plot_data$sdTree^2 + plot_data$sdSE^2 + plot_data$sdGrowth^2
   plot_data$sdTotal <- sqrt(plot_data$varPlot)
 
