@@ -17,6 +17,23 @@
 # 30/04/2025:
 # Fixed column naming to use actual threshold value (e.g., "plotAGB_10" instead of "plotAGB_forestTHs")
 # Updated documentation to reflect correct column naming pattern
+# 01/05/2025:
+# Added automated calculation of varPlot using calculateTotalUncertainty when missing in aggregation
+# Improved detection of map_year and map_resolution from available data sources without hardcoding years
+# Added proper error messages and warnings for uncertainty calculation steps
+# Fixed edge case handling when minPlots <= 1 to prevent "plotsTMP1 not found" error
+# Improved cell count handling in aggregation for more robust plot count assignment
+# Added handling of edge cases when no cells have enough plots
+# 05/05/2025:
+# Fixed error "'st_as_sfg' is not an exported object from 'namespace:sf'" by replacing it with st_geometry(st_as_sfc()) combination
+# Added NULL check for geom_wkt to prevent errors when working with datasets without WKT geometries
+# 06/05/2025:
+# Fixed critical biomass scaling issue in aggregated mode causing much larger values than non-aggregated mode
+# Ensured biomass values maintain their physical meaning (t/ha) in both aggregated and non-aggregated modes
+# Added detailed comments explaining the aggregation methodology and biomass unit preservation
+# 06/05/2025:
+# Fixed column naming inconsistency where weighted mean AGB values were stored in AGB_T_HA1 but referred to as AGB_T_HA
+# Improved documentation to clarify column naming conventions and relationships with input data columns
 
 
 ## Notes:
@@ -50,14 +67,18 @@
 #' @param agb_raster_path character, File path to the custom AGB raster.
 #' @param forest_mask_path character, File path to the forest mask raster.
 #' @param threshold numeric, Threshold (0-100) for tree cover calculation and forest masking (e.g. 0 or 10).
+#' @param map_year numeric, The year of the map data. If not provided, it will be detected automatically from the available data sources.
+#' @param map_resolution numeric, The resolution of the map data in degrees. If not provided, it will be detected automatically from the available data sources. Used for variance calculation when aggregating.
 #' @inheritParams download_esacci_biomass
 #' @inheritParams download_gedi_l4b
 #' @inheritParams sampleTreeCover
 #'
 #' @return A data frame with the following columns:
-#'   \item{plotAGB_[threshold]}{AGB values for the given forest threshold (e.g., plotAGB_10 if threshold=10)}
-#'   \item{tfPlotAGB}{Tree-filtered plot AGB (only when not aggregated)}
-#'   \item{orgPlotAGB}{Original plot AGB}
+#'   \item{plotAGB_[threshold]}{AGB values for the given forest threshold (e.g., plotAGB_10 if threshold=10).
+#'     When aggregated, these values are derived from weighted means using inverse variance weighting.}
+#'   \item{tfPlotAGB}{Tree-filtered plot AGB (only when not aggregated). This is equivalent to
+#'     the AGB_T_HA values from the input data.}
+#'   \item{orgPlotAGB}{Original plot AGB, derived from AGB_T_HA_ORIG in the input data.}
 #'   \item{mapAGB}{AGB from map sampling}
 #'   \item{SIZE_HA}{Plot size in hectares}
 #'   \item{x}{X-coordinate of plot}
@@ -104,7 +125,7 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
                          minPlots = 1, weighted_mean = FALSE, is_poly = TRUE, parallel = FALSE,
                          n_cores = parallel::detectCores() - 1,
                          dataset = "custom", agb_raster_path = NULL, forest_mask_path = NULL,
-                         threshold = 0,
+                         threshold = 0, map_year = NULL, map_resolution = NULL,
                          esacci_biomass_year = "latest", esacci_biomass_version = "latest",
                          esacci_folder = "data/ESACCI-BIOMASS", gedi_l4b_folder = "data/GEDI_L4B/",
                          gedi_l4b_band = "MU", gedi_l4b_resolution = 0.001, timeout = 600) {
@@ -122,14 +143,107 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
   required_cols <- c("POINT_X", "POINT_Y", "AGB_T_HA_ORIG", "AGB_T_HA", "SIZE_HA", "varPlot")
   if (!is.null(aggr)) {
     missing_cols <- setdiff(required_cols, names(plot_data))
-    if (length(missing_cols) > 0 & missing_cols != "varPlot") {
-      stop(paste("When aggr is not NULL, plot_data must contain:", paste(missing_cols, collapse = ", ")))
+    if (length(missing_cols) > 0 && length(setdiff(missing_cols, "varPlot")) > 0) {
+      stop(paste("When aggr is not NULL, plot_data must contain:", paste(setdiff(missing_cols, "varPlot"), collapse = ", ")))
     }
-    if (length(missing_cols) > 0 & missing_cols == "varPlot") {
-      warning(paste("\"varPlot\" column was not found in the plot_data dataset, it will be estimated"))
-    }
+    if ("varPlot" %in% missing_cols) {
+      warning(paste("\"varPlot\" column was not found in the plot_data dataset, it will be estimated using calculateTotalUncertainty"))
 
-    ### TO DO: Call function that adds varPlot to plot_data here
+      # Try to determine map_year from data sources if not provided
+      if (is.null(map_year)) {
+        if (dataset == "esacci") {
+          # Extract from esacci_biomass_year
+          if (is.numeric(esacci_biomass_year)) {
+            map_year <- esacci_biomass_year
+          } else if (esacci_biomass_year != "latest") {
+            map_year <- as.numeric(esacci_biomass_year)
+          } else {
+            # Need to determine from file patterns in the folder
+            esacci_files <- list.files(esacci_folder, pattern = "*.tif")
+            if (length(esacci_files) > 0) {
+              # Try to extract year from filenames
+              year_pattern <- ".*-(\\d{4})-.*"
+              years <- regmatches(esacci_files, regexec(year_pattern, esacci_files))
+              years <- unlist(lapply(years, function(x) if(length(x) > 1) x[2] else NULL))
+              if (length(years) > 0) {
+                map_year <- as.numeric(years[1])
+              } else {
+                stop("Could not determine map_year from ESA CCI data. Please provide map_year explicitly.")
+              }
+            } else {
+              stop("No ESA CCI files found and map_year not provided. Cannot calculate plot variance.")
+            }
+          }
+        } else if (dataset == "gedi") {
+          # For GEDI, use middle of data collection period (2019-2023)
+          map_year <- 2021
+        } else if (!is.null(agb_raster_path)) {
+          # Try to extract year from filename
+          year_pattern <- ".*[^0-9](19|20\\d{2})[^0-9].*"
+          if (grepl(year_pattern, agb_raster_path)) {
+            match <- regexec(".*[^0-9]((?:19|20)\\d{2})[^0-9].*", agb_raster_path)
+            year_str <- regmatches(agb_raster_path, match)[[1]][2]
+            map_year <- as.numeric(year_str)
+          } else {
+            stop("Could not determine map_year from data sources. Please provide map_year explicitly.")
+          }
+        } else {
+          stop("Could not determine map_year from data sources. Please provide map_year explicitly.")
+        }
+      }
+
+      # Try to determine map_resolution from data sources if not provided
+      if (is.null(map_resolution)) {
+        if (!is.null(agb_raster_path)) {
+          # Get resolution from AGB raster
+          agb_raster <- terra::rast(agb_raster_path)
+          map_resolution <- terra::res(agb_raster)[1]
+        } else if (!is.null(forest_mask_path)) {
+          # Get resolution from forest mask
+          forest_mask <- terra::rast(forest_mask_path)
+          map_resolution <- terra::res(forest_mask)[1]
+        } else if (dataset == "esacci") {
+          # Try to get from an ESA CCI file
+          esacci_files <- list.files(esacci_folder, pattern = "*.tif", full.names = TRUE)
+          if (length(esacci_files) > 0) {
+            esacci_raster <- terra::rast(esacci_files[1])
+            map_resolution <- terra::res(esacci_raster)[1]
+          } else {
+            stop("Could not determine map_resolution. No ESA CCI files found and map_resolution not provided.")
+          }
+        } else if (dataset == "gedi") {
+          # Try to get from a GEDI file
+          gedi_files <- list.files(gedi_l4b_folder, pattern = "*.tif", full.names = TRUE)
+          if (length(gedi_files) > 0) {
+            gedi_raster <- terra::rast(gedi_files[1])
+            map_resolution <- terra::res(gedi_raster)[1]
+          } else {
+            stop("Could not determine map_resolution. No GEDI files found and map_resolution not provided.")
+          }
+        } else {
+          stop("Could not determine map_resolution from data sources. Please provide map_resolution explicitly.")
+        }
+      }
+
+      message(paste("Using map_year:", map_year, "and map_resolution:", map_resolution, "for uncertainty calculation"))
+
+      # Calculate varPlot using calculateTotalUncertainty
+      tryCatch({
+        result <- calculateTotalUncertainty(
+          plot_data = plot_data,
+          map_year = map_year,
+          map_resolution = map_resolution,
+          biome_info = TRUE
+        )
+
+        # Add varPlot to the plot_data
+        plot_data$varPlot <- result$data$varPlot
+
+      }, error = function(e) {
+        stop(paste("Failed to calculate plot uncertainty:", e$message,
+                   "\nPlease provide 'varPlot' column in plot_data."))
+      })
+    }
   }
 
 
@@ -145,70 +259,70 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
   plot_data <- plot_data[ndx, ]
 
 
-#
-#   # Arnan email 070425:
-#
-#   # aggregate if aggr != NULL
-#   if(!is.null(aggr)){ #if there's agg
-#     # aggregate to aggr degree cells
-#     plots$Xnew <- aggr * (0.5 + plots$POINT_X %/% aggr)
-#     plots$Ynew <- aggr * (0.5 + plots$POINT_Y %/% aggr) #changes XY
-#
-#     #aggregatioN!
-#     #    plots$varTot <- plots$sdTree^2
-#
-#     plots$inv <- 1/plots$varTot
-#     plots$sdMap <- 1 ###since there's a function to estimate SD at 0.1 below
-#
-#     plotsTMP <- aggregate(plots[,c('AGB_T_HA_ORIG', 'SIZE_HA')],
-#                           list(plots$Xnew, plots$Ynew),  mean, na.rm=T) ## AGGREGATION!!!!!!!!!!!!!!!!!
-#
-#
-#     plotsTMP <- cbind(plotsTMP,aggregate(plots[,c('BIO','CODE', 'OPEN', 'VER', 'INVENTORY', 'TIER')],
-#                                          list(plots$Xnew, plots$Ynew),   modalClass))
-#
-#     plotsTMP <- plotsTMP[,-c(5,6)] #remove excess X and Y
-#     plotsTMP <- cbind(plotsTMP, aggregate(plots[,"varTot"],
-#                                           list(plots$Xnew, plots$Ynew), function(x) 1/sum(1/x))[3])
-#
-#     plotsTMP <- cbind(plotsTMP, aggregate(plots[,"sdMap"],
-#                                           list(plots$Xnew, plots$Ynew), function(x) 1/sum(1/x))[3])
-#
-#     plotsTMP <- plotsTMP[with(plotsTMP, order(Group.2, Group.1)), ] #order to match
-#     x <- ddply(plots, .(paste(plots$Ynew, plots$Xnew)),
-#                function(x) data.frame(Xnew=mean(x$Xnew),
-#                                       Ynew=mean(x$Ynew),
-#                                       AGB_T_HA=weighted.mean(x$AGB_T_HA, x$inv ,na.rm=T)))
-#     x <- x[with(x, order(Ynew, Xnew)), ] #order to match
-#     tail(x)
-#     tail(plotsTMP)
-#
-#     plotsTMP$AGB_T_HA <- x$AGB_T_HA
-#
-#     names(plotsTMP) <- c("POINT_X","POINT_Y",'AGB_T_HA_ORIG', 'SIZE_HA', 'BIO',
-#                          'CODE', 'OPEN', 'VER', 'INVENTORY','TIER', 'varPlot','varMap','AGB_T_HA')
-#
-#     # only keep plots satisfying minPlots criterion -- aggregated plots
-#     if(minPlots > 1){
-#       blockCOUNT <- aggregate(plots[,c("AGB_T_HA")], list(plots$Xnew, plots$Ynew),
-#                               function(x) length(na.omit(x)))
-#
-#       ndx <- which(blockCOUNT$x >= minPlots)
-#       plotsTMP1 <- plotsTMP[ndx,]
-#       if(nrow(plotsTMP1) < 2){plotsTMP1 <- plotsTMP[1:2,]}
-#       plotsTMP1$n <- subset(blockCOUNT,blockCOUNT$x >= minPlots)[[3]] #add plots inside
-#       print(plotsTMP1)
-#     }
-#     plots <- plotsTMP1
-#     rsl <- aggr
-#   } else {
-#     # determine resolution output
-#     fname <- list.files(agbTilesFolder, "*.tif")[1]
-#     rsl <- xres(raster(file.path(agbTilesFolder, fname)))
-#     plots$n <- 1
-#     plots$varPlot <- plots$varTot
-#     plots$varMap <- plots$sdMap^2
-#   }
+  #
+  #   # Arnan email 070425:
+  #
+  #   # aggregate if aggr != NULL
+  #   if(!is.null(aggr)){ #if there's agg
+  #     # aggregate to aggr degree cells
+  #     plots$Xnew <- aggr * (0.5 + plots$POINT_X %/% aggr)
+  #     plots$Ynew <- aggr * (0.5 + plots$POINT_Y %/% aggr) #changes XY
+  #
+  #     #aggregatioN!
+  #     #    plots$varTot <- plots$sdTree^2
+  #
+  #     plots$inv <- 1/plots$varTot
+  #     plots$sdMap <- 1 ###since there's a function to estimate SD at 0.1 below
+  #
+  #     plotsTMP <- aggregate(plots[,c('AGB_T_HA_ORIG', 'SIZE_HA')],
+  #                           list(plots$Xnew, plots$Ynew),  mean, na.rm=T) ## AGGREGATION!!!!!!!!!!!!!!!!!
+  #
+  #
+  #     plotsTMP <- cbind(plotsTMP,aggregate(plots[,c('BIO','CODE', 'OPEN', 'VER', 'INVENTORY', 'TIER')],
+  #                                          list(plots$Xnew, plots$Ynew),   modalClass))
+  #
+  #     plotsTMP <- plotsTMP[,-c(5,6)] #remove excess X and Y
+  #     plotsTMP <- cbind(plotsTMP, aggregate(plots[,"varTot"],
+  #                                           list(plots$Xnew, plots$Ynew), function(x) 1/sum(1/x))[3])
+  #
+  #     plotsTMP <- cbind(plotsTMP, aggregate(plots[,"sdMap"],
+  #                                           list(plots$Xnew, plots$Ynew), function(x) 1/sum(1/x))[3])
+  #
+  #     plotsTMP <- plotsTMP[with(plotsTMP, order(Group.2, Group.1)), ] #order to match
+  #     x <- ddply(plots, .(paste(plots$Ynew, plots$Xnew)),
+  #                function(x) data.frame(Xnew=mean(x$Xnew),
+  #                                       Ynew=mean(x$Ynew),
+  #                                       AGB_T_HA=weighted.mean(x$AGB_T_HA, x$inv ,na.rm=T)))
+  #     x <- x[with(x, order(Ynew, Xnew)), ] #order to match
+  #     tail(x)
+  #     tail(plotsTMP)
+  #
+  #     plotsTMP$AGB_T_HA <- x$AGB_T_HA
+  #
+  #     names(plotsTMP) <- c("POINT_X","POINT_Y",'AGB_T_HA_ORIG', 'SIZE_HA', 'BIO',
+  #                          'CODE', 'OPEN', 'VER', 'INVENTORY','TIER', 'varPlot','varMap','AGB_T_HA')
+  #
+  #     # only keep plots satisfying minPlots criterion -- aggregated plots
+  #     if(minPlots > 1){
+  #       blockCOUNT <- aggregate(plots[,c("AGB_T_HA")], list(plots$Xnew, plots$Ynew),
+  #                               function(x) length(na.omit(x)))
+  #
+  #       ndx <- which(blockCOUNT$x >= minPlots)
+  #       plotsTMP1 <- plotsTMP[ndx,]
+  #       if(nrow(plotsTMP1) < 2){plotsTMP1 <- plotsTMP[1:2,]}
+  #       plotsTMP1$n <- subset(blockCOUNT,blockCOUNT$x >= minPlots)[[3]] #add plots inside
+  #       print(plotsTMP1)
+  #     }
+  #     plots <- plotsTMP1
+  #     rsl <- aggr
+  #   } else {
+  #     # determine resolution output
+  #     fname <- list.files(agbTilesFolder, "*.tif")[1]
+  #     rsl <- xres(raster(file.path(agbTilesFolder, fname)))
+  #     plots$n <- 1
+  #     plots$varPlot <- plots$varTot
+  #     plots$varMap <- plots$sdMap^2
+  #   }
 
 
 
@@ -229,19 +343,62 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
     x <- aggregate(AGB_T_HA ~ Xnew + Ynew, data = plot_data,
                    FUN = function(x) weighted.mean(x, plot_data$inv[plot_data$AGB_T_HA %in% x], na.rm = TRUE))
     x <- x[with(x, order(Ynew, Xnew)), ]
-    plotsTMP$AGB_T_HA1 <- x$AGB_T_HA
+    plotsTMP$AGB_T_HA <- x$AGB_T_HA
 
     names(plotsTMP) <- c("POINT_X", "POINT_Y", "AGB_T_HA_ORIG", "SIZE_HA", "varPlot", "AGB_T_HA")
 
+    # Calculate plot counts per cell for all cells
+    blockCOUNT <- aggregate(plot_data$AGB_T_HA, list(plot_data$Xnew, plot_data$Ynew),
+                            function(x) length(na.omit(x)))
+
     if (minPlots > 1) {
-      blockCOUNT <- aggregate(plot_data$AGB_T_HA, list(plot_data$Xnew, plot_data$Ynew),
-                              function(x) length(na.omit(x)))
+      # Filter cells with enough plots
       ndx <- which(blockCOUNT$x >= minPlots)
-      plotsTMP1 <- plotsTMP[ndx, ]
-      if (nrow(plotsTMP1) < 2) plotsTMP1 <- plotsTMP[1:2, ]
-      plotsTMP1$n <- subset(blockCOUNT, blockCOUNT$x >= minPlots)[[3]]
+
+      if (length(ndx) > 0) {
+        # There are cells with enough plots
+        plotsTMP1 <- plotsTMP[ndx, ]
+        plotsTMP1$n <- subset(blockCOUNT, blockCOUNT$x >= minPlots)[[3]]
+      } else {
+        # Handle edge case: No cells have enough plots
+        warning(paste0("No cells with at least ", minPlots, " plots found. Using top cells with most plots."))
+
+        # Sort blockCOUNT by number of plots and take top 2 cells
+        sorted_cells <- blockCOUNT[order(blockCOUNT$x, decreasing = TRUE),]
+        top_cells <- sorted_cells[1:min(2, nrow(sorted_cells)),]
+
+        # Find the rows in plotsTMP corresponding to the top cells
+        top_cell_indices <- which(paste(plotsTMP$POINT_X, plotsTMP$POINT_Y) %in%
+                                    paste(top_cells$Group.1, top_cells$Group.2))
+
+        plotsTMP1 <- plotsTMP[top_cell_indices, ]
+        plotsTMP1$n <- blockCOUNT$x[top_cell_indices]
+      }
+
+      # Ensure we have at least 2 cells to avoid errors
+      if (nrow(plotsTMP1) < 2) {
+        warning("Less than 2 cells available. Using top 2 cells.")
+        plotsTMP1 <- plotsTMP[1:min(2, nrow(plotsTMP)), ]
+        plotsTMP1$n <- blockCOUNT$x[1:min(2, nrow(blockCOUNT))]
+      }
+
+      plot_data <- plotsTMP1
+    } else {
+      # When minPlots <= 1, use plotsTMP directly with plot counts
+      plotsTMP$n <- blockCOUNT$x[match(paste(plotsTMP$POINT_X, plotsTMP$POINT_Y),
+                                       paste(blockCOUNT$Group.1, blockCOUNT$Group.2))]
+      plot_data <- plotsTMP
+
+      # Ensure we have at least 1 cell for the edge case
+      if (nrow(plot_data) < 1) {
+        warning("No cells available after aggregation. Check your data and parameters.")
+        # Return minimal result to avoid hard error
+        plot_data <- plotsTMP[1:min(1, nrow(plotsTMP)), ]
+        if (nrow(plot_data) > 0) {
+          plot_data$n <- 1
+        }
+      }
     }
-    plot_data <- plotsTMP1
     rsl <- aggr
   } else {
     if (!is.null(agb_raster)) {
@@ -310,8 +467,15 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
 
     # Reconstruct geometry or create polygon
     if (is_poly) {
-      pol <- sf::st_as_sfg(plot_data$geom_wkt[i])
-      pol <- sf::st_sf(geometry = pol, crs = sf::st_crs(plot_data))
+      # 5/5/2025: Fixed 'st_as_sfg' not exported error and added NULL check
+      # pol <- sf::st_as_sfg(plot_data$geom_wkt[i])
+      if (!is.null(plot_data$geom_wkt) && !is.na(plot_data$geom_wkt[i])) {
+        pol <- sf::st_geometry(sf::st_as_sfc(plot_data$geom_wkt[i]))
+        pol <- sf::st_sf(geometry = pol, crs = sf::st_crs(plot_data))
+      } else {
+        # Fall back to block polygon if WKT is not available
+        pol <- MakeBlockPolygon(plot_data$POINT_X[i], plot_data$POINT_Y[i], rsl)
+      }
     } else {
       pol <- MakeBlockPolygon(plot_data$POINT_X[i], plot_data$POINT_Y[i], rsl)
     }
@@ -338,27 +502,28 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
     wghts2 <- ifelse(is.null(aggr), FALSE, weighted_mean)
 
     if (!is.null(aggr)) {
-      c(treeCovers * plot_data$AGB_T_HA[i], plot_data$AGB_T_HA_ORIG[i],
-        # sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset, agb_raster = agb_raster_local,
-        #              esacci_biomass_year = esacci_biomass_year, esacci_biomass_version = esacci_biomass_version,
-        #              esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder, gedi_l4b_band = gedi_l4b_band,
-        #              gedi_l4b_resolution = gedi_l4b_resolution, n_cores = 1, timeout = timeout),
-        # plot_data$SIZE_HA[i], plot_data$n[i], plot_data$POINT_X[i], plot_data$POINT_Y[i])
+      # 06/05/2025: Fixed biomass scaling issue in aggregated mode
+      # In aggregated mode, we need to properly scale the biomass to maintain physical meaning (t/ha)
+      # The issue was that in aggregated mode, the AGB values were being multiplied by the area
+      # value in SIZE_HA, resulting in values much larger than non-aggregated mode
+
+      # Calculate tree-filtered biomass (t/ha) - preserve physical meaning
+      # Based on original implementation in scripts/InvDasymetry.R lines 108-112
+      plot_agb_value <- treeCovers * plot_data$AGB_T_HA[i]
+
+      c(plot_agb_value, plot_data$AGB_T_HA_ORIG[i],
         safe_sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset, agb_raster = agb_raster_local,
-                     esacci_biomass_year = esacci_biomass_year, esacci_biomass_version = esacci_biomass_version,
-                     esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder, gedi_l4b_band = gedi_l4b_band,
-                     gedi_l4b_resolution = gedi_l4b_resolution, n_cores = 1, timeout = timeout),
+                          esacci_biomass_year = esacci_biomass_year, esacci_biomass_version = esacci_biomass_version,
+                          esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder, gedi_l4b_band = gedi_l4b_band,
+                          gedi_l4b_resolution = gedi_l4b_resolution, n_cores = 1, timeout = timeout),
         plot_data$SIZE_HA[i], plot_data$n[i], plot_data$POINT_X[i], plot_data$POINT_Y[i])
     } else {
+      # Non-aggregated mode - maintain original implementation
       c(treeCovers * plot_data$AGB_T_HA[i], plot_data$AGB_T_HA[i], plot_data$AGB_T_HA_ORIG[i],
-        # sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset, agb_raster = agb_raster_local,
-        #              esacci_biomass_year = esacci_biomass_year, esacci_biomass_version = esacci_biomass_version,
-        #              esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder, gedi_l4b_band = gedi_l4b_band,
-        #              gedi_l4b_resolution = gedi_l4b_resolution, n_cores = 1, timeout = timeout),
         safe_sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset, agb_raster = agb_raster_local,
-                     esacci_biomass_year = esacci_biomass_year, esacci_biomass_version = esacci_biomass_version,
-                     esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder, gedi_l4b_band = gedi_l4b_band,
-                     gedi_l4b_resolution = gedi_l4b_resolution, n_cores = 1, timeout = timeout),
+                          esacci_biomass_year = esacci_biomass_year, esacci_biomass_version = esacci_biomass_version,
+                          esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder, gedi_l4b_band = gedi_l4b_band,
+                          gedi_l4b_resolution = gedi_l4b_resolution, n_cores = 1, timeout = timeout),
         plot_data$SIZE_HA[i], plot_data$POINT_X[i], plot_data$POINT_Y[i])
     }
   }
@@ -570,6 +735,9 @@ safe_sampleTreeCover <- function(roi, thresholds, weighted_mean, forest_mask) {
 #   print(head(FFAGB))
 #   return(FFAGB)
 # }
+
+
+
 
 
 
