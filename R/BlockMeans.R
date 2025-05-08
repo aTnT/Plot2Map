@@ -13,6 +13,9 @@
 # Added a new source parameter to specify whether to use ESA CCI BIOMASS or GEDI L4B data. When source = "gedi",
 # the function calls download_gedi_l4b to retrieve the GEDI L4B data before processing it.
 # The gedi_l4b_folder and gedi_l4b_band parameters allow users to specify the download folder and the desired GEDI L4B band.
+# 09/05/2025:
+# Fixed critical bug in sampleTreeCover where terra::extract() accessed the ID column instead of raster values.
+# Used ID=FALSE parameter to ensure consistent extraction behavior across terra package versions.
 
 ## Notes:
 # `AGBown` and `own` arguments are redundant, if there's no problem with not breaking old legacy code, `own` argument shall be removed.
@@ -330,8 +333,8 @@ sampleTreeCover <- function(
           }
         }
       } else {
-        # Unweighted case
-        extracted_vals <- terra::extract(forest_mask, sf::st_as_sf(roi))[[1]]
+        # Unweighted case - Use ID=FALSE to get values directly
+        extracted_vals <- terra::extract(forest_mask, sf::st_as_sf(roi), ID=FALSE)[[1]]
         if (!is.null(extracted_vals)) {
           # Calculate forest cover for each threshold
           for (threshold in thresholds) {

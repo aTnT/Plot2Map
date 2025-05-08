@@ -5,6 +5,55 @@ library(terra)
 
 # Tests for Deforested.R
 
+test_that("terra::extract behavior in Deforested.R is consistent with ID=FALSE parameter", {
+  skip("Skipping this test as it requires mocking external functions")
+  
+  # Create a test forest loss raster with values 0 (no loss) and 5 (loss in 2005)
+  test_raster <- terra::rast(nrows=20, ncols=20, xmin=0, xmax=1, ymin=0, ymax=1, crs="EPSG:4326")
+  terra::values(test_raster) <- rep(c(0, 5), length.out=terra::ncell(test_raster))
+  
+  # Create a test directory and save the raster
+  test_dir <- tempfile()
+  dir.create(test_dir, recursive = TRUE)
+  on.exit(unlink(test_dir, recursive = TRUE), add = TRUE)
+  
+  test_file <- file.path(test_dir, "Hansen_GFC-2023-v1.11_lossyear_10N_000E.tif")
+  terra::writeRaster(test_raster, test_file, overwrite=TRUE)
+  
+  # Create a test plot
+  test_plot <- data.frame(
+    POINT_X = 0.5,
+    POINT_Y = 0.5,
+    PLOT_ID = 1,
+    SIZE_HA = 1
+  )
+  test_plot <- sf::st_as_sf(test_plot, coords = c("POINT_X", "POINT_Y"), crs = 4326)
+  
+  # The test needs mocking of gfcanalysis functions which is not currently supported
+})
+
+# Test using ACTUAL raster extract behavior to verify ID=FALSE implementation
+test_that("terra::extract with ID=FALSE returns correct values", {
+  # Create a test forest loss raster with values 0 (no loss) and 5 (loss in 2005)
+  test_raster <- terra::rast(nrows=5, ncols=5, xmin=0, xmax=1, ymin=0, ymax=1, crs="EPSG:4326")
+  terra::values(test_raster) <- rep(5, terra::ncell(test_raster))
+  
+  # Create a test point (using point to get single value rather than multiple polygon cells)
+  test_point <- sf::st_point(c(0.5, 0.5))
+  test_point_sf <- sf::st_sfc(test_point, crs = 4326)
+  test_point_sf <- sf::st_sf(geometry = test_point_sf)
+  
+  # Extract values using the original way (with [[2]] to get values)
+  original_extract <- terra::extract(test_raster, test_point_sf)[[2]]
+  
+  # Extract values using the new way (with ID=FALSE and [[1]])
+  new_extract <- terra::extract(test_raster, test_point_sf, ID=FALSE)[[1]]
+  
+  # Both should return the same result
+  expect_equal(original_extract, new_extract)
+  expect_equal(new_extract, 5)
+})
+
 test_that("Deforested function behaves consistently across map_years", {
   skip("Skipping because this test requires large datasets")
   

@@ -433,7 +433,7 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
 
   library(foreach)
 
-  cat(paste0(nrow(plot_data), " plots being processed...\n"))
+  cat(paste0(nrow(plot_data), " plots or cells being processed...\n"))
 
   # Define operator for parallel/sequential processing
   `%op%` <- if (parallel) foreach::`%dopar%` else foreach::`%do%`

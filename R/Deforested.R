@@ -8,6 +8,10 @@
 # 27/01/2025:
 # - Making less assumptions about the structure of plot data, for ex not assuming a Xnew column if POINT_X column not existing.
 # - Corrected bug which removed plots with >50% deforestation vs >5% deforestation
+# 09/05/2025:
+# - Fixed bug in terra::extract call by using ID=FALSE parameter to ensure extraction of raster values
+# - Previous implementation was using [[2]] which directly accessed the second column, making it inconsistent
+# - This improves behavior consistency across different terra package versions
 
 
 ## Notes:
@@ -135,7 +139,7 @@ Deforested <- function(plt, map_year, gfc_folder = "data/GFC", gfc_dataset_year 
     vls <- numeric()
     for (f in fnms) {
       if (file.exists(f))
-        vls <- c(vls, terra::extract(terra::rast(f), pol)[[2]])
+        vls <- c(vls, terra::extract(terra::rast(f), pol, ID=FALSE)[[1]])
     }
 
     # vls <- if (length(vls[vls == 0]) > length(vls[vls > 0])) vls * 0 else (c(vls)) # implies a 50% threshold
