@@ -7,9 +7,13 @@
   };
 </script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Roboto-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Inverse dasymetric mapping — invDasymetry"><meta name="description" content="This function performs inverse dasymetric mapping on plot data. It selects plots
 based on given criteria, optionally aggregates them, and calculates forest
-fraction and Above Ground Biomass (AGB) data for each plot or cell."><meta property="og:description" content="This function performs inverse dasymetric mapping on plot data. It selects plots
+fraction and Above Ground Biomass (AGB) data for each plot or cell. Inverse dasymetric
+mapping is particularly useful for comparing field inventory plot measurements with remote
+sensing biomass maps by accounting for differences in spatial scales and forest cover percentages."><meta property="og:description" content="This function performs inverse dasymetric mapping on plot data. It selects plots
 based on given criteria, optionally aggregates them, and calculates forest
-fraction and Above Ground Biomass (AGB) data for each plot or cell."><meta property="og:image" content="https://atnt.github.io/Plot2Map/logo.png"></head><body>
+fraction and Above Ground Biomass (AGB) data for each plot or cell. Inverse dasymetric
+mapping is particularly useful for comparing field inventory plot measurements with remote
+sensing biomass maps by accounting for differences in spatial scales and forest cover percentages."><meta property="og:image" content="https://atnt.github.io/Plot2Map/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -54,7 +58,9 @@ fraction and Above Ground Biomass (AGB) data for each plot or cell."><meta prope
     <div class="ref-description section level2">
     <p>This function performs inverse dasymetric mapping on plot data. It selects plots
 based on given criteria, optionally aggregates them, and calculates forest
-fraction and Above Ground Biomass (AGB) data for each plot or cell.</p>
+fraction and Above Ground Biomass (AGB) data for each plot or cell. Inverse dasymetric
+mapping is particularly useful for comparing field inventory plot measurements with remote
+sensing biomass maps by accounting for differences in spatial scales and forest cover percentages.</p>
     </div>
 
     <div class="section level2">
@@ -73,6 +79,8 @@ fraction and Above Ground Biomass (AGB) data for each plot or cell.</p>
 <span>  agb_raster_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  forest_mask_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  threshold <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  map_year <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  map_resolution <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  esacci_biomass_year <span class="op">=</span> <span class="st">"latest"</span>,</span>
 <span>  esacci_biomass_version <span class="op">=</span> <span class="st">"latest"</span>,</span>
 <span>  esacci_folder <span class="op">=</span> <span class="st">"data/ESACCI-BIOMASS"</span>,</span>
@@ -88,35 +96,40 @@ fraction and Above Ground Biomass (AGB) data for each plot or cell.</p>
 
 
 <dl><dt id="arg-plot-data">plot_data<a class="anchor" aria-label="anchor" href="#arg-plot-data"></a></dt>
-<dd><p>data.frame, Plot dataset containing required columns.</p></dd>
+<dd><p>data.frame, Plot dataset containing required columns. For non-aggregated mode, the
+required columns are "POINT_X", "POINT_Y", "AGB_T_HA_ORIG", "AGB_T_HA", and "SIZE_HA".
+For aggregated mode (when aggr is not NULL), the "varPlot" column is also required, but will
+be automatically calculated if missing.</p></dd>
 
 
 <dt id="arg-clmn">clmn<a class="anchor" aria-label="anchor" href="#arg-clmn"></a></dt>
-<dd><p>character, Column name for plot selection.</p></dd>
+<dd><p>character, Column name for plot selection (e.g., "ZONE", "CONTINENT").</p></dd>
 
 
 <dt id="arg-value">value<a class="anchor" aria-label="anchor" href="#arg-value"></a></dt>
-<dd><p>character, Value to select in the specified column.</p></dd>
+<dd><p>character, Value to select in the specified column (e.g., "Europe", "Africa").</p></dd>
 
 
 <dt id="arg-aggr">aggr<a class="anchor" aria-label="anchor" href="#arg-aggr"></a></dt>
-<dd><p>numeric, Aggregation factor in degrees. NULL for no aggregation.</p></dd>
+<dd><p>numeric, Aggregation factor in degrees (e.g., 0.1 for 0.1-degree cells). Set to NULL for no aggregation.
+When aggregated, plots falling within the same grid cell are combined using inverse variance weighting.</p></dd>
 
 
 <dt id="arg-minplots">minPlots<a class="anchor" aria-label="anchor" href="#arg-minplots"></a></dt>
-<dd><p>integer, Minimum number of plots per aggregated cell.</p></dd>
+<dd><p>integer, Minimum number of plots per aggregated cell. Cells with fewer plots will be excluded.</p></dd>
 
 
 <dt id="arg-weighted-mean">weighted_mean<a class="anchor" aria-label="anchor" href="#arg-weighted-mean"></a></dt>
-<dd><p>logical, Whether to use weighted mean for calculations.</p></dd>
+<dd><p>Logical, if TRUE the weighted mean is calculated considering the
+approximate fraction of each cell that is covered by the roi (default is FALSE).</p></dd>
 
 
 <dt id="arg-is-poly">is_poly<a class="anchor" aria-label="anchor" href="#arg-is-poly"></a></dt>
-<dd><p>logical, Whether input plots are polygons.</p></dd>
+<dd><p>logical, Whether input plots are polygons (TRUE) or should be converted to polygons (FALSE).</p></dd>
 
 
 <dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
-<dd><p>logical, Enable parallel processing. Default is FALSE.</p></dd>
+<dd><p>logical, Enable parallel processing for faster computation on multi-core systems. Default is FALSE.</p></dd>
 
 
 <dt id="arg-n-cores">n_cores<a class="anchor" aria-label="anchor" href="#arg-n-cores"></a></dt>
@@ -124,7 +137,7 @@ fraction and Above Ground Biomass (AGB) data for each plot or cell.</p>
 
 
 <dt id="arg-dataset">dataset<a class="anchor" aria-label="anchor" href="#arg-dataset"></a></dt>
-<dd><p>character, Dataset for AGB estimation: "custom", "esacci", or "gedi". Default is "custom".</p></dd>
+<dd><p>Character, the dataset to use for AGB estimation. Options are "custom", "esacci", or "gedi". Default is "custom".</p></dd>
 
 
 <dt id="arg-agb-raster-path">agb_raster_path<a class="anchor" aria-label="anchor" href="#arg-agb-raster-path"></a></dt>
@@ -136,7 +149,16 @@ fraction and Above Ground Biomass (AGB) data for each plot or cell.</p>
 
 
 <dt id="arg-threshold">threshold<a class="anchor" aria-label="anchor" href="#arg-threshold"></a></dt>
-<dd><p>numeric, Threshold (0-100) for tree cover calculation and forest masking (e.g. 0 or 10).</p></dd>
+<dd><p>numeric, Threshold (0-100) for tree cover calculation and forest masking (e.g. 0 or 10).
+Only pixels with tree cover percentage above this threshold will contribute to biomass estimates.</p></dd>
+
+
+<dt id="arg-map-year">map_year<a class="anchor" aria-label="anchor" href="#arg-map-year"></a></dt>
+<dd><p>numeric, The year of the map data. If not provided, it will be detected automatically from the available data sources.</p></dd>
+
+
+<dt id="arg-map-resolution">map_resolution<a class="anchor" aria-label="anchor" href="#arg-map-resolution"></a></dt>
+<dd><p>numeric, The resolution of the map data in degrees. If not provided, it will be detected automatically from the available data sources. Used for variance calculation when aggregating.</p></dd>
 
 
 <dt id="arg-esacci-biomass-year">esacci_biomass_year<a class="anchor" aria-label="anchor" href="#arg-esacci-biomass-year"></a></dt>
@@ -174,36 +196,51 @@ approximately 0.001 degrees at the equator. Default is 0.001.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame with the following columns:</p>
 <dl><dt>plotAGB_threshold</dt>
-<dd><p>AGB values for the given forest threshold (e.g., plotAGB_10 if threshold=10)</p></dd>
+<dd><p>AGB values for the given forest threshold (e.g., plotAGB_10 if threshold=10).
+When aggregated, these values are derived from weighted means using inverse variance weighting.
+Units are in tonnes per hectare (t/ha).</p></dd>
 
 <dt>tfPlotAGB</dt>
-<dd><p>Tree-filtered plot AGB (only when not aggregated)</p></dd>
+<dd><p>Tree-filtered plot AGB (only when not aggregated). This is equivalent to
+the AGB_T_HA values from the input data.</p></dd>
 
 <dt>orgPlotAGB</dt>
-<dd><p>Original plot AGB</p></dd>
+<dd><p>Original plot AGB, derived from AGB_T_HA_ORIG in the input data.</p></dd>
 
 <dt>mapAGB</dt>
-<dd><p>AGB from map sampling</p></dd>
+<dd><p>AGB from map sampling, representing the biomass values extracted from the
+reference map at each plot or cell location.</p></dd>
 
 <dt>SIZE_HA</dt>
-<dd><p>Plot size in hectares</p></dd>
+<dd><p>Plot size in hectares. For aggregated cells, this is the mean plot size within the cell.</p></dd>
 
 <dt>x</dt>
-<dd><p>X-coordinate of plot</p></dd>
+<dd><p>X-coordinate of plot or cell center (longitude).</p></dd>
 
 <dt>y</dt>
-<dd><p>Y-coordinate of plot</p></dd>
+<dd><p>Y-coordinate of plot or cell center (latitude).</p></dd>
 
 <dt>n</dt>
-<dd><p>Number of plots (only if aggregated)</p></dd>
+<dd><p>Number of plots within each aggregated cell (only included when aggr is not NULL).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The function performs the following steps:</p><ol><li><p>Selects plots based on the specified criteria.</p></li>
-<li><p>Optionally aggregates plots if <code>aggr</code> is not NULL.</p></li>
-<li><p>Calculates forest fraction and AGB for each plot or cell.</p></li>
-<li><p>Samples AGB from custom raster or downloads and uses ESA CCI BIOMASS or GEDI L4B data.</p></li>
+    <p>The function performs inverse dasymetric mapping through these key steps:</p><ol><li><p><strong>Plot Selection</strong>: Selects plots based on the specified criteria (clmn and value).</p></li>
+<li><p><strong>Spatial Processing</strong> (two modes):</p><ul><li><p><strong>Non-Aggregated Mode</strong> (aggr = NULL): Each plot is processed individually.</p><ul><li><p>Tree cover percentage is calculated for each plot</p></li>
+<li><p>Biomass values are adjusted based on tree cover percentage</p></li>
+</ul></li>
+<li><p><strong>Aggregated Mode</strong> (e.g., aggr = 0.1): Plots are grouped into grid cells.</p><ul><li><p>New grid cell coordinates are calculated using integer division</p></li>
+<li><p>Plot measurements are aggregated using inverse variance weighting</p></li>
+<li><p>Cells with insufficient plot counts (less than minPlots) are filtered out</p></li>
+</ul></li>
+</ul></li>
+<li><p><strong>Forest Cover Correction</strong>:</p><ul><li><p>Tree cover percentage is calculated for each plot or cell</p></li>
+<li><p>Only forest pixels (based on threshold) contribute to biomass estimates</p></li>
+</ul></li>
+<li><p><strong>Map Comparison</strong>:</p><ul><li><p>AGB values are sampled from reference maps</p></li>
+<li><p>Enables direct comparison between field-measured and map-estimated biomass</p></li>
+</ul></li>
 </ol></div>
     <div class="section level2">
     <h2 id="note">Note<a class="anchor" aria-label="anchor" href="#note"></a></h2>
@@ -211,24 +248,55 @@ approximately 0.001 degrees at the equator. Default is 0.001.</p></dd>
 <ul><li><p>Ensure all required columns are present in the input plot data.</p></li>
 <li><p>For parallel processing, adjust <code>n_cores</code> based on your system's capabilities.</p></li>
 <li><p>Large datasets may require significant processing time and memory.</p></li>
+<li><p>When using aggregation, the function automatically calculates <code>varPlot</code> if missing.</p></li>
 </ul></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Create a sample dataset of 10 plots:</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">sampled_plots</span> <span class="op">&lt;-</span> <span class="va">plots</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">plots</span><span class="op">)</span>, <span class="fl">10</span><span class="op">)</span>, <span class="op">]</span></span></span>
-<span class="r-in"><span><span class="va">plot_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="Deforested.html">Deforested</a></span><span class="op">(</span><span class="va">sampled_plots</span>, gfc_folder <span class="op">=</span> <span class="va">test_dir</span>,  map_year <span class="op">=</span> <span class="va">test_year</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">plot_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="BiomePair.html">BiomePair</a></span><span class="op">(</span><span class="va">sampled_plots</span><span class="op">$</span><span class="va">non_deforested_plots</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">plot_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="TempApply.html">TempApply</a></span><span class="op">(</span><span class="va">plot_data</span>, <span class="va">test_year</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Basic usage with sample data</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://aTnT.github.io/Plot2Map/" class="external-link">Plot2Map</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">plots</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">invDasymetry</span><span class="op">(</span>plot_data <span class="op">=</span> <span class="va">plot_data</span>,</span></span>
-<span class="r-in"><span>                       clmn <span class="op">=</span> <span class="st">"ZONE"</span>,</span></span>
-<span class="r-in"><span>                       value <span class="op">=</span> <span class="st">"Europe"</span>,</span></span>
-<span class="r-in"><span>                       aggr <span class="op">=</span> <span class="fl">0.1</span>,</span></span>
-<span class="r-in"><span>                       parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
-<span class="r-in"><span>                       dataset <span class="op">=</span> <span class="st">"esacci"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Create a sample dataset and process it</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sampled_plots</span> <span class="op">&lt;-</span> <span class="va">plots</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">plots</span><span class="op">)</span>, <span class="fl">100</span><span class="op">)</span>, <span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">plot_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="Deforested.html">Deforested</a></span><span class="op">(</span><span class="va">sampled_plots</span>, gfc_folder <span class="op">=</span> <span class="st">"data/GFC"</span>, map_year <span class="op">=</span> <span class="fl">2020</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">plot_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="BiomePair.html">BiomePair</a></span><span class="op">(</span><span class="va">plot_data</span><span class="op">$</span><span class="va">non_deforested_plots</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">plot_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="TempApplyVar.html">TempApplyVar</a></span><span class="op">(</span><span class="va">plot_data</span>, <span class="fl">2020</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example 1: Non-aggregated mode with custom AGB raster</span></span></span>
+<span class="r-in"><span><span class="va">result_individual</span> <span class="op">&lt;-</span> <span class="fu">invDasymetry</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  plot_data <span class="op">=</span> <span class="va">plot_data</span>,</span></span>
+<span class="r-in"><span>  clmn <span class="op">=</span> <span class="st">"ZONE"</span>,</span></span>
+<span class="r-in"><span>  value <span class="op">=</span> <span class="st">"Europe"</span>,</span></span>
+<span class="r-in"><span>  aggr <span class="op">=</span> <span class="cn">NULL</span>,  <span class="co"># No aggregation</span></span></span>
+<span class="r-in"><span>  threshold <span class="op">=</span> <span class="fl">10</span>,  <span class="co"># 10% tree cover threshold</span></span></span>
+<span class="r-in"><span>  dataset <span class="op">=</span> <span class="st">"custom"</span>,</span></span>
+<span class="r-in"><span>  agb_raster_path <span class="op">=</span> <span class="st">"path/to/agb_raster.tif"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example 2: Aggregated mode with ESA CCI data</span></span></span>
+<span class="r-in"><span><span class="va">result_aggregated</span> <span class="op">&lt;-</span> <span class="fu">invDasymetry</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  plot_data <span class="op">=</span> <span class="va">plot_data</span>,</span></span>
+<span class="r-in"><span>  clmn <span class="op">=</span> <span class="st">"ZONE"</span>,</span></span>
+<span class="r-in"><span>  value <span class="op">=</span> <span class="st">"Europe"</span>,</span></span>
+<span class="r-in"><span>  aggr <span class="op">=</span> <span class="fl">0.25</span>,  <span class="co"># 0.25° aggregation</span></span></span>
+<span class="r-in"><span>  minPlots <span class="op">=</span> <span class="fl">2</span>,  <span class="co"># Minimum 2 plots per cell</span></span></span>
+<span class="r-in"><span>  threshold <span class="op">=</span> <span class="fl">10</span>,</span></span>
+<span class="r-in"><span>  dataset <span class="op">=</span> <span class="st">"esacci"</span>,</span></span>
+<span class="r-in"><span>  esacci_biomass_year <span class="op">=</span> <span class="st">"latest"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Compare plot AGB with map AGB</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">result_aggregated</span><span class="op">$</span><span class="va">plotAGB_10</span>,</span></span>
+<span class="r-in"><span>  <span class="va">result_aggregated</span><span class="op">$</span><span class="va">mapAGB</span>,</span></span>
+<span class="r-in"><span>  xlab <span class="op">=</span> <span class="st">"Plot AGB (t/ha)"</span>,</span></span>
+<span class="r-in"><span>  ylab <span class="op">=</span> <span class="st">"Map AGB (t/ha)"</span>,</span></span>
+<span class="r-in"><span>  main <span class="op">=</span> <span class="st">"Plot vs Map Biomass Comparison"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, col <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span>  <span class="co"># 1:1 line</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

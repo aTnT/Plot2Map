@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   introduction: introduction.html
   plot-data-preparation: plot-data-preparation.html
-last_built: 2025-05-08T12:53Z
+last_built: 2025-05-08T16:36Z
 urls:
   reference: https://atnt.github.io/Plot2Map/reference
   article: https://atnt.github.io/Plot2Map/articles
