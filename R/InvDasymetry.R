@@ -31,6 +31,10 @@
 # Added detailed comments explaining the aggregation methodology
 # Fixed bug with displaced brackets that lead to difference in aggregated vs non-aggregated case
 # Added tests with synthetic data to compare and validate aggregated vs non-aggregated case
+# 09/05/2025:
+# Fixed critical issue with forest threshold filtering in non-aggregated mode
+# Previously the non-aggregated mode was skipping threshold filtering for plots ≥ 1 hectare
+# Now always applies threshold filtering consistently in both modes
 
 
 
@@ -38,66 +42,121 @@
 #'
 #' This function performs inverse dasymetric mapping on plot data. It selects plots
 #' based on given criteria, optionally aggregates them, and calculates forest
-#' fraction and Above Ground Biomass (AGB) data for each plot or cell.
+#' fraction and Above Ground Biomass (AGB) data for each plot or cell. Inverse dasymetric
+#' mapping is particularly useful for comparing field inventory plot measurements with remote
+#' sensing biomass maps by accounting for differences in spatial scales and forest cover percentages.
 #'
-#' @param plot_data data.frame, Plot dataset containing required columns.
-#' @param clmn character, Column name for plot selection.
-#' @param value character, Value to select in the specified column.
-#' @param aggr numeric, Aggregation factor in degrees. NULL for no aggregation.
-#' @param minPlots integer, Minimum number of plots per aggregated cell.
-#' @param weighted_mean logical, Whether to use weighted mean for calculations.
-#' @param is_poly logical, Whether input plots are polygons.
-#' @param parallel logical, Enable parallel processing. Default is FALSE.
+#' @param plot_data data.frame, Plot dataset containing required columns. For non-aggregated mode, the
+#'        required columns are "POINT_X", "POINT_Y", "AGB_T_HA_ORIG", "AGB_T_HA", and "SIZE_HA".
+#'        For aggregated mode (when aggr is not NULL), the "varPlot" column is also required, but will
+#'        be automatically calculated if missing.
+#' @param clmn character, Column name for plot selection (e.g., "ZONE", "CONTINENT").
+#' @param value character, Value to select in the specified column (e.g., "Europe", "Africa").
+#' @param aggr numeric, Aggregation factor in degrees (e.g., 0.1 for 0.1-degree cells). Set to NULL for no aggregation.
+#'        When aggregated, plots falling within the same grid cell are combined using inverse variance weighting.
+#' @param minPlots integer, Minimum number of plots per aggregated cell. Cells with fewer plots will be excluded.
+#' @param is_poly logical, Whether input plots are polygons (TRUE) or should be converted to polygons (FALSE).
+#' @param parallel logical, Enable parallel processing for faster computation on multi-core systems. Default is FALSE.
 #' @param n_cores numeric, Number of cores to use for parallel processing.
-#' @param dataset character, Dataset for AGB estimation: "custom", "esacci", or "gedi". Default is "custom".
 #' @param agb_raster_path character, File path to the custom AGB raster.
 #' @param forest_mask_path character, File path to the forest mask raster.
 #' @param threshold numeric, Threshold (0-100) for tree cover calculation and forest masking (e.g. 0 or 10).
+#'  Only pixels with tree cover percentage above this threshold will contribute to biomass estimates.
 #' @param map_year numeric, The year of the map data. If not provided, it will be detected automatically from the available data sources.
 #' @param map_resolution numeric, The resolution of the map data in degrees. If not provided, it will be detected automatically from the available data sources. Used for variance calculation when aggregating.
 #' @inheritParams download_esacci_biomass
 #' @inheritParams download_gedi_l4b
-#' @inheritParams sampleTreeCover
+#' @inheritParams sampleAGBmap
 #'
 #' @return A data frame with the following columns:
 #'   \item{plotAGB_[threshold]}{AGB values for the given forest threshold (e.g., plotAGB_10 if threshold=10).
-#'     When aggregated, these values are derived from weighted means using inverse variance weighting.}
+#'     When aggregated, these values are derived from weighted means using inverse variance weighting.
+#'     Units are in tonnes per hectare (t/ha).}
 #'   \item{tfPlotAGB}{Tree-filtered plot AGB (only when not aggregated). This is equivalent to
 #'     the AGB_T_HA values from the input data.}
 #'   \item{orgPlotAGB}{Original plot AGB, derived from AGB_T_HA_ORIG in the input data.}
-#'   \item{mapAGB}{AGB from map sampling}
-#'   \item{SIZE_HA}{Plot size in hectares}
-#'   \item{x}{X-coordinate of plot}
-#'   \item{y}{Y-coordinate of plot}
-#'   \item{n}{Number of plots (only if aggregated)}
+#'   \item{mapAGB}{AGB from map sampling, representing the biomass values extracted from the
+#'     reference map at each plot or cell location.}
+#'   \item{SIZE_HA}{Plot size in hectares. For aggregated cells, this is the mean plot size within the cell.}
+#'   \item{x}{X-coordinate of plot or cell center (longitude).}
+#'   \item{y}{Y-coordinate of plot or cell center (latitude).}
+#'   \item{n}{Number of plots within each aggregated cell (only included when aggr is not NULL).}
 #'
 #' @details
-#' The function performs the following steps:
-#' 1. Selects plots based on the specified criteria.
-#' 2. Optionally aggregates plots if `aggr` is not NULL.
-#' 3. Calculates forest fraction and AGB for each plot or cell.
-#' 4. Samples AGB from custom raster or downloads and uses ESA CCI BIOMASS or GEDI L4B data.
+#' The function performs inverse dasymetric mapping through these key steps:
+#'
+#' 1. **Plot Selection**: Selects plots based on the specified criteria (clmn and value).
+#'
+#' 2. **Spatial Processing** (two modes):
+#'
+#'    * **Non-Aggregated Mode** (aggr = NULL): Each plot is processed individually.
+#'      - Tree cover percentage is calculated for each plot
+#'      - Biomass values are adjusted based on tree cover percentage
+#'
+#'    * **Aggregated Mode** (e.g., aggr = 0.1): Plots are grouped into grid cells.
+#'      - New grid cell coordinates are calculated using integer division
+#'      - Plot measurements are aggregated using inverse variance weighting
+#'      - Cells with insufficient plot counts (less than minPlots) are filtered out
+#'
+#' 3. **Forest Cover Correction**:
+#'    - Tree cover percentage is calculated for each plot or cell
+#'    - Only forest pixels (based on threshold) contribute to biomass estimates
+#'
+#' 4. **Map Comparison**:
+#'    - AGB values are sampled from reference maps
+#'    - Enables direct comparison between field-measured and map-estimated biomass
 #'
 #' @note
 #' - Ensure all required columns are present in the input plot data.
 #' - For parallel processing, adjust `n_cores` based on your system's capabilities.
 #' - Large datasets may require significant processing time and memory.
+#' - When using aggregation, the function automatically calculates `varPlot` if missing.
 #'
 #' @examples
 #' \dontrun{
-#'# Create a sample dataset of 10 plots:
-#' set.seed(42)
-#' sampled_plots <- plots[sample(nrow(plots), 10), ]
-#' plot_data <- Deforested(sampled_plots, gfc_folder = test_dir,  map_year = test_year)
-#' plot_data <- BiomePair(sampled_plots$non_deforested_plots)
-#' plot_data <- TempApply(plot_data, test_year)
+#' # Basic usage with sample data
+#' library(Plot2Map)
+#' data(plots)
 #'
-#' result <- invDasymetry(plot_data = plot_data,
-#'                        clmn = "ZONE",
-#'                        value = "Europe",
-#'                        aggr = 0.1,
-#'                        parallel = TRUE,
-#'                        dataset = "esacci")
+#' # Create a sample dataset and process it
+#' set.seed(42)
+#' sampled_plots <- plots[sample(nrow(plots), 100), ]
+#' plot_data <- Deforested(sampled_plots, gfc_folder = "data/GFC", map_year = 2020)
+#' plot_data <- BiomePair(plot_data$non_deforested_plots)
+#' plot_data <- TempApplyVar(plot_data, 2020)
+#'
+#' # Example 1: Non-aggregated mode with custom AGB raster
+#' result_individual <- invDasymetry(
+#'   plot_data = plot_data,
+#'   clmn = "ZONE",
+#'   value = "Europe",
+#'   aggr = NULL,  # No aggregation
+#'   threshold = 10,  # 10% tree cover threshold
+#'   dataset = "custom",
+#'   agb_raster_path = "path/to/agb_raster.tif"
+#' )
+#'
+#' # Example 2: Aggregated mode with ESA CCI data
+#' result_aggregated <- invDasymetry(
+#'   plot_data = plot_data,
+#'   clmn = "ZONE",
+#'   value = "Europe",
+#'   aggr = 0.25,  # 0.25° aggregation
+#'   minPlots = 2,  # Minimum 2 plots per cell
+#'   threshold = 10,
+#'   dataset = "esacci",
+#'   esacci_biomass_year = "latest"
+#' )
+#'
+#' # Compare plot AGB with map AGB
+#' plot(
+#'   result_aggregated$plotAGB_10,
+#'   result_aggregated$mapAGB,
+#'   xlab = "Plot AGB (t/ha)",
+#'   ylab = "Map AGB (t/ha)",
+#'   main = "Plot vs Map Biomass Comparison"
+#' )
+#' abline(0, 1, col = "red")  # 1:1 line
 #' }
 #'
 #' @import sf
@@ -502,17 +561,8 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
     # Clean memory
     if (i %% 50 == 0) gc(full = TRUE)
 
-    if (is.null(aggr)) {
-      if (is.na(plot_data$SIZE_HA[i])) {
-        treeCovers <- safe_sampleTreeCover(roi = pol, thresholds = threshold, weighted_mean = weighted_mean, forest_mask = forest_mask_local)
-      } else if (plot_data$SIZE_HA[i] >= 1) {
-        treeCovers <- rep(1, length(threshold))
-      } else {
-        treeCovers <- safe_sampleTreeCover(roi = pol, thresholds = threshold, weighted_mean = weighted_mean, forest_mask = forest_mask_local)
-      }
-    } else {
-      treeCovers <- safe_sampleTreeCover(roi = pol, thresholds = threshold, weighted_mean = weighted_mean, forest_mask = forest_mask_local)
-    }
+    # Always use sampleTreeCover to apply consistent threshold filtering, regardless of plot size or aggregation
+    treeCovers <- safe_sampleTreeCover(roi = pol, thresholds = threshold, weighted_mean = weighted_mean, forest_mask = forest_mask_local)
 
     wghts2 <- ifelse(is.null(aggr), FALSE, weighted_mean)
 

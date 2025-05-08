@@ -23,7 +23,7 @@ sampleAGBmap(
 \item{roi}{An sf or SpatVector object representing the Region of Interest.}
 
 \item{weighted_mean}{Logical, if TRUE the weighted mean is calculated considering the
-approximate fraction of each cell that is covered by the polygon (default is FALSE).}
+approximate fraction of each cell that is covered by the roi (default is FALSE).}
 
 \item{agb_raster}{A SpatRaster object with the custom AGB map. If NULL, either ESA CCI BIOMASS AGB tiles or GEDI L4B data will be downloaded and used.}
 

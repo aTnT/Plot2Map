@@ -33,7 +33,7 @@
 #'
 #' @param roi An sf or SpatVector object representing the Region of Interest.
 #' @param weighted_mean Logical, if TRUE the weighted mean is calculated considering the
-#'  approximate fraction of each cell that is covered by the polygon (default is FALSE).
+#'  approximate fraction of each cell that is covered by the roi (default is FALSE).
 #' @param dataset Character, the dataset to use for AGB estimation. Options are "custom", "esacci", or "gedi". Default is "custom".
 #' @param agb_raster A SpatRaster object with the custom AGB map. If NULL, either ESA CCI BIOMASS AGB tiles or GEDI L4B data will be downloaded and used.
 #' @inheritParams download_esacci_biomass
@@ -258,7 +258,7 @@ sampleAGBmap <- function(
 #' @param roi An sf or SpatVector object representing the Region of Interest.
 #' @param thresholds Numeric vector of tree cover thresholds percentages (e.g., c(10, 20, 30)) to calculate forest cover percentages.
 #' @param weighted_mean Logical, if TRUE the weighted mean is calculated considering the
-#'  approximate fraction of each cell that is covered by the polygon (default is FALSE).
+#'  approximate fraction of each cell that is covered by the roi (default is FALSE).
 #' @param forest_mask A SpatRaster object with a custom forest cover mask. If NULL, Hansen GFC tree cover tiles will be downloaded and used.
 #' @inheritParams Deforested
 #'

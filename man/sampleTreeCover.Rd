@@ -21,7 +21,7 @@ sampleTreeCover(
 \item{forest_mask}{A SpatRaster object with a custom forest cover mask. If NULL, Hansen GFC tree cover tiles will be downloaded and used.}
 
 \item{weighted_mean}{Logical, if TRUE the weighted mean is calculated considering the
-approximate fraction of each cell that is covered by the polygon (default is FALSE).}
+approximate fraction of each cell that is covered by the roi (default is FALSE).}
 
 \item{gfc_folder}{Character string specifying the directory to download GFC data.}
 
