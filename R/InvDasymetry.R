@@ -27,24 +27,10 @@
 # 05/05/2025:
 # Fixed error "'st_as_sfg' is not an exported object from 'namespace:sf'" by replacing it with st_geometry(st_as_sfc()) combination
 # Added NULL check for geom_wkt to prevent errors when working with datasets without WKT geometries
-# 06/05/2025:
-# Fixed critical biomass scaling issue in aggregated mode causing much larger values than non-aggregated mode
-# Ensured biomass values maintain their physical meaning (t/ha) in both aggregated and non-aggregated modes
-# Added detailed comments explaining the aggregation methodology and biomass unit preservation
-# 06/05/2025:
-# Fixed column naming inconsistency where weighted mean AGB values were stored in AGB_T_HA1 but referred to as AGB_T_HA
-# Improved documentation to clarify column naming conventions and relationships with input data columns
-
-
-## Notes:
-# Questions:
-#   Why:
-# 1.
-#   } else if (plot_data$SIZE_HA[i] >= 1) {
-#     treeCovers <- rep(1, length(threshold))
-# 2. Where does this data come from:
-# plot_data$AGB_T_HA_UW[i] , plot_data$varPlot ... and other hardcoded columns in plot_data
-# if these columns are not present the function fails
+# 06-08/05/2025:
+# Added detailed comments explaining the aggregation methodology
+# Fixed bug with displaced brackets that lead to difference in aggregated vs non-aggregated case
+# Added tests with synthetic data to compare and validate aggregated vs non-aggregated case
 
 
 
@@ -324,28 +310,56 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
   #     plots$varMap <- plots$sdMap^2
   #   }
 
-
-
-
   # Aggregate if aggr != NULL
   if (!is.null(aggr)) {
+
+    # Creating aggregation cell grid
     plot_data$Xnew <- aggr * (0.5 + plot_data$POINT_X %/% aggr)
     plot_data$Ynew <- aggr * (0.5 + plot_data$POINT_Y %/% aggr)
     plot_data$inv <- 1 / plot_data$varPlot
 
-    plotsTMP <- aggregate(plot_data[, c("AGB_T_HA_ORIG", "AGB_T_HA", "SIZE_HA")],
+    # Plot AGB and area are mean aggregated with cell grid
+    #plotsTMP <- aggregate(plot_data[, c("AGB_T_HA_ORIG", "AGB_T_HA", "SIZE_HA")], # AGB_T_HA is aggregated below with inv weighted mean
+    plotsTMP <- aggregate(plot_data[, c("AGB_T_HA_ORIG", "SIZE_HA")],
                           list(plot_data$Xnew, plot_data$Ynew), mean, na.rm = TRUE)
+
+    # Plot variance is aggregated with inverse of summed variance inversions
     plotsTMP <- cbind(plotsTMP, aggregate(plot_data[, "varPlot"],
                                           list(plot_data$Xnew, plot_data$Ynew),
                                           function(x) 1 / sum(1 / x))[3])
     plotsTMP <- plotsTMP[with(plotsTMP, order(Group.2, Group.1)), ]
 
+    # x <- plyr::ddply(plot_data, .(paste(plot_data$Ynew, plot_data$Xnew)), # removing plyr dependency and replacing with lines below
+    #            function(x) data.frame(Xnew=mean(x$Xnew),
+    #                                   Ynew=mean(x$Ynew),
+    #                                   AGB_T_HA=weighted.mean(x$AGB_T_HA, x$inv ,na.rm=T)))
+    # x <- x[with(x, order(Ynew, Xnew)), ]
+
+    # AGB_T_HA is aggregated using inverse variance weighed mean
     x <- aggregate(AGB_T_HA ~ Xnew + Ynew, data = plot_data,
                    FUN = function(x) weighted.mean(x, plot_data$inv[plot_data$AGB_T_HA %in% x], na.rm = TRUE))
     x <- x[with(x, order(Ynew, Xnew)), ]
     plotsTMP$AGB_T_HA <- x$AGB_T_HA
 
     names(plotsTMP) <- c("POINT_X", "POINT_Y", "AGB_T_HA_ORIG", "SIZE_HA", "varPlot", "AGB_T_HA")
+
+    #   # only keep plots satisfying minPlots criterion
+    #   if(minPlots > 1){
+    #     blockCOUNT <- aggregate(plot_data$AGB_T_HA, list(plot_data$Xnew, plot_data$Ynew),
+    #                             function(x) length(na.omit(x)))
+    #     ndx <- which(blockCOUNT$x >= minPlots)
+    #     plotsTMP1 <- plotsTMP[ndx,]
+    #     if(nrow(plotsTMP1) < 2){plotsTMP1 <- plotsTMP[1:2,]}
+    #     plotsTMP1$n <- subset(blockCOUNT,blockCOUNT$x >= minPlots)[[3]] #add plots inside
+    #     print(plotsTMP1)
+    #   }
+    #   plot_data <- plotsTMP1
+    #   rsl <- aggr
+    # } else {
+    #   # determine resolution output
+    #   fname <- list.files(agbTilesDir, "*.tif")[99]
+    #   rsl <- xres(raster(file.path(agbTilesDir, fname)))
+    # }
 
     # Calculate plot counts per cell for all cells
     blockCOUNT <- aggregate(plot_data$AGB_T_HA, list(plot_data$Xnew, plot_data$Ynew),
@@ -361,58 +375,59 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
         plotsTMP1$n <- subset(blockCOUNT, blockCOUNT$x >= minPlots)[[3]]
       } else {
         # Handle edge case: No cells have enough plots
-        warning(paste0("No cells with at least ", minPlots, " plots found. Using top cells with most plots."))
+        stop(paste0("No cells with at least ", minPlots, " plots found. Use a lower 'minPlots', a larger 'aggr' or add more plots to 'plot_data'."))
 
-        # Sort blockCOUNT by number of plots and take top 2 cells
-        sorted_cells <- blockCOUNT[order(blockCOUNT$x, decreasing = TRUE),]
-        top_cells <- sorted_cells[1:min(2, nrow(sorted_cells)),]
-
-        # Find the rows in plotsTMP corresponding to the top cells
-        top_cell_indices <- which(paste(plotsTMP$POINT_X, plotsTMP$POINT_Y) %in%
-                                    paste(top_cells$Group.1, top_cells$Group.2))
-
-        plotsTMP1 <- plotsTMP[top_cell_indices, ]
-        plotsTMP1$n <- blockCOUNT$x[top_cell_indices]
+        #   warning(paste0("No cells with at least ", minPlots, " plots found. Using top cells with most plots."))
+        #
+        #   # Sort blockCOUNT by number of plots and take top 2 cells
+        #   sorted_cells <- blockCOUNT[order(blockCOUNT$x, decreasing = TRUE),]
+        #   top_cells <- sorted_cells[1:min(2, nrow(sorted_cells)),]
+        #
+        #   # Find the rows in plotsTMP corresponding to the top cells
+        #   top_cell_indices <- which(paste(plotsTMP$POINT_X, plotsTMP$POINT_Y) %in%
+        #                               paste(top_cells$Group.1, top_cells$Group.2))
+        #
+        #   plotsTMP1 <- plotsTMP[top_cell_indices, ]
+        #   plotsTMP1$n <- blockCOUNT$x[top_cell_indices]
+        # }
+        #
+        # # Ensure we have at least 2 cells to avoid errors
+        # if (nrow(plotsTMP1) < 2) {
+        #   warning("Less than 2 cells available. Using top 2 cells.")
+        #   plotsTMP1 <- plotsTMP[1:min(2, nrow(plotsTMP)), ]
+        #   plotsTMP1$n <- blockCOUNT$x[1:min(2, nrow(blockCOUNT))]
+        # }
+        #
       }
-
-      # Ensure we have at least 2 cells to avoid errors
-      if (nrow(plotsTMP1) < 2) {
-        warning("Less than 2 cells available. Using top 2 cells.")
-        plotsTMP1 <- plotsTMP[1:min(2, nrow(plotsTMP)), ]
-        plotsTMP1$n <- blockCOUNT$x[1:min(2, nrow(blockCOUNT))]
-      }
-
       plot_data <- plotsTMP1
+
     } else {
       # When minPlots <= 1, use plotsTMP directly with plot counts
       plotsTMP$n <- blockCOUNT$x[match(paste(plotsTMP$POINT_X, plotsTMP$POINT_Y),
                                        paste(blockCOUNT$Group.1, blockCOUNT$Group.2))]
       plot_data <- plotsTMP
-
-      # Ensure we have at least 1 cell for the edge case
-      if (nrow(plot_data) < 1) {
-        warning("No cells available after aggregation. Check your data and parameters.")
-        # Return minimal result to avoid hard error
-        plot_data <- plotsTMP[1:min(1, nrow(plotsTMP)), ]
-        if (nrow(plot_data) > 0) {
-          plot_data$n <- 1
-        }
-      }
     }
+
+    # Ensure we have at least 1 cell
+    if (nrow(plot_data) < 1) {
+      stop("No cells available after aggregation. Check your data and parameters.")
+    }
+
     rsl <- aggr
-  } else {
-    if (!is.null(agb_raster)) {
-      rsl <- terra::res(agb_raster)[1]
-    } else if (dataset != "custom") {
-      if (dataset == "esacci") {
-        fname <- list.files(esacci_folder, "*.tif")[1]
-        rsl <- terra::res(terra::rast(file.path(esacci_folder, fname)))[1]
-      } else if (dataset == "gedi") {
-        fname <- list.files(gedi_l4b_folder, "*.tif")[1]
-        rsl <- terra::res(terra::rast(file.path(gedi_l4b_folder, fname)))[1]
-      }
+  }
+
+  if (!is.null(agb_raster)) {
+    rsl <- terra::res(agb_raster)[1]
+  } else if (dataset != "custom") {
+    if (dataset == "esacci") {
+      fname <- list.files(esacci_folder, "*.tif")[1]
+      rsl <- terra::res(terra::rast(file.path(esacci_folder, fname)))[1]
+    } else if (dataset == "gedi") {
+      fname <- list.files(gedi_l4b_folder, "*.tif")[1]
+      rsl <- terra::res(terra::rast(file.path(gedi_l4b_folder, fname)))[1]
     }
   }
+
 
   if (nrow(plot_data) <= 1) stop("Too few plots selected; decrease minPlots or run at original resolution")
 
@@ -502,16 +517,7 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
     wghts2 <- ifelse(is.null(aggr), FALSE, weighted_mean)
 
     if (!is.null(aggr)) {
-      # 06/05/2025: Fixed biomass scaling issue in aggregated mode
-      # In aggregated mode, we need to properly scale the biomass to maintain physical meaning (t/ha)
-      # The issue was that in aggregated mode, the AGB values were being multiplied by the area
-      # value in SIZE_HA, resulting in values much larger than non-aggregated mode
-
-      # Calculate tree-filtered biomass (t/ha) - preserve physical meaning
-      # Based on original implementation in scripts/InvDasymetry.R lines 108-112
-      plot_agb_value <- treeCovers * plot_data$AGB_T_HA[i]
-
-      c(plot_agb_value, plot_data$AGB_T_HA_ORIG[i],
+      c(treeCovers * plot_data$AGB_T_HA[i], plot_data$AGB_T_HA_ORIG[i],
         safe_sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset, agb_raster = agb_raster_local,
                           esacci_biomass_year = esacci_biomass_year, esacci_biomass_version = esacci_biomass_version,
                           esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder, gedi_l4b_band = gedi_l4b_band,
