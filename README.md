@@ -1,8 +1,9 @@
 
 # Plot2Map <img src="man/figures/logo.png" align="right" height="75"/>
 
-[![R-CMD-check](https://github.com/aTnT/Plot2Map/workflows/R-CMD-check/badge.svg)](https://github.com/aTnT/Plot2Map/actions)
-[![test-coverage](https://github.com/aTnT/Plot2Map/workflows/test-coverage/badge.svg)](https://github.com/aTnT/Plot2Map/actions)
+[![R-CMD-check](https://github.com/aTnT/Plot2Map/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/aTnT/Plot2Map/actions/workflows/R-CMD-check.yaml)
+[![test-coverage](https://github.com/aTnT/Plot2Map/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/aTnT/Plot2Map/actions/workflows/test-coverage.yaml)
+[![pkgdown](https://github.com/aTnT/Plot2Map/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/aTnT/Plot2Map/actions/workflows/pkgdown.yaml)
 
 Plot2Map is an R package for comparing forest plot data to biomass maps, with a focus on Above Ground Biomass (AGB) estimation and validation.
 
