@@ -111,11 +111,11 @@ saved in the output_folder.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>This function computes a tree cover forest mask by leveraging a baseline tree cover and forest loss data.
-It uses two primary types of input files:</p><ol><li><p>Tree cover data, which serves as the baseline:</p><ul><li><p>For the 2000 baseline, the function uses files matching the pattern "Hansen_GFC-2023-v1.11_treecover2000_<em>.tif".
- For the 2010 baseline, the function uses files matching the pattern "treecover2010_</em>.tif".</p></li>
-<li><p>Tree cover values represent the percentage of tree cover (0-100%).</p></li>
+It uses two primary types of input files:</p><ol><li><p>Tree cover data, which serves as the baseline:</p><ul><li><p>For the 2000 baseline, the function uses files from the Hansen dataset for tree cover.</p></li>
+<li><p>For the 2010 baseline, the function uses GLAD tree cover files.</p></li>
+<li><p>Tree cover values represent the percentage of tree cover (0-100\<!-- %). --></p></li>
 </ul></li>
-<li><p>Forest loss year data:</p><ul><li><p>The function uses files matching the pattern "Hansen_GFC-2023-v1.11_lossyear_*.tif".</p></li>
+<li><p>Forest loss year data:</p><ul><li><p>The function uses Hansen Global Forest Change lossyear files.</p></li>
 <li><p>Values in these files indicate the year of forest loss (1-23, corresponding to years 2001-2023), or 0 if no loss occurred.</p></li>
 </ul></li>
 </ol><p>The function applies the following steps:</p><ol><li><p>It reads the tree cover and forest loss rasters for the specified year and location.</p></li>

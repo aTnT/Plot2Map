@@ -105,19 +105,20 @@ from <span class="pkg">Plot2Map</span> is used.</p></dd>
 <dt><code>sdGrowth</code></dt>
 <dd><p>Temporal standard deviation of the biomass adjustment.</p></dd>
 
-<dt>All other columns from the input <code>plt</code>.</dt>
-<dd><p></p></dd>
+<dt>Additional</dt>
+<dd><p>All other columns from the input <code>plt</code>.</p></dd>
+
 
 </dl></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://aTnT.github.io/Plot2Map/" class="external-link">Plot2Map</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">sample_plots</span> <span class="op">&lt;-</span> <span class="va">plots</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">plots</span><span class="op">)</span>, <span class="fl">10</span><span class="op">)</span>, <span class="op">]</span></span></span>
-<span class="r-in"><span>  <span class="va">sample_plots_gez</span> <span class="op">&lt;-</span> <span class="fu"><a href="BiomePair.html">BiomePair</a></span><span class="op">(</span><span class="va">sample_plots</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">TempApplyVar</span><span class="op">(</span><span class="va">sample_plots_gez</span>, map_year <span class="op">=</span> <span class="fl">2004</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://aTnT.github.io/Plot2Map/" class="external-link">Plot2Map</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sample_plots</span> <span class="op">&lt;-</span> <span class="va">plots</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">plots</span><span class="op">)</span>, <span class="fl">10</span><span class="op">)</span>, <span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">sample_plots_gez</span> <span class="op">&lt;-</span> <span class="fu"><a href="BiomePair.html">BiomePair</a></span><span class="op">(</span><span class="va">sample_plots</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">TempApplyVar</span><span class="op">(</span><span class="va">sample_plots_gez</span>, map_year <span class="op">=</span> <span class="fl">2004</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   PLOT_ID AGB_T_HA AVG_YEAR SIZE_HA   POINT_X  POINT_Y   ZONE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1     EU2 97.17177     2001   0.196  1.305915 42.59214 Europe</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2     EU2 62.49786     2000   0.196 -3.988935 40.33963 Europe</span>

@@ -112,13 +112,12 @@ deforested beyond a set deforestation threshold or if the deforestation occurred
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># 4 plots without and 4 plots with deforestation:</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># 4 plots without and 4 plots with deforestation:</span></span></span>
 <span class="r-in"><span><span class="va">plots_sample</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">182</span>, <span class="fl">200</span>, <span class="fl">323</span>, <span class="fl">6765</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sampled_plots</span> <span class="op">&lt;-</span> <span class="va">plots</span><span class="op">[</span><span class="va">plots_sample</span>,<span class="op">]</span></span></span>
 <span class="r-in"><span><span class="fu">Deforested</span><span class="op">(</span><span class="va">sampled_plots</span>, <span class="fl">2010</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Created directory: data/GFC</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Spherical geometry (s2) switched off</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in st_area.sfc(st_geometry(x), ...):</span> package lwgeom required, please install it first</span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
