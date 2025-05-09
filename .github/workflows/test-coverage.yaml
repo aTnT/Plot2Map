@@ -15,7 +15,7 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: r-lib/actions/setup-r@v2
         with:
@@ -23,7 +23,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::covr
+          extra-packages: any::covr,any::lwgeom
           needs: coverage
 
       - name: Install system dependencies
@@ -32,12 +32,22 @@ jobs:
           sudo apt-get install -y libgdal-dev libproj-dev libgeos-dev libudunits2-dev libspatialindex-dev
 
       - name: Test coverage
+        env:
+          _R_CHECK_FORCE_SUGGESTS_: false
+          R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+          NOT_CRAN: true
         run: |
+          options(covr.exclude_pattern = c("R/zzz.R", "R/RcppExports.R"))
           covr::codecov(
             quiet = FALSE,
             clean = FALSE,
             install_path = file.path(Sys.getenv("RUNNER_TEMP"), "package"),
-            function_exclusions = "\\%op\\%"
+            function_exclusions = "\\%op\\%",
+            line_exclusions = list(
+              "R/RawPlots.R" = c(101:146),  # Interactive RawPlotsTree function
+              "R/Nested.R" = c(38:82),       # Interactive Nested function
+              "R/treecover.R" = 380:420      # Large data downloads
+            )
           )
         shell: Rscript {0}
 
@@ -50,7 +60,7 @@ jobs:
 
       - name: Upload test results
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-test-failures
           path: ${{ github.workspace }}/tests/testthat/_snaps
