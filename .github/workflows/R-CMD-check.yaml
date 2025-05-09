@@ -30,13 +30,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: r-lib/actions/setup-r@v4
+      - uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
-      - uses: r-lib/actions/setup-pandoc@v4
+      - uses: r-lib/actions/setup-pandoc@v2
 
       - name: Install system dependencies
         if: runner.os == 'Linux'
@@ -44,7 +44,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgdal-dev libproj-dev libgeos-dev libudunits2-dev libspatialindex-dev
 
-      - uses: r-lib/actions/setup-r-dependencies@v4
+      - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck,any::lwgeom
           needs: check

@@ -18,7 +18,9 @@ Suggests:
     knitr,
     rmarkdown,
     testthat (>= 3.0.0),
-    lwgeom
+    lwgeom,
+    covr,
+    rcmdcheck
 VignetteBuilder: knitr
 Imports: 
     BIOMASS,
