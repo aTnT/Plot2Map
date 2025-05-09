@@ -19,7 +19,10 @@
 #'         provided year. If a tree cover threshold is provided, all tree cover pixels below the threshold are set to NA. Rasters are saved as a GeoTIFF file
 #'         saved in the output_folder.
 #'
-#' @import terra stringr parallel pbapply
+#' @importFrom terra rast crop ext global intersect extract res vect values writeRaster
+#' @importFrom stringr str_extract str_match
+#' @importFrom parallel makeCluster stopCluster
+#' @importFrom pbapply pbsapply
 #'
 #' @details
 #' This function computes a tree cover forest mask by leveraging a baseline tree cover and forest loss data.

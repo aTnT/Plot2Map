@@ -75,7 +75,7 @@
 #' 5. Calculates plot-level AGB and standard deviation.
 #' 6. Scales values per hectare.
 #'
-#' @import dplyr
+#' @importFrom dplyr filter select group_by summarize mutate inner_join arrange
 #' @importFrom BIOMASS correctTaxo getWoodDensity modelHD retrieveH AGBmonteCarlo
 #'
 #' @examples

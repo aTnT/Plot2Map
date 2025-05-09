@@ -21,8 +21,8 @@
 #'
 #' @return A dataframe with accuracy metrics for each AGB bin and a total row.
 #'
-#' @import dplyr
-#' @import tidyr
+#' @importFrom dplyr filter select group_by summarize mutate inner_join arrange bind_rows
+#' @importFrom tidyr pivot_wider pivot_longer
 #' @importFrom rlang sym
 #'
 #' @export

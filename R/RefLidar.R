@@ -31,7 +31,7 @@
 #' \dontrun{
 #' lidar_data <- RefLidar(lidar.dir = "data/SustainableLandscapeBrazil_v04/SLB_AGBmaps")
 #' }
-#' @import terra
+#' @importFrom terra rast crop ext extract ncell project vect values xmax xmin ymax ymin
 #' @importFrom utils menu
 #'
 #' @export

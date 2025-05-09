@@ -158,12 +158,13 @@
 #' )
 #' abline(0, 1, col = "red")  # 1:1 line
 #' }
-#'
-#' @import sf
-#' @import terra
-#' @import foreach
-#' @import doParallel
-#' @importFrom stats aggregate na.omit weighted.mean
+#' @importFrom terra rast values writeRaster vect res terraOptions extract intersect crop ext ncell global
+#' @importFrom stats aggregate na.omit weighted.mean quantile
+#' @importFrom dplyr filter bind_rows
+#' @importFrom graphics hist plot
+#' @importFrom sf st_as_text st_as_sfc st_geometry st_crs st_sf st_buffer
+#' @importFrom foreach foreach %dopar% %do%
+#' @importFrom doParallel registerDoParallel
 #'
 #' @export
 invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr = NULL,
@@ -378,12 +379,12 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
     plot_data$inv <- 1 / plot_data$varPlot
 
     # Plot AGB and area are mean aggregated with cell grid
-    #plotsTMP <- aggregate(plot_data[, c("AGB_T_HA_ORIG", "AGB_T_HA", "SIZE_HA")], # AGB_T_HA is aggregated below with inv weighted mean
-    plotsTMP <- aggregate(plot_data[, c("AGB_T_HA_ORIG", "SIZE_HA")],
+    #plotsTMP <- stats::aggregate(plot_data[, c("AGB_T_HA_ORIG", "AGB_T_HA", "SIZE_HA")], # AGB_T_HA is aggregated below with inv weighted mean
+    plotsTMP <- stats::aggregate(plot_data[, c("AGB_T_HA_ORIG", "SIZE_HA")],
                           list(plot_data$Xnew, plot_data$Ynew), mean, na.rm = TRUE)
 
     # Plot variance is aggregated with inverse of summed variance inversions
-    plotsTMP <- cbind(plotsTMP, aggregate(plot_data[, "varPlot"],
+    plotsTMP <- cbind(plotsTMP, stats::aggregate(plot_data[, "varPlot"],
                                           list(plot_data$Xnew, plot_data$Ynew),
                                           function(x) 1 / sum(1 / x))[3])
     plotsTMP <- plotsTMP[with(plotsTMP, order(Group.2, Group.1)), ]
@@ -395,8 +396,8 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
     # x <- x[with(x, order(Ynew, Xnew)), ]
 
     # AGB_T_HA is aggregated using inverse variance weighed mean
-    x <- aggregate(AGB_T_HA ~ Xnew + Ynew, data = plot_data,
-                   FUN = function(x) weighted.mean(x, plot_data$inv[plot_data$AGB_T_HA %in% x], na.rm = TRUE))
+    x <- stats::aggregate(stats::formula(AGB_T_HA ~ Xnew + Ynew), data = plot_data,
+                   FUN = function(x) stats::weighted.mean(x, plot_data$inv[plot_data$AGB_T_HA %in% x], na.rm = TRUE))
     x <- x[with(x, order(Ynew, Xnew)), ]
     plotsTMP$AGB_T_HA <- x$AGB_T_HA
 
@@ -421,8 +422,8 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
     # }
 
     # Calculate plot counts per cell for all cells
-    blockCOUNT <- aggregate(plot_data$AGB_T_HA, list(plot_data$Xnew, plot_data$Ynew),
-                            function(x) length(na.omit(x)))
+    blockCOUNT <- stats::aggregate(plot_data$AGB_T_HA, list(plot_data$Xnew, plot_data$Ynew),
+                            function(x) length(stats::na.omit(x)))
 
     if (minPlots > 1) {
       # Filter cells with enough plots
@@ -495,7 +496,7 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
   cat(paste0(nrow(plot_data), " plots or cells being processed...\n"))
 
   # Define operator for parallel/sequential processing
-  `%op%` <- if (parallel) foreach::`%dopar%` else foreach::`%do%`
+  `%op%` <- if (parallel) `%dopar%` else `%do%`
 
   # Converting to wkt to use inside worker
   if (is_poly && inherits(plot_data, "sf")) {
@@ -524,7 +525,7 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
   FFAGB <- foreach::foreach(
     i = 1:nrow(plot_data),
     .combine = "rbind",
-    .packages = c("terra", "sf"),
+    .packages = c("terra", "sf", "stats"),
     .export = if (parallel) export_vars else NULL,
     .errorhandling = "stop"
   ) %op% {
@@ -791,11 +792,4 @@ safe_sampleTreeCover <- function(roi, thresholds, weighted_mean, forest_mask) {
 #   print(head(FFAGB))
 #   return(FFAGB)
 # }
-
-
-
-
-
-
-
 

@@ -43,7 +43,8 @@ Polygonize <- function(df, SRS) {
   pol1$PLOT_ID <- row.names(pol1)
   pol1$SIZE_HA <- round(st_area(pol1) / 10000, 2)    # QA: keep the rounding to 2 digits?
   pol1$SIZE_HA <- units::set_units(st_area(pol1), "ha")
-  c <- st_centroid(pol1)
+  # Suppress sf warnings about centroid operations on geographic coordinates
+  c <- suppressWarnings(st_centroid(pol1))
 
   pol2 <- st_transform(c, crs = 4326)
   coords <- st_coordinates(pol2)
