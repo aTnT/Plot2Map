@@ -13,15 +13,18 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      _R_CHECK_FORCE_SUGGESTS_: false
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      NOT_CRAN: true
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: r-lib/actions/setup-r@v2
+      - uses: r-lib/actions/setup-r@v4
         with:
           use-public-rspm: true
 
-      - uses: r-lib/actions/setup-r-dependencies@v2
+      - uses: r-lib/actions/setup-r-dependencies@v4
         with:
           extra-packages: any::covr,any::lwgeom
           needs: coverage
@@ -32,31 +35,18 @@ jobs:
           sudo apt-get install -y libgdal-dev libproj-dev libgeos-dev libudunits2-dev libspatialindex-dev
 
       - name: Test coverage
-        env:
-          _R_CHECK_FORCE_SUGGESTS_: false
-          R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
-          NOT_CRAN: true
         run: |
-          options(covr.exclude_pattern = c("R/zzz.R", "R/RcppExports.R"))
           covr::codecov(
             quiet = FALSE,
             clean = FALSE,
-            install_path = file.path(Sys.getenv("RUNNER_TEMP"), "package"),
-            function_exclusions = "\\%op\\%",
-            line_exclusions = list(
-              "R/RawPlots.R" = c(101:146),  # Interactive RawPlotsTree function
-              "R/Nested.R" = c(38:82),       # Interactive Nested function
-              "R/treecover.R" = 380:420      # Large data downloads
-            )
+            coverage = covr::package_coverage(
+              type = "none",
+              path = ".",
+              function_exclusions = "\\%op\\%"
+            ),
+            token = "${{ secrets.CODECOV_TOKEN }}"
           )
         shell: Rscript {0}
-
-      - name: Show testthat output
-        if: always()
-        run: |
-          ## Print out the output of the tests
-          find . -name 'testthat.Rout*' -exec cat '{}' \;
-        shell: bash
 
       - name: Upload test results
         if: failure()
