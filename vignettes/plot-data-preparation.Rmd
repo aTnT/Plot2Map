@@ -15,6 +15,8 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup, include = FALSE}
+# Setting eval=FALSE for all chunks to prevent large file downloads during package checks
+knitr::opts_chunk$set(eval = FALSE)
 #library(Plot2Map)
 devtools::load_all()
 ```

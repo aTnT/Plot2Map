@@ -16,7 +16,7 @@ test_that("sample_file returns correct file paths", {
   expect_true(file.exists(sample_csv))
   
   # Test with non-existent file (should error)
-  expect_error(sample_file("NonExistentFile.csv"), "Can't find package file")
+  expect_error(sample_file("NonExistentFile.csv"), "Can't find package file.")
 })
 
 test_that("sample_lidar_folder returns correct folder paths", {

@@ -47,13 +47,13 @@ It uses two primary types of input files:
 \enumerate{
 \item Tree cover data, which serves as the baseline:
 \itemize{
-\item For the 2000 baseline, the function uses files matching the pattern "Hansen_GFC-2023-v1.11_treecover2000_\emph{.tif".
-\item For the 2010 baseline, the function uses files matching the pattern "treecover2010_}.tif".
-\item Tree cover values represent the percentage of tree cover (0-100\%).
+\item For the 2000 baseline, the function uses files from the Hansen dataset for tree cover.
+\item For the 2010 baseline, the function uses GLAD tree cover files.
+\item Tree cover values represent the percentage of tree cover (0-100\\%).
 }
 \item Forest loss year data:
 \itemize{
-\item The function uses files matching the pattern "Hansen_GFC-2023-v1.11_lossyear_*.tif".
+\item The function uses Hansen Global Forest Change lossyear files.
 \item Values in these files indicate the year of forest loss (1-23, corresponding to years 2001-2023), or 0 if no loss occurred.
 }
 }

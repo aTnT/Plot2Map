@@ -5,6 +5,7 @@ library(sf)
 # Tests for Polygonize.R
 
 test_that("Polygonize function produces consistent and correct results within the tolerance of 1e-2 for HA by design", {
+  skip_if(!requireNamespace("lwgeom", quietly = TRUE), "The lwgeom package is required for this test")
   # Test case 1: Regular rectangular plot
   test_data1 <- data.frame(
     id = rep("plot1", 4),

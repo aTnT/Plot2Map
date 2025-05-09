@@ -30,15 +30,20 @@
 #' @importFrom dplyr left_join
 #'
 #' @examples
-#' centroid_data <- readOGR(dsn = "path/to/shapefile", layer = "centroid_layer")
-#' tree_data <- read.csv("path/to/tree_data.csv")
+#' \dontrun{
+#' # This example requires interactive input and spatial data files
+#' # Load centroid data (sf object)
+#' centroid_data <- sf::st_read(system.file("extdata", "SampleCentroid.shp", package = "Plot2Map"))
+#' # Load tree data
+#' tree_data <- read.csv(system.file("extdata", "SampleTreeNested.csv", package = "Plot2Map"))
+#' # Process the nested plot data
 #' nested_data <- Nested(centroid_data, tree_data)
-#'pol
+#' }
 #' @export
 Nested <- function(centroids_sf, tree_table) {
 
   cent.wgs <- sf::st_transform(centroids_sf, 4326) # to WGS84
-  sf_use_s2(TRUE)
+  sf::sf_use_s2(TRUE)
   pol <- sf::st_buffer(cent.wgs, dist = 1000, nQuadSegs = 1) # square buffer approx. 1km resolution
 
   # cent.sf <- st_as_sf(centroid_shp)

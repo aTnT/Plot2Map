@@ -28,7 +28,7 @@ A data.frame with the following columns:
 \item{\code{AGB_T_HA}}{Adjusted biomass values for the specified \code{map_year}.}
 \item{\code{AGB_T_HA_ORIG}}{Original biomass values before adjustment.}
 \item{\code{sdGrowth}}{Temporal standard deviation of the biomass adjustment.}
-\item{All other columns from the input \code{plt}.}
+\item{Additional}{All other columns from the input \code{plt}.}
 }
 }
 \description{
@@ -38,10 +38,10 @@ standard deviations. It combines the functionality of \code{\link{TempApply}} an
 \code{\link{TempVar}} into a single call.
 }
 \examples{
-  library(Plot2Map)
-  set.seed(42)
-  sample_plots <- plots[sample(nrow(plots), 10), ]
-  sample_plots_gez <- BiomePair(sample_plots)
-  result <- TempApplyVar(sample_plots_gez, map_year = 2004)
-  head(result)
+library(Plot2Map)
+set.seed(42)
+sample_plots <- plots[sample(nrow(plots), 10), ]
+sample_plots_gez <- BiomePair(sample_plots)
+result <- TempApplyVar(sample_plots_gez, map_year = 2004)
+head(result)
 }

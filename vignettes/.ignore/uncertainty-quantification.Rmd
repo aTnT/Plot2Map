@@ -1,0 +1,110 @@
+---
+title: "Plot data measurement uncertainty estimation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{uncertainty-quantification}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, include = FALSE}
+#library(Plot2Map)
+devtools::load_all()
+```
+
+
+
+
+
+
+Accurate quantification of aboveground biomass (AGB) requires rigorous handling of measurement uncertainties inherent to field plot data. Section 2.3 of Araza et al. describes in detail the methodology applied in `Plot2Map` to quantify plot data measurement uncertainty, which can be allocated to the following assumed uncorrelated and independent measurement uncertainty contributors:
+
+
+
+
+```{r, include = TRUE}
+
+library(DiagrammeR)
+
+grViz("
+digraph flowchart {
+  graph [layout = dot, rankdir = TB]
+
+  # Define nodes
+  node [shape = rectangle, style = filled, fillcolor = lightblue]
+  trace_data [label = 'Tree-level data']
+  no_mensuration [label = 'No mensuration (Remote sensing)']
+  new_photos [label = '5 New Photos']
+  lidar_data [label = '6 Lidar Data']
+  agb_formula [label = '6 Relating SD Tree = CV x AGB']
+  biomass [label = 'Aboveground Biomass']
+  
+  node [shape = ellipse, style = filled, fillcolor = lightgreen]
+  intermediate_step [label = 'Intermediate Calculations']
+
+  # Define edges
+  trace_data -> intermediate_step
+  no_mensuration -> intermediate_step
+  intermediate_step -> new_photos
+  intermediate_step -> lidar_data
+  new_photos -> biomass
+  lidar_data -> agb_formula
+  agb_formula -> biomass
+
+}
+")
+```
+
+
+## Plot measurement and allometric model errors (SDme)
+
+The package allows for the calculation of SDme - here called plot data measurement error - the cumulative error from tree measurement and allometric models - for either of the cases:
+
+
+#### **Case 1: Plots with Tree-Level Data**  
+For plots containing individual tree measurements, uncertainty arises from:  
+1. **Tree parameter errors**:  
+
+in cases plot data contains 
+   - **Diameter**: Measurement inaccuracies (±0.5 cm) from uncalibrated tools or human error  
+   - **Height**: Estimated via the Weibull model (Eq. 1) if field data are missing, introducing biome-specific uncertainties[5]  
+   - **Wood density**: Variability from global databases (e.g., Chave et al. 2009), often ±10% relative error[5]  
+
+2. **Allometric model errors**:  
+   - Residual uncertainties in biomass equations (e.g., Chave et al. 2014)  
+   - Propagation through **Monte Carlo simulations** (1,000 iterations via `AGBmonteCarlo` in the BIOMASS R package)[5][7]  
+
+
+3. **Aggregation to plot level**:  
+   - Tree-level errors combine additively, scaled by plot size (0–25 ha)  
+   - Example: A 0.5 cm diameter error in a tropical tree may amplify to ±15% AGB uncertainty at the plot scale[5][8]  
+
+#### **Case 2: Plots Without Tree-Level Data**  
+For plots lacking individual tree records (92.6% of datasets in the study):  
+1. **Predictive modeling**:  
+   - A **random forest (RF) model** trained on 8,457 plots with tree data predicts SDme  
+   - Covariates: Climatic zone, plot AGB density, and plot size[5][3]  
+2. **Model performance**:  
+   - Validation on 2,819 independent plots: R2 = 0.86, RMSE = 22.1 Mg ha−1[5]  
+   - Handles biome-specific differences (e.g., higher uncertainty in tropical vs. boreal plots)[5][4]  
+
+#### **Key Contrasts**  
+| **Aspect**            | **With Tree Data**                          | **Without Tree Data**                     |  
+|-------------------------|---------------------------------------------|-------------------------------------------|  
+| **Inputs**             | Diameter, height, species-level wood density | Aggregated AGB, plot size, ecological zone |  
+| **Uncertainty Source** | Direct measurement + allometric propagation | RF model predictions                      |  
+| **Strengths**          | Granular error attribution                  | Scalable for large datasets               |  
+| **Limitations**        | Labor-intensive data collection            | Relies on representativeness of training data |  
+
+This two-tiered approach balances precision (for intensively measured plots) and scalability (for regional/national inventories), addressing the 5–44% uncertainty range in non-destructive AGB estimates[5][7].
+
+
+
+

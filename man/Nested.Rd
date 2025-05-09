@@ -32,8 +32,13 @@ The function performs the following steps:
 }
 }
 \examples{
-centroid_data <- readOGR(dsn = "path/to/shapefile", layer = "centroid_layer")
-tree_data <- read.csv("path/to/tree_data.csv")
+\dontrun{
+# This example requires interactive input and spatial data files
+# Load centroid data (sf object)
+centroid_data <- sf::st_read(system.file("extdata", "SampleCentroid.shp", package = "Plot2Map"))
+# Load tree data
+tree_data <- read.csv(system.file("extdata", "SampleTreeNested.csv", package = "Plot2Map"))
+# Process the nested plot data
 nested_data <- Nested(centroid_data, tree_data)
-pol
+}
 }

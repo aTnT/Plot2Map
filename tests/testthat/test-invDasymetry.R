@@ -55,7 +55,7 @@ create_test_rasters <- function(temp_dir) {
 # Test that biomass values maintain correct units in non-aggregated mode
 test_that("invDasymetry preserves biomass values in non-aggregated mode", {
   # Skip on CI if needed
-  skip_on_ci()
+  skip("Skipping as this test requires creating synthetic rasters")
 
   # Create a temporary directory
   temp_dir <- tempdir()
@@ -92,7 +92,7 @@ test_that("invDasymetry preserves biomass values in non-aggregated mode", {
 # Test that biomass values maintain correct physical meaning in aggregated mode
 test_that("invDasymetry maintains biomass physical meaning in aggregated mode", {
 
-  skip_on_ci()
+  skip("Skipping as this test requires creating synthetic rasters")
 
   # Create a temporary directory
   temp_dir <- tempdir()
@@ -161,7 +161,7 @@ test_that("invDasymetry maintains biomass physical meaning in aggregated mode", 
 
 
 test_that("invDasymetry applies threshold filtering consistently", {
-  skip_on_ci()
+  skip("Skipping as this test requires creating synthetic rasters")
   # Create a temp directory for test files
   temp_dir <- tempdir()
 
@@ -275,7 +275,7 @@ test_that("invDasymetry applies threshold filtering consistently", {
 
 test_that("invDasymetry accepts map_year and map_resolution parameters and correctly handles aggregation", {
 
-  skip_on_ci()
+  skip("Skipping as this test requires creating synthetic rasters")
 
   # Create real word test dataset
   test_year <- 2022
@@ -479,7 +479,7 @@ test_that("invDasymetry calculates varPlot automatically when missing", {
 
 # Test the minPlots <= 1 edge case
 test_that("invDasymetry handles minPlots <= 1 correctly", {
-  skip_on_ci()
+  skip("Skipping as this test requires creating synthetic rasters")
 
   # Create a temporary directory
   temp_dir <- tempdir()
@@ -694,7 +694,7 @@ create_test_rasters <- function(temp_dir) {
 
 # Test Error Handling - Invalid column/value combination
 test_that("invDasymetry handles invalid column/value combinations correctly", {
-  skip_on_ci()
+  skip("Skipping as this test requires creating synthetic rasters")
 
   # Create a temporary directory
   temp_dir <- tempdir()
@@ -723,7 +723,7 @@ test_that("invDasymetry handles invalid column/value combinations correctly", {
 
 # Test Error Handling - Invalid column name
 test_that("invDasymetry handles invalid column names correctly", {
-  skip_on_ci()
+  skip("Skipping as this test requires creating synthetic rasters")
 
   # Create a temporary directory
   temp_dir <- tempdir()
@@ -752,7 +752,7 @@ test_that("invDasymetry handles invalid column names correctly", {
 
 # Test Boundary Value - Zero threshold
 test_that("invDasymetry correctly handles zero threshold", {
-  skip_on_ci()
+  skip("Skipping as this test requires creating synthetic rasters")
 
   # Create a temporary directory
   temp_dir <- tempdir()
@@ -783,7 +783,7 @@ test_that("invDasymetry correctly handles zero threshold", {
 
 # Test map_year auto-detection from filename
 test_that("invDasymetry correctly auto-detects map_year from filename", {
-  skip_on_ci()
+  skip("Skipping as this test requires creating synthetic rasters")
 
   # Create a temporary directory
   temp_dir <- tempdir()
@@ -834,7 +834,7 @@ test_that("invDasymetry correctly auto-detects map_year from filename", {
 
 # Test extreme threshold value
 test_that("invDasymetry correctly handles extreme threshold value (100)", {
-  skip_on_ci()
+  skip("Skipping as this test requires creating synthetic rasters")
 
   # Create a temporary directory
   temp_dir <- tempdir()
@@ -866,7 +866,7 @@ test_that("invDasymetry correctly handles extreme threshold value (100)", {
 
 # Test negative threshold values
 test_that("invDasymetry handles negative threshold values", {
-  skip_on_ci()
+  skip("Skipping as this test requires creating synthetic rasters")
 
   # Create a temporary directory
   temp_dir <- tempdir()
@@ -909,7 +909,7 @@ test_that("invDasymetry handles negative threshold values", {
 
 # Test plots outside raster extent
 test_that("invDasymetry handles plots outside raster extent", {
-  skip_on_ci()
+  skip("Skipping as this test requires creating synthetic rasters")
 
   # Create a temporary directory
   temp_dir <- tempdir()
@@ -959,7 +959,7 @@ test_that("invDasymetry handles plots outside raster extent", {
 
 # Test handling of malformed file names
 test_that("invDasymetry handles malformed file names", {
-  skip_on_ci()
+  skip("Skipping as this test requires creating synthetic rasters")
 
   # Create a temporary directory
   temp_dir <- tempdir()

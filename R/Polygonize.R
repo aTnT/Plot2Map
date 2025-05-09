@@ -20,7 +20,7 @@
 #'
 #' @return A data frame with polygon information, including PLOT_ID, SIZE_HA, POINT_X, and POINT_Y.
 #'
-#' @importFrom sf st_polygon st_sfc st_sf st_crs st_point st_buffer st_make_valid st_as_sf st_transform st_coordinates st_area
+#' @importFrom sf st_polygon st_sfc st_sf st_crs st_point st_buffer st_make_valid st_as_sf st_transform st_coordinates st_area st_centroid
 #' @importFrom dplyr select
 #'
 #' @export
@@ -35,6 +35,10 @@
 #'   polygons <- Polygonize(plot_data, 4326)
 #' }
 Polygonize <- function(df, SRS) {
+  # Check for lwgeom package availability
+  if (!requireNamespace("lwgeom", quietly = TRUE)) {
+    stop("The lwgeom package is required for accurate area calculations. Please install it with install.packages('lwgeom')")
+  }
   dat <- split(df, df$id)
   pol <- lapply(dat, function(x) polyIrreg(x))
   pol1 <- st_make_valid(st_as_sf(do.call(rbind, pol)))

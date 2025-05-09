@@ -24,7 +24,11 @@ The function prompts the user to select column indices for key tree and plot att
 It handles cases with and without tree height data.
 }
 \examples{
-# Assuming 'raw_tree_plots' is your input data frame
-formatted_tree_plots <- RawPlotsTree(raw_tree_plots)
+\dontrun{
+# This function requires interactive input
+# Sample code to format tree-level data:
+tree_data <- read.csv(sample_file("SampleTreeNested.csv"))
+formatted_tree_plots <- RawPlotsTree(tree_data)
+}
 
 }

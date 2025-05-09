@@ -35,10 +35,12 @@ downloads the necessary forest loss tiles, and determines if the plot has been
 deforested beyond a set deforestation threshold or if the deforestation occurred before or during the specified map year.
 }
 \examples{
+\dontrun{
 # 4 plots without and 4 plots with deforestation:
 plots_sample <- c(1, 2, 3, 4, 182, 200, 323, 6765)
 sampled_plots <- plots[plots_sample,]
 Deforested(sampled_plots, 2010)
+}
 
 }
 \references{

@@ -1,0 +1,12 @@
+*.html
+*.R
+# Ignore large files downloaded during vignette building
+*.tif
+*.tiff
+*.TIF
+*.TIFF
+*.hdf
+*.HDF
+*.hdf5
+*.HDF5
+data/

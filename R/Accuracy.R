@@ -168,6 +168,10 @@ Accuracy <- function(df, intervals = 8, dir = "results", str = '') {
   df.new1 <- round_df(df.new1, 0)
   df.new1 <- df.new1[, -c(7:9)]
 
+  # Create the directory if it doesn't exist
+  if (!dir.exists(dir)) {
+    dir.create(dir, recursive = TRUE)
+  }
   utils::write.csv(df.new1, file.path(dir, paste0('acc_', str, '.csv')), row.names = FALSE)
   return(df.new1)
 }

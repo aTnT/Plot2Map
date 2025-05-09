@@ -21,8 +21,11 @@
 # validate the new function.
 
 
-# For some raeson we need to load this library at package load to avoid a "gfc_tiles not found" error:
-library(gfcanalysis)
+# Need to ensure gfcanalysis package is available
+# We'll use requireNamespace instead of library to avoid namespace conflicts
+if (!requireNamespace("gfcanalysis", quietly = TRUE)) {
+  stop("Package 'gfcanalysis' is needed for this function to work. Please install it.", call. = FALSE)
+}
 
 
 #' Remove deforested plots by overlaying plots with Global Forest Change data
@@ -42,20 +45,22 @@ library(gfcanalysis)
 #'   \item{non_deforested_plots}{A sf object with non-deforested plots}
 #'   \item{all_plots}{The original input sf object with added deforestated proportion (0-1) w.r.t. to plot area and deforestation start year}
 #'
-#' @importFrom sf st_as_sf st_buffer st_bbox st_coordinates
+#' @importFrom sf st_as_sf st_buffer st_bbox st_coordinates st_area sf_use_s2
 #' @importFrom terra rast extract
-#' @importFrom dplyr select setdiff
-#' @import gfcanalysis
+#' @importFrom dplyr filter select setdiff
+#' @importFrom gfcanalysis calc_gfc_tiles download_tiles
 #'
 #' @export
 #'
 #' @references M. C. Hansen et al., High-Resolution Global Maps of 21st-Century Forest Cover Change. Science342,850-853(2013). [DOI:10.1126/science.1244693](https://doi.org/10.1126/science.1244693)
 #'
 #' @examples
+#' \dontrun{
 #' # 4 plots without and 4 plots with deforestation:
 #' plots_sample <- c(1, 2, 3, 4, 182, 200, 323, 6765)
 #' sampled_plots <- plots[plots_sample,]
 #' Deforested(sampled_plots, 2010)
+#' }
 #'
 Deforested <- function(plt, map_year, gfc_folder = "data/GFC", gfc_dataset_year = "latest", defo_threshold = 0.05) {
 
@@ -90,7 +95,7 @@ Deforested <- function(plt, map_year, gfc_folder = "data/GFC", gfc_dataset_year 
     plt$POINT_Y <- plt$Ynew
     plt$PLOT_ID <- 1:nrow(plt)
   } else if ((!"POINT_X" %in% colnames(plt)) & (!"Xnew" %in% colnames(plt))) {
-    stop("Invalid plot data. Please check that both ´POINT_X' and ´POINT_Y´ columns (corresponding to lon, lat points in WGS 84) are provided.")
+    stop("Invalid plot data. Please check that both 'POINT_X' and 'POINT_Y' columns (corresponding to lon, lat points in WGS 84) are provided.")
   }
 
   if (!inherits(plt, "sf")) {
@@ -106,7 +111,7 @@ Deforested <- function(plt, map_year, gfc_folder = "data/GFC", gfc_dataset_year 
     ww <- ifelse(!(is.na(plt[p,]$SIZE_HA)),
                  (sqrt(plt[p,]$SIZE_HA*10000) *0.00001)/2, 0.0002) # mean of plots for NAs, ww in arc-deg
     ww <- ifelse(ww < 0, abs(ww), ww)
-    sf_use_s2(FALSE)  # ww in sf:: with sf_use_s2(TRUE) is in meters
+    sf::sf_use_s2(FALSE)  # ww in sf:: with sf_use_s2(TRUE) is in meters
     pol <- suppressMessages(suppressWarnings(sf::st_buffer(plt[p,], dist = ww, endCapStyle = "SQUARE")))
     # diff(st_bbox(pol)[c(2, 4)])
     # diff(st_bbox(pol)[c(1, 3)])
