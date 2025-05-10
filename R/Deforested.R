@@ -149,15 +149,15 @@ Deforested <- function(plt, map_year, gfc_folder = "data/GFC", gfc_dataset_year 
     # Downloads respective forest loss tile/s from squared plots
     #dir.create(file.path(gfc_folder), showWarnings = FALSE)
     #setwd(file.path(gfc_folder))
-    # Calculate which GFC tiles are needed and store in gfcTile variable
-    gfcTile <- suppressMessages(suppressWarnings(gfcanalysis::calc_gfc_tiles(pol)))
-    # Make sure gfcTile is not NULL before passing to download_tiles
-    if (is.null(gfcTile)) {
+    # Calculate which GFC tiles are needed and store in gfc_tiles variable 
+    gfc_tiles <- suppressMessages(suppressWarnings(gfcanalysis::calc_gfc_tiles(pol)))
+    # Make sure gfc_tiles is not NULL before passing to download_tiles
+    if (is.null(gfc_tiles)) {
       message("Could not determine GFC tiles for plot ", p, ". Skipping this plot.")
       next
     }
     # Download the required tiles
-    gfcanalysis::download_tiles(gfcTile, gfc_folder, images = "lossyear", dataset = dataset_str)#, timeout = 1000)
+    gfcanalysis::download_tiles(gfc_tiles, gfc_folder, images = "lossyear", dataset = dataset_str)#, timeout = 1000)
 
     # Get overlapping tile/s (up to 4 possible tiles)
     bb <- sf::st_bbox(pol)
