@@ -123,7 +123,7 @@ Deforested <- function(plt, map_year, gfc_folder = "data/GFC", gfc_dataset_year 
     #dir.create(file.path(gfc_folder), showWarnings = FALSE)
     #setwd(file.path(gfc_folder))
     gfcTile <- suppressMessages(suppressWarnings(gfcanalysis::calc_gfc_tiles(pol)))
-    gfcanalysis::download_tiles(gfcTile, gfc_folder, images = "lossyear", dataset = dataset_str, timeout = 1000)
+    gfcanalysis::download_tiles(gfcTile, gfc_folder, images = "lossyear", dataset = dataset_str)#, timeout = 1000)
 
     # Get overlapping tile/s (up to 4 possible tiles)
     bb <- sf::st_bbox(pol)
