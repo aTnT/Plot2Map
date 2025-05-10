@@ -176,8 +176,10 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
                          esacci_folder = "data/ESACCI-BIOMASS", gedi_l4b_folder = "data/GEDI_L4B/",
                          gedi_l4b_band = "MU", gedi_l4b_resolution = 0.001, timeout = 600) {
 
-  # Limit terra memory usage
-  terra::terraOptions(memfrac = 0.5)
+  # Limit terra memory usage - restore original settings on exit
+  old_memfrac <- terra::terraOptions()$memfrac
+  on.exit(terra::terraOptions(memfrac = old_memfrac))
+  terra::terraOptions(memfrac = 0.3)
 
   # Input checks
   if (is.null(plot_data)) stop("plot_data cannot be NULL.")
@@ -499,14 +501,46 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
   `%op%` <- if (parallel) `%dopar%` else `%do%`
 
   # Converting to wkt to use inside worker
+  # Handle sf objects efficiently by converting geometry to WKT before parallel execution
   if (is_poly && inherits(plot_data, "sf")) {
-    plot_data$geom_wkt <- sf::st_as_text(plot_data$geometry)
+    # Convert geometry to WKT for serialization
+    plot_data$geom_wkt <- sf::st_as_text(sf::st_geometry(plot_data))
+    
+    # Extract CRS for later use
+    crs_orig <- sf::st_crs(plot_data)
+    
+    # Convert sf to data frame for better parallel performance
+    plot_data <- as.data.frame(sf::st_drop_geometry(plot_data))
+    plot_data$crs <- list(crs_orig)  # Store CRS as list column for reconstruction
   }
 
-  # Parallel setup
+  # Parallel setup - with optimized resource management
   if (parallel) {
     nc <- n_cores
+    
+    # Set terra options before creating the cluster
+    terra_memfrac_worker <- 0.2  # Lower memory fraction for each worker
+    
+    # Create cluster with custom configuration
     cl <- parallel::makeCluster(nc)
+    
+    # Initialize workers with optimized terra settings
+    parallel::clusterEvalQ(cl, {
+      # Configure terra to use less memory per worker
+      terra::terraOptions(memfrac = terra_memfrac_worker)
+      
+      # Load required libraries
+      library(terra)
+      library(sf)
+      library(stats)
+      
+      # Set up worker environment
+      options(warn = 1)  # Show warnings immediately
+      
+      # Return status
+      TRUE
+    })
+    
     doParallel::registerDoParallel(cl)
   }
 
@@ -542,11 +576,22 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
 
     # Reconstruct geometry or create polygon
     if (is_poly) {
-      # 5/5/2025: Fixed 'st_as_sfg' not exported error and added NULL check
-      # pol <- sf::st_as_sfg(plot_data$geom_wkt[i])
       if (!is.null(plot_data$geom_wkt) && !is.na(plot_data$geom_wkt[i])) {
-        pol <- sf::st_geometry(sf::st_as_sfc(plot_data$geom_wkt[i]))
-        pol <- sf::st_sf(geometry = pol, crs = sf::st_crs(plot_data))
+        tryCatch({
+          # Reconstruct geometry from WKT
+          pol_geom <- sf::st_geometry(sf::st_as_sfc(plot_data$geom_wkt[i]))
+          
+          # Use stored CRS if available, otherwise use default CRS
+          if (!is.null(plot_data$crs) && length(plot_data$crs) >= i) {
+            pol <- sf::st_sf(geometry = pol_geom, crs = plot_data$crs[[i]])
+          } else {
+            pol <- sf::st_sf(geometry = pol_geom, crs = 4326) # Default to WGS84
+          }
+        }, error = function(e) {
+          # Fall back to block polygon if reconstruction fails
+          warning(paste("Failed to reconstruct geometry from WKT for plot", i, ":", e$message))
+          pol <- MakeBlockPolygon(plot_data$POINT_X[i], plot_data$POINT_Y[i], rsl)
+        })
       } else {
         # Fall back to block polygon if WKT is not available
         pol <- MakeBlockPolygon(plot_data$POINT_X[i], plot_data$POINT_Y[i], rsl)
@@ -555,12 +600,68 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
       pol <- MakeBlockPolygon(plot_data$POINT_X[i], plot_data$POINT_Y[i], rsl)
     }
 
-    # Create local raster objects
-    forest_mask_local <- if (!is.null(forest_mask_path)) terra::rast(forest_mask_path) else NULL
-    agb_raster_local <- if (!is.null(agb_raster_path)) terra::rast(agb_raster_path) else NULL
+    # Create local raster objects with optimized memory settings
+    if (!is.null(forest_mask_path)) {
+      # Create with lower memory footprint and only the area we need
+      roi_bbox <- sf::st_bbox(pol)
+      # Add buffer to ensure we get all needed cells
+      roi_bbox <- roi_bbox + c(-rsl, -rsl, rsl, rsl)
+      
+      # Load only the necessary extent
+      forest_mask_local <- terra::rast(forest_mask_path)
+      ext_crop <- terra::ext(roi_bbox[c(1, 3, 2, 4)])
+      if (!is.null(forest_mask_local)) {
+        tryCatch({
+          # First try to crop to the ROI extent
+          forest_mask_local <- terra::crop(forest_mask_local, ext_crop)
+        }, error = function(e) {
+          # If cropping fails, use the full raster
+          warning("Cropping forest mask failed, using full raster")
+          forest_mask_local <- terra::rast(forest_mask_path)
+        })
+      }
+    } else {
+      forest_mask_local <- NULL
+    }
+    
+    if (!is.null(agb_raster_path)) {
+      # Create with lower memory footprint and only the area we need
+      roi_bbox <- sf::st_bbox(pol)
+      # Add buffer to ensure we get all needed cells
+      roi_bbox <- roi_bbox + c(-rsl, -rsl, rsl, rsl)
+      
+      # Load only the necessary extent
+      agb_raster_local <- terra::rast(agb_raster_path)
+      ext_crop <- terra::ext(roi_bbox[c(1, 3, 2, 4)])
+      if (!is.null(agb_raster_local)) {
+        tryCatch({
+          # First try to crop to the ROI extent
+          agb_raster_local <- terra::crop(agb_raster_local, ext_crop)
+        }, error = function(e) {
+          # If cropping fails, use the full raster
+          warning("Cropping AGB raster failed, using full raster")
+          agb_raster_local <- terra::rast(agb_raster_path)
+        })
+      }
+    } else {
+      agb_raster_local <- NULL
+    }
 
-    # Clean memory
-    if (i %% 50 == 0) gc(full = TRUE)
+    # More aggressive memory management
+    # Clean memory more frequently for larger datasets
+    gc_interval <- ifelse(nrow(plot_data) > 1000, 20, 
+                    ifelse(nrow(plot_data) > 500, 30, 50))
+                    
+    if (i %% gc_interval == 0) {
+      # Remove any large objects no longer needed
+      if (exists("forest_mask_local") && !is.null(forest_mask_local)) {
+        rm(forest_mask_local)
+      }
+      if (exists("agb_raster_local") && !is.null(agb_raster_local)) {
+        rm(agb_raster_local)
+      }
+      gc(full = TRUE, verbose = FALSE)
+    }
 
     # Always use sampleTreeCover to apply consistent threshold filtering, regardless of plot size or aggregation
     treeCovers <- safe_sampleTreeCover(roi = pol, thresholds = threshold, weighted_mean = weighted_mean, forest_mask = forest_mask_local)
@@ -610,6 +711,14 @@ safe_sampleAGBmap <- function(roi, weighted_mean, dataset, agb_raster,
                               n_cores, timeout) {
   max_tries <- 3
   wait_time <- 2
+  
+  # Set a lower memory limit for workers when in parallel processing
+  if (n_cores > 1) {
+    old_memfrac <- terra::terraOptions()$memfrac
+    on.exit(terra::terraOptions(memfrac = old_memfrac))
+    terra::terraOptions(memfrac = 0.2)
+  }
+  
   for (try in 1:max_tries) {
     tryCatch({
       result <- sampleAGBmap(roi=roi, weighted_mean=weighted_mean, dataset=dataset, agb_raster=agb_raster,
@@ -623,17 +732,23 @@ safe_sampleAGBmap <- function(roi, weighted_mean, dataset, agb_raster,
       if (try < max_tries) {
         warning(paste("Error in sampleAGBmap:", e$message, ". Retrying in", wait_time, "seconds."))
         Sys.sleep(wait_time)
+        # Force garbage collection between retries
+        gc(full = TRUE, verbose = FALSE)
       } else {
         stop(paste("sampleAGBmap failed after", max_tries, "tries:", e$message))
       }
     })
   }
+  
+  # This will never be reached but is here for code completeness
+  return(NA)
 }
 
 
 safe_sampleTreeCover <- function(roi, thresholds, weighted_mean, forest_mask) {
   max_tries <- 3
   wait_time <- 2
+  
   for (try in 1:max_tries) {
     tryCatch({
       result <- sampleTreeCover(roi = roi, thresholds = thresholds, weighted_mean = weighted_mean, forest_mask = forest_mask)
@@ -642,11 +757,16 @@ safe_sampleTreeCover <- function(roi, thresholds, weighted_mean, forest_mask) {
       if (try < max_tries) {
         warning(paste("Error in sampleTreeCover:", e$message, ". Retrying in", wait_time, "seconds."))
         Sys.sleep(wait_time)
+        # Force garbage collection between retries
+        gc(full = TRUE, verbose = FALSE)
       } else {
         stop(paste("sampleTreeCover failed after", max_tries, "tries:", e$message))
       }
     })
   }
+  
+  # This will never be reached but is here for code completeness
+  return(NA)
 }
 
 
