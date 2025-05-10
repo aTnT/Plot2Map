@@ -73,8 +73,6 @@ sensing biomass maps by accounting for differences in spatial scales and forest 
 <span>  minPlots <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  weighted_mean <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  is_poly <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  n_cores <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>,</span>
 <span>  dataset <span class="op">=</span> <span class="st">"custom"</span>,</span>
 <span>  agb_raster_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  forest_mask_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -87,7 +85,13 @@ sensing biomass maps by accounting for differences in spatial scales and forest 
 <span>  gedi_l4b_folder <span class="op">=</span> <span class="st">"data/GEDI_L4B/"</span>,</span>
 <span>  gedi_l4b_band <span class="op">=</span> <span class="st">"MU"</span>,</span>
 <span>  gedi_l4b_resolution <span class="op">=</span> <span class="fl">0.001</span>,</span>
-<span>  timeout <span class="op">=</span> <span class="fl">600</span></span>
+<span>  timeout <span class="op">=</span> <span class="fl">600</span>,</span>
+<span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  n_cores <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>,</span>
+<span>  memfrac <span class="op">=</span> <span class="fl">0.3</span>,</span>
+<span>  worker_memfrac <span class="op">=</span> <span class="fl">0.2</span>,</span>
+<span>  batch_size <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  crop_rasters <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -126,14 +130,6 @@ approximate fraction of each cell that is covered by the roi (default is FALSE).
 
 <dt id="arg-is-poly">is_poly<a class="anchor" aria-label="anchor" href="#arg-is-poly"></a></dt>
 <dd><p>logical, Whether input plots are polygons (TRUE) or should be converted to polygons (FALSE).</p></dd>
-
-
-<dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
-<dd><p>logical, Enable parallel processing for faster computation on multi-core systems. Default is FALSE.</p></dd>
-
-
-<dt id="arg-n-cores">n_cores<a class="anchor" aria-label="anchor" href="#arg-n-cores"></a></dt>
-<dd><p>numeric, Number of cores to use for parallel processing.</p></dd>
 
 
 <dt id="arg-dataset">dataset<a class="anchor" aria-label="anchor" href="#arg-dataset"></a></dt>
@@ -190,6 +186,31 @@ approximately 0.001 degrees at the equator. Default is 0.001.</p></dd>
 
 <dt id="arg-timeout">timeout<a class="anchor" aria-label="anchor" href="#arg-timeout"></a></dt>
 <dd><p>Number of seconds for reaching file download timeout.</p></dd>
+
+
+<dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
+<dd><p>logical, Enable parallel processing for faster computation on multi-core systems. Default is FALSE.</p></dd>
+
+
+<dt id="arg-n-cores">n_cores<a class="anchor" aria-label="anchor" href="#arg-n-cores"></a></dt>
+<dd><p>numeric, Number of cores to use for parallel processing.</p></dd>
+
+
+<dt id="arg-memfrac">memfrac<a class="anchor" aria-label="anchor" href="#arg-memfrac"></a></dt>
+<dd><p>numeric, Memory fraction (0-1) for Terra to use in the main process. Default is 0.3.</p></dd>
+
+
+<dt id="arg-worker-memfrac">worker_memfrac<a class="anchor" aria-label="anchor" href="#arg-worker-memfrac"></a></dt>
+<dd><p>numeric, Memory fraction (0-1) for Terra to use in each worker process during parallel execution (future use - currently fixed at 0.2 internally). Default is 0.2.</p></dd>
+
+
+<dt id="arg-batch-size">batch_size<a class="anchor" aria-label="anchor" href="#arg-batch-size"></a></dt>
+<dd><p>integer, Number of plots to process in each batch for better memory management. If NULL (default), batch size is auto-determined based on dataset size.</p></dd>
+
+
+<dt id="arg-crop-rasters">crop_rasters<a class="anchor" aria-label="anchor" href="#arg-crop-rasters"></a></dt>
+<dd><p>logical, Whether to crop rasters to the region of interest before processing (TRUE by default).
+Set to FALSE if you encounter issues with cropping or if the plots are widely dispersed.</p></dd>
 
 </dl></div>
     <div class="section level2">
