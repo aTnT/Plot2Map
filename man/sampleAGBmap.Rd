@@ -69,10 +69,14 @@ roi_congo <- st_polygon(list(rbind(
 roi_sf_congo <- st_sfc(roi_congo, crs = 4326)
 
 # Example 1: Calculate mean AGB for the Congo ROI using ESA CCI BIOMASS (unweighted)
+\dontrun{
 sampleAGBmap(roi_sf_congo, dataset = "esacci")
+}
 
 # Example 2: Calculate mean AGB for the Congo ROI using GEDI L4B (weighted)
+\dontrun{
 sampleAGBmap(roi_sf_congo, dataset = "gedi", weighted_mean = TRUE)
+}
 
 }
 \references{

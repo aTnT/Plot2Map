@@ -46,10 +46,14 @@ roi_daintree <- st_polygon(list(rbind(c(145.3833, -16.2500), c(145.3933, -16.250
 roi_sf_daintree <- st_sfc(roi_daintree, crs = 4326)
 
 # Example 1: Calculate forest cover (unweighted)
+\dontrun{
 sampleTreeCover(roi_sf_daintree, thresholds = c(10, 20, 30))
+}
 
 # Example 2: Calculate forest cover (weighted)
+\dontrun{
 sampleTreeCover(roi_sf_daintree, thresholds = c(10, 20, 30), weighted_mean = TRUE)
+}
 
 }
 \references{

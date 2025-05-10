@@ -63,10 +63,14 @@
 #' roi_sf_congo <- st_sfc(roi_congo, crs = 4326)
 #'
 #' # Example 1: Calculate mean AGB for the Congo ROI using ESA CCI BIOMASS (unweighted)
+#' \dontrun{
 #' sampleAGBmap(roi_sf_congo, dataset = "esacci")
+#' }
 #'
 #' # Example 2: Calculate mean AGB for the Congo ROI using GEDI L4B (weighted)
+#' \dontrun{
 #' sampleAGBmap(roi_sf_congo, dataset = "gedi", weighted_mean = TRUE)
+#' }
 #'
 sampleAGBmap <- function(
     roi,
@@ -283,10 +287,14 @@ sampleAGBmap <- function(
 #' roi_sf_daintree <- st_sfc(roi_daintree, crs = 4326)
 #'
 #' # Example 1: Calculate forest cover (unweighted)
+#' \dontrun{
 #' sampleTreeCover(roi_sf_daintree, thresholds = c(10, 20, 30))
+#' }
 #'
 #' # Example 2: Calculate forest cover (weighted)
+#' \dontrun{
 #' sampleTreeCover(roi_sf_daintree, thresholds = c(10, 20, 30), weighted_mean = TRUE)
+#' }
 #'
 sampleTreeCover <- function(
     roi,

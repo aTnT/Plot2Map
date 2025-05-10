@@ -533,7 +533,7 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
     # Initialize workers with optimised terra settings
     # Create an environment with only the variables we need to pass to the workers
     worker_env <- new.env()
-    
+
     # Add our function arguments to this environment
     worker_env$plot_data <- plot_data
     worker_env$is_poly <- is_poly
@@ -551,39 +551,39 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
     worker_env$gedi_l4b_band <- gedi_l4b_band
     worker_env$gedi_l4b_resolution <- gedi_l4b_resolution
     worker_env$timeout <- timeout
-    
+
     # Export the variables to the workers
     parallel::clusterExport(cl, varlist = names(worker_env), envir = worker_env)
-    
+
     # Export the functions needed by workers
     # Get the current package environment where the functions are defined
     env <- environment()
-    
+
     # Export the helper functions defined within invDasymetry
     parallel::clusterExport(cl, c("safe_sampleTreeCover", "safe_sampleAGBmap"), envir = env)
-    
+
     # Export MakeBlockPolygon from the package namespace
     # In development mode, we need to use a different approach
     if (Sys.getenv("R_PACKAGE_DEVEL") == "TRUE") {
       # In development mode with devtools::load_all(), functions are in the global environment
-      parallel::clusterExport(cl, c("MakeBlockPolygon", "sampleTreeCover", "sampleAGBmap"), 
+      parallel::clusterExport(cl, c("MakeBlockPolygon", "sampleTreeCover", "sampleAGBmap"),
                               envir = .GlobalEnv)
     } else {
       # In production mode, functions are in the package namespace
-      parallel::clusterExport(cl, c("MakeBlockPolygon", "sampleTreeCover", "sampleAGBmap"), 
+      parallel::clusterExport(cl, c("MakeBlockPolygon", "sampleTreeCover", "sampleAGBmap"),
                               envir = asNamespace("Plot2Map"))
     }
-    
+
     parallel::clusterEvalQ(cl, {
       # Configure terra to use less memory per worker (fixed value)
       terra::terraOptions(memfrac = 0.2)
-      
+
       # Load required libraries
       library(terra)
       library(sf)
       library(stats)
       library(gfcanalysis)
-      
+
       # Try to load Plot2Map package if installed (for regular use)
       # Will be silently skipped during development with devtools::load_all()
       tryCatch({
@@ -591,10 +591,10 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
       }, error = function(e) {
         # Skip loading if package not installed - this is expected during development
       })
-      
+
       # Set up worker environment
       options(warn = 1)  # Show warnings immediately
-      
+
       # Return status
       TRUE
     })
@@ -603,11 +603,6 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
   }
 
   # No need for export_vars anymore since we're using clusterExport directly
-
-  if (!parallel) {
-    n_plots <- nrow(plot_data)
-    pb <- txtProgressBar(min = 0, max = n_plots, style = 3)
-  }
 
   # Define batch size for better memory management in parallel mode
   if (is.null(batch_size)) {
@@ -624,10 +619,9 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
   # Calculate number of batches
   total_batches <- ceiling(nrow(plot_data) / batch_size)
 
-  if (parallel) {
-    cat(paste0("Processing ", nrow(plot_data), " plots in ", total_batches,
-              " batches of up to ", batch_size, " plots each\n"))
-  }
+  # Use consistent progress reporting for both parallel and sequential mode
+  cat(paste0("Processing ", nrow(plot_data), " plots in ", total_batches,
+            " batches of up to ", batch_size, " plots each\n"))
 
   # Process in batches to manage memory better
   FFAGB <- foreach::foreach(
@@ -649,16 +643,20 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
 
       # Load all package dependencies if developing
       if (Sys.getenv("R_PACKAGE_DEVEL") == "TRUE") {
-        devtools::load_all()
+        suppressMessages(devtools::load_all())
       } else {
-        library(Plot2Map)
+        suppressMessages(library(Plot2Map))
         if (requireNamespace("gfcanalysis", quietly = TRUE)) {
-          library(gfcanalysis)
+          suppressMessages(library(gfcanalysis))
         }
       }
 
-      # Update progress bar for sequential mode
-      if (!parallel) setTxtProgressBar(pb, i)
+      # # Print progress by batch instead of by plot
+      # if (batch_idx %% max(1, ceiling(total_batches/20)) == 0) {
+      #   completed_percent <- round(batch_idx * 100 / total_batches)
+      #   cat(sprintf("\rProgress: %d%% complete...", completed_percent))
+      #   if (batch_idx == total_batches) cat("\n")
+      # }
 
       # Reconstruct geometry or create polygon
       if (is_poly) {
@@ -807,7 +805,6 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
     names(FFAGB) <- c(paste0("plotAGB_", threshold), "tfPlotAGB", "orgPlotAGB", "mapAGB", "SIZE_HA", "x", "y")
   }
 
-  if (!parallel) close(pb)
   cat("Processing complete. Results: \n\n")
   print(FFAGB)
   return(FFAGB)
