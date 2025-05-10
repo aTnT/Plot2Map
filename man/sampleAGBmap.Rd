@@ -30,10 +30,10 @@ approximate fraction of each cell that is covered by the roi (default is FALSE).
 \item{dataset}{Character, the dataset to use for AGB estimation. Options are "custom", "esacci", or "gedi". Default is "custom".}
 
 \item{esacci_biomass_year}{The ESA CCI BIOMASS AGB tiles year to use. Use either 2010, 2015, 2016, 2017, 2018, 2019,
-2020, 2021 or "latest" (default).}
+2020, 2021, 2022 or "latest" (default).}
 
 \item{esacci_biomass_version}{The ESA CCI BIOMASS AGB tiles version to use. Use either "v2.0", "v3.0", "v4.0",
-"v5.0", "v5.01" or "latest" (default).}
+"v5.0", "v5.01", "v6.0" or "latest" (default).}
 
 \item{esacci_folder}{Directory to save downloaded ESA CCI BIOMASS AGB files. Default is the relative path "data/ESACCI-BIOMASS".}
 
