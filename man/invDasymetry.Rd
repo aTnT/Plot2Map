@@ -12,8 +12,6 @@ invDasymetry(
   minPlots = 1,
   weighted_mean = FALSE,
   is_poly = TRUE,
-  parallel = FALSE,
-  n_cores = parallel::detectCores() - 1,
   dataset = "custom",
   agb_raster_path = NULL,
   forest_mask_path = NULL,
@@ -26,7 +24,13 @@ invDasymetry(
   gedi_l4b_folder = "data/GEDI_L4B/",
   gedi_l4b_band = "MU",
   gedi_l4b_resolution = 0.001,
-  timeout = 600
+  timeout = 600,
+  parallel = FALSE,
+  n_cores = parallel::detectCores() - 1,
+  memfrac = 0.3,
+  worker_memfrac = 0.2,
+  batch_size = NULL,
+  crop_rasters = TRUE
 )
 }
 \arguments{
@@ -48,10 +52,6 @@ When aggregated, plots falling within the same grid cell are combined using inve
 approximate fraction of each cell that is covered by the roi (default is FALSE).}
 
 \item{is_poly}{logical, Whether input plots are polygons (TRUE) or should be converted to polygons (FALSE).}
-
-\item{parallel}{logical, Enable parallel processing for faster computation on multi-core systems. Default is FALSE.}
-
-\item{n_cores}{numeric, Number of cores to use for parallel processing.}
 
 \item{dataset}{Character, the dataset to use for AGB estimation. Options are "custom", "esacci", or "gedi". Default is "custom".}
 
@@ -82,6 +82,19 @@ Only pixels with tree cover percentage above this threshold will contribute to b
 approximately 0.001 degrees at the equator. Default is 0.001.}
 
 \item{timeout}{Number of seconds for reaching file download timeout.}
+
+\item{parallel}{logical, Enable parallel processing for faster computation on multi-core systems. Default is FALSE.}
+
+\item{n_cores}{numeric, Number of cores to use for parallel processing.}
+
+\item{memfrac}{numeric, Memory fraction (0-1) for Terra to use in the main process. Default is 0.3.}
+
+\item{worker_memfrac}{numeric, Memory fraction (0-1) for Terra to use in each worker process during parallel execution (future use - currently fixed at 0.2 internally). Default is 0.2.}
+
+\item{batch_size}{integer, Number of plots to process in each batch for better memory management. If NULL (default), batch size is auto-determined based on dataset size.}
+
+\item{crop_rasters}{logical, Whether to crop rasters to the region of interest before processing (TRUE by default).
+Set to FALSE if you encounter issues with cropping or if the plots are widely dispersed.}
 }
 \value{
 A data frame with the following columns:

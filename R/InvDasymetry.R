@@ -56,14 +56,19 @@
 #'        When aggregated, plots falling within the same grid cell are combined using inverse variance weighting.
 #' @param minPlots integer, Minimum number of plots per aggregated cell. Cells with fewer plots will be excluded.
 #' @param is_poly logical, Whether input plots are polygons (TRUE) or should be converted to polygons (FALSE).
-#' @param parallel logical, Enable parallel processing for faster computation on multi-core systems. Default is FALSE.
-#' @param n_cores numeric, Number of cores to use for parallel processing.
 #' @param agb_raster_path character, File path to the custom AGB raster.
 #' @param forest_mask_path character, File path to the forest mask raster.
 #' @param threshold numeric, Threshold (0-100) for tree cover calculation and forest masking (e.g. 0 or 10).
 #'  Only pixels with tree cover percentage above this threshold will contribute to biomass estimates.
 #' @param map_year numeric, The year of the map data. If not provided, it will be detected automatically from the available data sources.
 #' @param map_resolution numeric, The resolution of the map data in degrees. If not provided, it will be detected automatically from the available data sources. Used for variance calculation when aggregating.
+#' @param parallel logical, Enable parallel processing for faster computation on multi-core systems. Default is FALSE.
+#' @param n_cores numeric, Number of cores to use for parallel processing.
+#' @param memfrac numeric, Memory fraction (0-1) for Terra to use in the main process. Default is 0.3.
+#' @param worker_memfrac numeric, Memory fraction (0-1) for Terra to use in each worker process during parallel execution (future use - currently fixed at 0.2 internally). Default is 0.2.
+#' @param batch_size integer, Number of plots to process in each batch for better memory management. If NULL (default), batch size is auto-determined based on dataset size.
+#' @param crop_rasters logical, Whether to crop rasters to the region of interest before processing (TRUE by default).
+#' Set to FALSE if you encounter issues with cropping or if the plots are widely dispersed.
 #' @inheritParams download_esacci_biomass
 #' @inheritParams download_gedi_l4b
 #' @inheritParams sampleAGBmap
@@ -165,21 +170,24 @@
 #' @importFrom sf st_as_text st_as_sfc st_geometry st_crs st_sf st_buffer
 #' @importFrom foreach foreach %dopar% %do%
 #' @importFrom doParallel registerDoParallel
+#' @importFrom gfcanalysis calc_gfc_tiles download_tiles
 #'
 #' @export
 invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr = NULL,
-                         minPlots = 1, weighted_mean = FALSE, is_poly = TRUE, parallel = FALSE,
-                         n_cores = parallel::detectCores() - 1,
+                         minPlots = 1, weighted_mean = FALSE, is_poly = TRUE,
                          dataset = "custom", agb_raster_path = NULL, forest_mask_path = NULL,
                          threshold = 0, map_year = NULL, map_resolution = NULL,
                          esacci_biomass_year = "latest", esacci_biomass_version = "latest",
                          esacci_folder = "data/ESACCI-BIOMASS", gedi_l4b_folder = "data/GEDI_L4B/",
-                         gedi_l4b_band = "MU", gedi_l4b_resolution = 0.001, timeout = 600) {
+                         gedi_l4b_band = "MU", gedi_l4b_resolution = 0.001, timeout = 600,
+                         parallel = FALSE, n_cores = parallel::detectCores() - 1,
+                         memfrac = 0.3, worker_memfrac = 0.2, batch_size = NULL,
+                         crop_rasters = TRUE) {
 
   # Limit terra memory usage - restore original settings on exit
   old_memfrac <- terra::terraOptions()$memfrac
   on.exit(terra::terraOptions(memfrac = old_memfrac))
-  terra::terraOptions(memfrac = 0.3)
+  terra::terraOptions(memfrac = memfrac)
 
   # Input checks
   if (is.null(plot_data)) stop("plot_data cannot be NULL.")
@@ -503,36 +511,86 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
   # Converting to wkt to use inside worker
   # Handle sf objects efficiently by converting geometry to WKT before parallel execution
   if (is_poly && inherits(plot_data, "sf")) {
-    # Convert geometry to WKT for serialization
+    # Convert geometry to WKT for serialisation
     plot_data$geom_wkt <- sf::st_as_text(sf::st_geometry(plot_data))
-    
+
     # Extract CRS for later use
     crs_orig <- sf::st_crs(plot_data)
-    
+
     # Convert sf to data frame for better parallel performance
     plot_data <- as.data.frame(sf::st_drop_geometry(plot_data))
     plot_data$crs <- list(crs_orig)  # Store CRS as list column for reconstruction
   }
 
-  # Parallel setup - with optimized resource management
+  # Parallel setup - with optimised resource management
   if (parallel) {
     nc <- n_cores
-    
+
     # Set terra options before creating the cluster
-    terra_memfrac_worker <- 0.2  # Lower memory fraction for each worker
-    
     # Create cluster with custom configuration
     cl <- parallel::makeCluster(nc)
+
+    # Initialize workers with optimised terra settings
+    # Create an environment with only the variables we need to pass to the workers
+    worker_env <- new.env()
     
-    # Initialize workers with optimized terra settings
+    # Add our function arguments to this environment
+    worker_env$plot_data <- plot_data
+    worker_env$is_poly <- is_poly
+    worker_env$aggr <- aggr
+    worker_env$rsl <- rsl
+    worker_env$threshold <- threshold
+    worker_env$weighted_mean <- weighted_mean
+    worker_env$dataset <- dataset
+    worker_env$agb_raster_path <- agb_raster_path
+    worker_env$forest_mask_path <- forest_mask_path
+    worker_env$esacci_biomass_year <- esacci_biomass_year
+    worker_env$esacci_biomass_version <- esacci_biomass_version
+    worker_env$esacci_folder <- esacci_folder
+    worker_env$gedi_l4b_folder <- gedi_l4b_folder
+    worker_env$gedi_l4b_band <- gedi_l4b_band
+    worker_env$gedi_l4b_resolution <- gedi_l4b_resolution
+    worker_env$timeout <- timeout
+    
+    # Export the variables to the workers
+    parallel::clusterExport(cl, varlist = names(worker_env), envir = worker_env)
+    
+    # Export the functions needed by workers
+    # Get the current package environment where the functions are defined
+    env <- environment()
+    
+    # Export the helper functions defined within invDasymetry
+    parallel::clusterExport(cl, c("safe_sampleTreeCover", "safe_sampleAGBmap"), envir = env)
+    
+    # Export MakeBlockPolygon from the package namespace
+    # In development mode, we need to use a different approach
+    if (Sys.getenv("R_PACKAGE_DEVEL") == "TRUE") {
+      # In development mode with devtools::load_all(), functions are in the global environment
+      parallel::clusterExport(cl, c("MakeBlockPolygon", "sampleTreeCover", "sampleAGBmap"), 
+                              envir = .GlobalEnv)
+    } else {
+      # In production mode, functions are in the package namespace
+      parallel::clusterExport(cl, c("MakeBlockPolygon", "sampleTreeCover", "sampleAGBmap"), 
+                              envir = asNamespace("Plot2Map"))
+    }
+    
     parallel::clusterEvalQ(cl, {
-      # Configure terra to use less memory per worker
-      terra::terraOptions(memfrac = terra_memfrac_worker)
+      # Configure terra to use less memory per worker (fixed value)
+      terra::terraOptions(memfrac = 0.2)
       
       # Load required libraries
       library(terra)
       library(sf)
       library(stats)
+      library(gfcanalysis)
+      
+      # Try to load Plot2Map package if installed (for regular use)
+      # Will be silently skipped during development with devtools::load_all()
+      tryCatch({
+        library(Plot2Map)
+      }, error = function(e) {
+        # Skip loading if package not installed - this is expected during development
+      })
       
       # Set up worker environment
       options(warn = 1)  # Show warnings immediately
@@ -540,150 +598,204 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
       # Return status
       TRUE
     })
-    
+
     doParallel::registerDoParallel(cl)
   }
 
-  export_vars <- c("MakeBlockPolygon", "sampleTreeCover", "sampleAGBmap",
-                   "ESACCIAGBtileNames", "download_esacci_biomass", "validate_esacci_biomass_args",
-                   "is_poly", "aggr", "plot_data", "rsl", "threshold", "weighted_mean", "dataset",
-                   "agb_raster_path", "forest_mask_path",
-                   "esacci_biomass_year", "esacci_biomass_version", "esacci_folder",
-                   "gedi_l4b_folder", "gedi_l4b_band", "gedi_l4b_resolution", "n_cores", "timeout")
+  # No need for export_vars anymore since we're using clusterExport directly
 
   if (!parallel) {
     n_plots <- nrow(plot_data)
     pb <- txtProgressBar(min = 0, max = n_plots, style = 3)
   }
 
+  # Define batch size for better memory management in parallel mode
+  if (is.null(batch_size)) {
+    # Auto determine batch size if not specified
+    batch_size <- ifelse(parallel,
+                      ifelse(nrow(plot_data) > 1000, 50,
+                        ifelse(nrow(plot_data) > 500, 100, 200)),
+                      nrow(plot_data))  # No batching in sequential mode
+  } else if (!parallel && batch_size < nrow(plot_data)) {
+    # In sequential mode, default to processing all at once unless batch_size is explicitly set
+    message("Using batch processing in sequential mode with batch size: ", batch_size)
+  }
+
+  # Calculate number of batches
+  total_batches <- ceiling(nrow(plot_data) / batch_size)
+
+  if (parallel) {
+    cat(paste0("Processing ", nrow(plot_data), " plots in ", total_batches,
+              " batches of up to ", batch_size, " plots each\n"))
+  }
+
+  # Process in batches to manage memory better
   FFAGB <- foreach::foreach(
-    i = 1:nrow(plot_data),
+    batch_idx = 1:total_batches,
     .combine = "rbind",
-    .packages = c("terra", "sf", "stats"),
-    .export = if (parallel) export_vars else NULL,
-    .errorhandling = "stop"
+    .packages = c("terra", "sf", "stats", "gfcanalysis"),
+    .export = NULL,  # Don't export variables explicitly as they're already available in the environment
+    .errorhandling = "stop",
+    .inorder = TRUE  # Preserve the original order of plots
   ) %op% {
 
-    # Load all package dependencies if developing
-    if (Sys.getenv("R_PACKAGE_DEVEL") == "TRUE") {
-      devtools::load_all()
-    } else {
-      library(Plot2Map)
-      library(gfcanalysis)
-    }
+    # Calculate batch start and end indices
+    start_idx <- (batch_idx - 1) * batch_size + 1
+    end_idx <- min(batch_idx * batch_size, nrow(plot_data))
+    batch_indices <- start_idx:end_idx
 
-    if (!parallel) setTxtProgressBar(pb, i)
+    # Process the entire batch
+    batch_results <- do.call(rbind, lapply(batch_indices, function(i) {
 
-    # Reconstruct geometry or create polygon
-    if (is_poly) {
-      if (!is.null(plot_data$geom_wkt) && !is.na(plot_data$geom_wkt[i])) {
-        tryCatch({
-          # Reconstruct geometry from WKT
-          pol_geom <- sf::st_geometry(sf::st_as_sfc(plot_data$geom_wkt[i]))
-          
-          # Use stored CRS if available, otherwise use default CRS
-          if (!is.null(plot_data$crs) && length(plot_data$crs) >= i) {
-            pol <- sf::st_sf(geometry = pol_geom, crs = plot_data$crs[[i]])
-          } else {
-            pol <- sf::st_sf(geometry = pol_geom, crs = 4326) # Default to WGS84
-          }
-        }, error = function(e) {
-          # Fall back to block polygon if reconstruction fails
-          warning(paste("Failed to reconstruct geometry from WKT for plot", i, ":", e$message))
-          pol <- MakeBlockPolygon(plot_data$POINT_X[i], plot_data$POINT_Y[i], rsl)
-        })
+      # Load all package dependencies if developing
+      if (Sys.getenv("R_PACKAGE_DEVEL") == "TRUE") {
+        devtools::load_all()
       } else {
-        # Fall back to block polygon if WKT is not available
+        library(Plot2Map)
+        if (requireNamespace("gfcanalysis", quietly = TRUE)) {
+          library(gfcanalysis)
+        }
+      }
+
+      # Update progress bar for sequential mode
+      if (!parallel) setTxtProgressBar(pb, i)
+
+      # Reconstruct geometry or create polygon
+      if (is_poly) {
+        if (!is.null(plot_data$geom_wkt) && !is.na(plot_data$geom_wkt[i])) {
+          tryCatch({
+            # Reconstruct geometry from WKT
+            pol_geom <- sf::st_geometry(sf::st_as_sfc(plot_data$geom_wkt[i]))
+
+            # Use stored CRS if available, otherwise use default CRS
+            if (!is.null(plot_data$crs) && length(plot_data$crs) >= i) {
+              pol <- sf::st_sf(geometry = pol_geom, crs = plot_data$crs[[i]])
+            } else {
+              pol <- sf::st_sf(geometry = pol_geom, crs = 4326) # Default to WGS84
+            }
+          }, error = function(e) {
+            # Fall back to block polygon if reconstruction fails
+            warning(paste("Failed to reconstruct geometry from WKT for plot", i, ":", e$message))
+            pol <- MakeBlockPolygon(plot_data$POINT_X[i], plot_data$POINT_Y[i], rsl)
+          })
+        } else {
+          # Fall back to block polygon if WKT is not available
+          pol <- MakeBlockPolygon(plot_data$POINT_X[i], plot_data$POINT_Y[i], rsl)
+        }
+      } else {
         pol <- MakeBlockPolygon(plot_data$POINT_X[i], plot_data$POINT_Y[i], rsl)
       }
-    } else {
-      pol <- MakeBlockPolygon(plot_data$POINT_X[i], plot_data$POINT_Y[i], rsl)
-    }
 
-    # Create local raster objects with optimized memory settings
-    if (!is.null(forest_mask_path)) {
-      # Create with lower memory footprint and only the area we need
-      roi_bbox <- sf::st_bbox(pol)
-      # Add buffer to ensure we get all needed cells
-      roi_bbox <- roi_bbox + c(-rsl, -rsl, rsl, rsl)
-      
-      # Load only the necessary extent
-      forest_mask_local <- terra::rast(forest_mask_path)
-      ext_crop <- terra::ext(roi_bbox[c(1, 3, 2, 4)])
-      if (!is.null(forest_mask_local)) {
-        tryCatch({
-          # First try to crop to the ROI extent
-          forest_mask_local <- terra::crop(forest_mask_local, ext_crop)
-        }, error = function(e) {
-          # If cropping fails, use the full raster
-          warning("Cropping forest mask failed, using full raster")
+      # Create local raster objects with optimized memory settings
+      if (!is.null(forest_mask_path)) {
+        if (crop_rasters) {
+          # Create with lower memory footprint and only the area we need
+          roi_bbox <- sf::st_bbox(pol)
+          # Add buffer to ensure we get all needed cells
+          roi_bbox <- roi_bbox + c(-rsl, -rsl, rsl, rsl)
+
+          # Load only the necessary extent
           forest_mask_local <- terra::rast(forest_mask_path)
-        })
+          ext_crop <- terra::ext(roi_bbox[c(1, 3, 2, 4)])
+          if (!is.null(forest_mask_local)) {
+            tryCatch({
+              # First try to crop to the ROI extent
+              forest_mask_local <- terra::crop(forest_mask_local, ext_crop)
+            }, error = function(e) {
+              # If cropping fails, use the full raster
+              warning("Cropping forest mask failed, using full raster")
+              forest_mask_local <- terra::rast(forest_mask_path)
+            })
+          }
+        } else {
+          # Load full raster without cropping
+          forest_mask_local <- terra::rast(forest_mask_path)
+        }
+      } else {
+        forest_mask_local <- NULL
       }
-    } else {
-      forest_mask_local <- NULL
-    }
-    
-    if (!is.null(agb_raster_path)) {
-      # Create with lower memory footprint and only the area we need
-      roi_bbox <- sf::st_bbox(pol)
-      # Add buffer to ensure we get all needed cells
-      roi_bbox <- roi_bbox + c(-rsl, -rsl, rsl, rsl)
-      
-      # Load only the necessary extent
-      agb_raster_local <- terra::rast(agb_raster_path)
-      ext_crop <- terra::ext(roi_bbox[c(1, 3, 2, 4)])
-      if (!is.null(agb_raster_local)) {
-        tryCatch({
-          # First try to crop to the ROI extent
-          agb_raster_local <- terra::crop(agb_raster_local, ext_crop)
-        }, error = function(e) {
-          # If cropping fails, use the full raster
-          warning("Cropping AGB raster failed, using full raster")
-          agb_raster_local <- terra::rast(agb_raster_path)
-        })
-      }
-    } else {
-      agb_raster_local <- NULL
-    }
 
-    # More aggressive memory management
-    # Clean memory more frequently for larger datasets
-    gc_interval <- ifelse(nrow(plot_data) > 1000, 20, 
-                    ifelse(nrow(plot_data) > 500, 30, 50))
-                    
-    if (i %% gc_interval == 0) {
-      # Remove any large objects no longer needed
+      if (!is.null(agb_raster_path)) {
+        if (crop_rasters) {
+          # Create with lower memory footprint and only the area we need
+          roi_bbox <- sf::st_bbox(pol)
+          # Add buffer to ensure we get all needed cells
+          roi_bbox <- roi_bbox + c(-rsl, -rsl, rsl, rsl)
+
+          # Load only the necessary extent
+          agb_raster_local <- terra::rast(agb_raster_path)
+          ext_crop <- terra::ext(roi_bbox[c(1, 3, 2, 4)])
+          if (!is.null(agb_raster_local)) {
+            tryCatch({
+              # First try to crop to the ROI extent
+              agb_raster_local <- terra::crop(agb_raster_local, ext_crop)
+            }, error = function(e) {
+              # If cropping fails, use the full raster
+              warning("Cropping AGB raster failed, using full raster")
+              agb_raster_local <- terra::rast(agb_raster_path)
+            })
+          }
+        } else {
+          # Load full raster without cropping
+          agb_raster_local <- terra::rast(agb_raster_path)
+        }
+      } else {
+        agb_raster_local <- NULL
+      }
+
+      # Always use sampleTreeCover to apply consistent threshold filtering
+      treeCovers <- safe_sampleTreeCover(roi = pol, thresholds = threshold,
+                                         weighted_mean = weighted_mean, forest_mask = forest_mask_local)
+
+      wghts2 <- ifelse(is.null(aggr), FALSE, weighted_mean)
+
+      # Clean up raster objects once we're done with them to free memory
+      result_row <- if (!is.null(aggr)) {
+        # Aggregated mode
+        res <- c(treeCovers * plot_data$AGB_T_HA[i], plot_data$AGB_T_HA_ORIG[i],
+            safe_sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset,
+                              agb_raster = agb_raster_local,
+                              esacci_biomass_year = esacci_biomass_year,
+                              esacci_biomass_version = esacci_biomass_version,
+                              esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder,
+                              gedi_l4b_band = gedi_l4b_band,
+                              gedi_l4b_resolution = gedi_l4b_resolution, n_cores = 1,
+                              timeout = timeout),
+            plot_data$SIZE_HA[i], plot_data$n[i], plot_data$POINT_X[i], plot_data$POINT_Y[i])
+        res
+      } else {
+        # Non-aggregated mode
+        res <- c(treeCovers * plot_data$AGB_T_HA[i], plot_data$AGB_T_HA[i],
+              plot_data$AGB_T_HA_ORIG[i],
+              safe_sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset,
+                              agb_raster = agb_raster_local,
+                              esacci_biomass_year = esacci_biomass_year,
+                              esacci_biomass_version = esacci_biomass_version,
+                              esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder,
+                              gedi_l4b_band = gedi_l4b_band,
+                              gedi_l4b_resolution = gedi_l4b_resolution, n_cores = 1,
+                              timeout = timeout),
+              plot_data$SIZE_HA[i], plot_data$POINT_X[i], plot_data$POINT_Y[i])
+        res
+      }
+
+      # Clean up to free memory
       if (exists("forest_mask_local") && !is.null(forest_mask_local)) {
         rm(forest_mask_local)
       }
       if (exists("agb_raster_local") && !is.null(agb_raster_local)) {
         rm(agb_raster_local)
       }
-      gc(full = TRUE, verbose = FALSE)
-    }
 
-    # Always use sampleTreeCover to apply consistent threshold filtering, regardless of plot size or aggregation
-    treeCovers <- safe_sampleTreeCover(roi = pol, thresholds = threshold, weighted_mean = weighted_mean, forest_mask = forest_mask_local)
+      # Return the result row
+      return(result_row)
+    }))
 
-    wghts2 <- ifelse(is.null(aggr), FALSE, weighted_mean)
+    # Clean up memory after processing each batch
+    gc(full = TRUE, verbose = FALSE)
 
-    if (!is.null(aggr)) {
-      c(treeCovers * plot_data$AGB_T_HA[i], plot_data$AGB_T_HA_ORIG[i],
-        safe_sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset, agb_raster = agb_raster_local,
-                          esacci_biomass_year = esacci_biomass_year, esacci_biomass_version = esacci_biomass_version,
-                          esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder, gedi_l4b_band = gedi_l4b_band,
-                          gedi_l4b_resolution = gedi_l4b_resolution, n_cores = 1, timeout = timeout),
-        plot_data$SIZE_HA[i], plot_data$n[i], plot_data$POINT_X[i], plot_data$POINT_Y[i])
-    } else {
-      # Non-aggregated mode - maintain original implementation
-      c(treeCovers * plot_data$AGB_T_HA[i], plot_data$AGB_T_HA[i], plot_data$AGB_T_HA_ORIG[i],
-        safe_sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset, agb_raster = agb_raster_local,
-                          esacci_biomass_year = esacci_biomass_year, esacci_biomass_version = esacci_biomass_version,
-                          esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder, gedi_l4b_band = gedi_l4b_band,
-                          gedi_l4b_resolution = gedi_l4b_resolution, n_cores = 1, timeout = timeout),
-        plot_data$SIZE_HA[i], plot_data$POINT_X[i], plot_data$POINT_Y[i])
-    }
+    # Return the batch results
+    return(batch_results)
   }
 
   if (parallel) parallel::stopCluster(cl)
@@ -711,14 +823,15 @@ safe_sampleAGBmap <- function(roi, weighted_mean, dataset, agb_raster,
                               n_cores, timeout) {
   max_tries <- 3
   wait_time <- 2
-  
+
   # Set a lower memory limit for workers when in parallel processing
   if (n_cores > 1) {
     old_memfrac <- terra::terraOptions()$memfrac
-    on.exit(terra::terraOptions(memfrac = old_memfrac))
+    on.exit(terra::terraOptions(memfrac = old_memfrac), add = TRUE)  # Use add=TRUE to avoid overriding the previous on.exit
+    # Use a fixed conservative value for memory fraction (0.2)
     terra::terraOptions(memfrac = 0.2)
   }
-  
+
   for (try in 1:max_tries) {
     tryCatch({
       result <- sampleAGBmap(roi=roi, weighted_mean=weighted_mean, dataset=dataset, agb_raster=agb_raster,
@@ -739,7 +852,7 @@ safe_sampleAGBmap <- function(roi, weighted_mean, dataset, agb_raster,
       }
     })
   }
-  
+
   # This will never be reached but is here for code completeness
   return(NA)
 }
@@ -748,7 +861,7 @@ safe_sampleAGBmap <- function(roi, weighted_mean, dataset, agb_raster,
 safe_sampleTreeCover <- function(roi, thresholds, weighted_mean, forest_mask) {
   max_tries <- 3
   wait_time <- 2
-  
+
   for (try in 1:max_tries) {
     tryCatch({
       result <- sampleTreeCover(roi = roi, thresholds = thresholds, weighted_mean = weighted_mean, forest_mask = forest_mask)
@@ -764,7 +877,7 @@ safe_sampleTreeCover <- function(roi, thresholds, weighted_mean, forest_mask) {
       }
     })
   }
-  
+
   # This will never be reached but is here for code completeness
   return(NA)
 }
