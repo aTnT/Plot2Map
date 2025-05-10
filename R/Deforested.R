@@ -12,6 +12,12 @@
 # - Fixed bug in terra::extract call by using ID=FALSE parameter to ensure extraction of raster values
 # - Previous implementation was using [[2]] which directly accessed the second column, making it inconsistent
 # - This improves behavior consistency across different terra package versions
+# 10/05/2025:
+# - Added comprehensive error handling and dependency checking
+# - Added tryCatch to handle errors for individual plots without failing the entire function
+# - Added proper handling of missing packages with installation prompts
+# - Fixed issue with gfc_tiles reference by adding NULL checks
+# - Improved handling of NA values in the deforestation data
 
 
 ## Notes:
@@ -21,10 +27,30 @@
 # validate the new function.
 
 
-# Need to ensure gfcanalysis package is available
-# We'll use requireNamespace instead of library to avoid namespace conflicts
-if (!requireNamespace("gfcanalysis", quietly = TRUE)) {
-  stop("Package 'gfcanalysis' is needed for this function to work. Please install it.", call. = FALSE)
+# Check for all required packages
+required_packages <- c("gfcanalysis", "sf", "terra", "dplyr")
+missing_packages <- required_packages[!sapply(required_packages, requireNamespace, quietly = TRUE)]
+
+if (length(missing_packages) > 0) {
+  message("The following required packages are not installed: ", paste(missing_packages, collapse = ", "))
+  message("Would you like to install them now from CRAN? (y/n)")
+  answer <- readline(prompt = "")
+  if (tolower(answer) == "y") {
+    message("Installing required packages from CRAN...")
+    utils::install.packages(missing_packages)
+    
+    # Check if installation was successful
+    still_missing <- missing_packages[!sapply(missing_packages, requireNamespace, quietly = TRUE)]
+    if (length(still_missing) > 0) {
+      stop("Failed to install the following packages: ", paste(still_missing, collapse = ", "), 
+           ". Please install them manually with: install.packages(c('", 
+           paste(still_missing, collapse = "', '"), "'))", call. = FALSE)
+    }
+    message("All required packages successfully installed.")
+  } else {
+    stop("The following packages are required for this function to work: ", 
+         paste(missing_packages, collapse = ", "), ". Installation was declined.", call. = FALSE)
+  }
 }
 
 
@@ -106,23 +132,31 @@ Deforested <- function(plt, map_year, gfc_folder = "data/GFC", gfc_dataset_year 
   defo_start_year <- rep(NA, nrow(plt))
 
   for (p in 1:nrow(plt)) {
-
-    # Make a square polygon with a ww buffer
-    ww <- ifelse(!(is.na(plt[p,]$SIZE_HA)),
-                 (sqrt(plt[p,]$SIZE_HA*10000) *0.00001)/2, 0.0002) # mean of plots for NAs, ww in arc-deg
-    ww <- ifelse(ww < 0, abs(ww), ww)
-    sf::sf_use_s2(FALSE)  # ww in sf:: with sf_use_s2(TRUE) is in meters
-    pol <- suppressMessages(suppressWarnings(sf::st_buffer(plt[p,], dist = ww, endCapStyle = "SQUARE")))
-    # diff(st_bbox(pol)[c(2, 4)])
-    # diff(st_bbox(pol)[c(1, 3)])
-
-    message(paste("Processing row", p, "with PLOT_ID", plt[p,]$PLOT_ID, "and buffered area", round(as.numeric(sf::st_area(pol) / 10000), 2), "ha ... \n"))
+    # Use tryCatch to handle potential errors for each plot
+    tryCatch({
+      # Make a square polygon with a ww buffer
+      ww <- ifelse(!(is.na(plt[p,]$SIZE_HA)),
+                   (sqrt(plt[p,]$SIZE_HA*10000) *0.00001)/2, 0.0002) # mean of plots for NAs, ww in arc-deg
+      ww <- ifelse(ww < 0, abs(ww), ww)
+      sf::sf_use_s2(FALSE)  # ww in sf:: with sf_use_s2(TRUE) is in meters
+      pol <- suppressMessages(suppressWarnings(sf::st_buffer(plt[p,], dist = ww, endCapStyle = "SQUARE")))
+      # diff(st_bbox(pol)[c(2, 4)])
+      # diff(st_bbox(pol)[c(1, 3)])
+      
+      message(paste("Processing row", p, "with PLOT_ID", plt[p,]$PLOT_ID, "and buffered area", round(as.numeric(sf::st_area(pol) / 10000), 2), "ha ... \n"))
     #cat(paste('processing:', round((res / 0.00001 * res / 0.00001) / 10000, 2), 'ha')) # checker
 
     # Downloads respective forest loss tile/s from squared plots
     #dir.create(file.path(gfc_folder), showWarnings = FALSE)
     #setwd(file.path(gfc_folder))
+    # Calculate which GFC tiles are needed and store in gfcTile variable
     gfcTile <- suppressMessages(suppressWarnings(gfcanalysis::calc_gfc_tiles(pol)))
+    # Make sure gfcTile is not NULL before passing to download_tiles
+    if (is.null(gfcTile)) {
+      message("Could not determine GFC tiles for plot ", p, ". Skipping this plot.")
+      next
+    }
+    # Download the required tiles
     gfcanalysis::download_tiles(gfcTile, gfc_folder, images = "lossyear", dataset = dataset_str)#, timeout = 1000)
 
     # Get overlapping tile/s (up to 4 possible tiles)
@@ -163,18 +197,36 @@ Deforested <- function(plt, map_year, gfc_folder = "data/GFC", gfc_dataset_year 
 
     defo[p] <- ratio_defo_cells
     defo_start_year[p] <- defo_start
+    
+    }, error = function(e) {
+      message(paste("Error processing plot", p, "with ID", plt[p,]$PLOT_ID, ":", e$message))
+      defo[p] <<- NA  # Use <<- to assign to the parent environment
+      defo_start_year[p] <<- NA
+    })
   }
 
   plt$defo <- defo
   plt$defo_start_year <- defo_start_year
+  
+  # Count and report plots with NA deforestation values due to errors
+  na_plots <- sum(is.na(defo))
+  if (na_plots > 0) {
+    message(paste(na_plots, "plot(s) could not be processed correctly and will be excluded from deforestation filtering."))
+  }
 
   # Plots deforested before map year:
   deforestedPlots <- plt |>
+    # Filter out NAs first
+    dplyr::filter(!is.na(defo)) |>
     dplyr::filter(defo > defo_threshold) |>
     dplyr::filter(!is.na(defo_start_year)) |>
     dplyr::filter(defo_start_year <= map_year)
 
-  netPlt <- dplyr::select(dplyr::setdiff(plt, deforestedPlots), -c(defo, defo_start_year))
+  # Remove plots with errors (NA values) as well as deforested plots
+  netPlt <- plt |>
+    dplyr::filter(!is.na(defo)) |>
+    dplyr::setdiff(deforestedPlots) |>
+    dplyr::select(-c(defo, defo_start_year))
 
   message(paste('Removed', nrow(deforestedPlots), 'plot(s) that have >', 100 * defo_threshold, '% deforested area before/during the', map_year, 'map year.'))
 
