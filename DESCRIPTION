@@ -30,7 +30,6 @@ Imports:
     foreach,
     gdalcubes,
     geosphere,
-    gfcanalysis,
     graphics,
     grDevices,
     gstat,
@@ -49,4 +48,5 @@ Imports:
     units,
     utils,
     devtools,
-    ranger
+    ranger,
+    RCurl

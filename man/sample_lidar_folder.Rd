@@ -14,5 +14,7 @@ This package comes bundled with a number of sample files in its \code{inst/extda
 directory. This function make them easy to access
 }
 \examples{
+\dontrun{
 sample_lidar_folder("SustainableLandscapeBrazil_v04/SLB_AGBmaps")
+}
 }

@@ -6,8 +6,10 @@
 #' @param file Name of file. If `NULL`, all sample files will be listed.
 #' @export
 #' @examples
+#' \dontrun{
 #' sample_file()
 #' sample_file("SampleUnformattedPlots.csv")
+#' }
 sample_file <- function(file = NULL) {
   if (is.null(file)) {
     dir(system.file("extdata", package = "Plot2Map"))
@@ -25,7 +27,9 @@ sample_file <- function(file = NULL) {
 #' @param file Name of folder.
 #' @export
 #' @examples
+#' \dontrun{
 #' sample_lidar_folder("SustainableLandscapeBrazil_v04/SLB_AGBmaps")
+#' }
 sample_lidar_folder <- function(folder) {
 
   dir(system.file(file.path("extdata", folder), package = "Plot2Map"))

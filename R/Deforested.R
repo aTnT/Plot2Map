@@ -28,7 +28,7 @@
 
 
 # Check for all required packages
-required_packages <- c("gfcanalysis", "sf", "terra", "dplyr")
+required_packages <- c("sf", "terra", "dplyr")
 missing_packages <- required_packages[!sapply(required_packages, requireNamespace, quietly = TRUE)]
 
 if (length(missing_packages) > 0) {
@@ -74,7 +74,6 @@ if (length(missing_packages) > 0) {
 #' @importFrom sf st_as_sf st_buffer st_bbox st_coordinates st_area sf_use_s2
 #' @importFrom terra rast extract
 #' @importFrom dplyr filter select setdiff
-#' @importFrom gfcanalysis calc_gfc_tiles download_tiles
 #'
 #' @export
 #'
@@ -150,14 +149,14 @@ Deforested <- function(plt, map_year, gfc_folder = "data/GFC", gfc_dataset_year 
     #dir.create(file.path(gfc_folder), showWarnings = FALSE)
     #setwd(file.path(gfc_folder))
     # Calculate which GFC tiles are needed and store in gfc_tiles variable 
-    gfc_tiles <- suppressMessages(suppressWarnings(gfcanalysis::calc_gfc_tiles(pol)))
-    # Make sure gfc_tiles is not NULL before passing to download_tiles
+    gfc_tiles <- suppressMessages(suppressWarnings(calculate_gfc_tiles(pol)))
+    # Make sure gfc_tiles is not NULL before passing to download_gfc_tiles
     if (is.null(gfc_tiles)) {
       message("Could not determine GFC tiles for plot ", p, ". Skipping this plot.")
       next
     }
     # Download the required tiles
-    gfcanalysis::download_tiles(gfc_tiles, gfc_folder, images = "lossyear", dataset = dataset_str)#, timeout = 1000)
+    download_gfc_tiles(gfc_tiles, gfc_folder, images = "lossyear", dataset = dataset_str, timeout = 1000)
 
     # Get overlapping tile/s (up to 4 possible tiles)
     bb <- sf::st_bbox(pol)

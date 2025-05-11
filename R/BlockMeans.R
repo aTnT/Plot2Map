@@ -356,8 +356,8 @@ sampleTreeCover <- function(
     })
   } else {
     # Get Hansen GFC tree cover tile names for the ROI
-    gfcTile <- suppressMessages(suppressWarnings(gfcanalysis::calc_gfc_tiles(roi)))
-    gfcanalysis::download_tiles(gfcTile, gfc_folder, images = "treecover2000", dataset = dataset_str, timeout = 1000)
+    gfcTile <- suppressMessages(suppressWarnings(calculate_gfc_tiles(roi)))
+    download_gfc_tiles(gfcTile, gfc_folder, images = "treecover2000", dataset = dataset_str, timeout = 1000)
 
     # Get overlapping tile/s (up to 4 possible tiles)
     bb <- sf::st_bbox(roi)
@@ -496,8 +496,8 @@ sampleTreeCover <- function(
 #   } else {
 #     # Get Hansen GFC tree cover tile names for the ROI
 #     #ras <- TCtileNames(roi, gfc_dataset_year)
-#     gfcTile <- suppressMessages(suppressWarnings(gfcanalysis::calc_gfc_tiles(roi)))
-#     gfcanalysis::download_tiles(gfcTile, gfc_folder, images = "treecover2000", dataset = dataset_str)
+#     gfcTile <- suppressMessages(suppressWarnings(calculate_gfc_tiles(roi)))
+#     download_gfc_tiles(gfcTile, gfc_folder, images = "treecover2000", dataset = dataset_str)
 #
 #     # Get overlapping tile/s (up to 4 possible tiles)
 #     bb <- sf::st_bbox(roi)

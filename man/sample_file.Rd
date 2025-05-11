@@ -14,6 +14,8 @@ This package comes bundled with a number of sample files in its \code{inst/extda
 directory. This function make them easy to access
 }
 \examples{
+\dontrun{
 sample_file()
 sample_file("SampleUnformattedPlots.csv")
+}
 }

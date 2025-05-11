@@ -170,7 +170,6 @@
 #' @importFrom sf st_as_text st_as_sfc st_geometry st_crs st_sf st_buffer
 #' @importFrom foreach foreach %dopar% %do%
 #' @importFrom doParallel registerDoParallel
-#' @importFrom gfcanalysis calc_gfc_tiles download_tiles
 #'
 #' @export
 invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr = NULL,
@@ -582,7 +581,6 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
       library(terra)
       library(sf)
       library(stats)
-      library(gfcanalysis)
 
       # Try to load Plot2Map package if installed (for regular use)
       # Will be silently skipped during development with devtools::load_all()
@@ -627,7 +625,7 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
   FFAGB <- foreach::foreach(
     batch_idx = 1:total_batches,
     .combine = "rbind",
-    .packages = c("terra", "sf", "stats", "gfcanalysis"),
+    .packages = c("terra", "sf", "stats"),
     .export = NULL,  # Don't export variables explicitly as they're already available in the environment
     .errorhandling = "stop",
     .inorder = TRUE  # Preserve the original order of plots
@@ -646,9 +644,6 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
         suppressMessages(devtools::load_all())
       } else {
         suppressMessages(library(Plot2Map))
-        if (requireNamespace("gfcanalysis", quietly = TRUE)) {
-          suppressMessages(library(gfcanalysis))
-        }
       }
 
       # # Print progress by batch instead of by plot
