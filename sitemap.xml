@@ -34,12 +34,16 @@
 <url><loc>https://atnt.github.io/Plot2Map/reference/assign_strata_weights.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/blockCorr.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/calculateTotalUncertainty.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/reference/calculate_gfc_tiles.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/check_and_convert_plt.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/compute_treecover.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/reference/create_gfc_tiles_grid.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/determineDataType.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/download_esacci_biomass.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/download_gedi_l4b.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/reference/download_gfc_tiles.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/download_glad_tcc_2010.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/reference/download_tile.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/index.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/invDasymetry.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/plots.html</loc></url>
@@ -55,5 +59,6 @@
 <url><loc>https://atnt.github.io/Plot2Map/reference/sf_to_df_with_coords.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/sf_to_sf_with_coords.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/validate_esacci_biomass_args.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/reference/verify_download.html</loc></url>
 </urlset>
 
