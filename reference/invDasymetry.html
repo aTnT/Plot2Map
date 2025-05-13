@@ -85,6 +85,8 @@ sensing biomass maps by accounting for differences in spatial scales and forest 
 <span>  gedi_l4b_folder <span class="op">=</span> <span class="st">"data/GEDI_L4B/"</span>,</span>
 <span>  gedi_l4b_band <span class="op">=</span> <span class="st">"MU"</span>,</span>
 <span>  gedi_l4b_resolution <span class="op">=</span> <span class="fl">0.001</span>,</span>
+<span>  gfc_folder <span class="op">=</span> <span class="st">"data/GFC"</span>,</span>
+<span>  gfc_dataset_year <span class="op">=</span> <span class="st">"latest"</span>,</span>
 <span>  timeout <span class="op">=</span> <span class="fl">600</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>,</span>
@@ -182,6 +184,14 @@ Only pixels with tree cover percentage above this threshold will contribute to b
 <dt id="arg-gedi-l-b-resolution">gedi_l4b_resolution<a class="anchor" aria-label="anchor" href="#arg-gedi-l-b-resolution"></a></dt>
 <dd><p>Numeric, the spatial resolution of the processed output GeoTIFF in degrees. The native resolution of the GEDI L4B gridded dataset is 1 km,
 approximately 0.001 degrees at the equator. Default is 0.001.</p></dd>
+
+
+<dt id="arg-gfc-folder">gfc_folder<a class="anchor" aria-label="anchor" href="#arg-gfc-folder"></a></dt>
+<dd><p>Character string specifying the directory to download GFC data.</p></dd>
+
+
+<dt id="arg-gfc-dataset-year">gfc_dataset_year<a class="anchor" aria-label="anchor" href="#arg-gfc-dataset-year"></a></dt>
+<dd><p>Numeric value describing which version of the Hansen data to use: any year in the 2018-2023 range or "latest" (default).</p></dd>
 
 
 <dt id="arg-timeout">timeout<a class="anchor" aria-label="anchor" href="#arg-timeout"></a></dt>
