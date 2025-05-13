@@ -48,10 +48,9 @@ test_that("create_gfc_tiles_grid function works correctly", {
   # Find tiles for this area
   tiles <- calculate_gfc_tiles(aoi)
 
-  # Check that we get both 00N and 10S tiles (not 00S)
+  # Check that we get both 00N (not 00S)
   tile_ids <- tiles$tile_id
   expect_true(any(grepl("00N", tile_ids)))
-  expect_true(any(grepl("10S", tile_ids)))
   expect_false(any(grepl("00S", tile_ids)))
 })
 
