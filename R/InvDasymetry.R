@@ -40,6 +40,10 @@
 # Created explicit worker versions of helper functions with proper parameter handling
 # Added debug logging to track parameter passing in parallel mode
 # Ensured consistent function behavior between sequential and parallel execution modes
+# 13/05/2025:
+# Fixed bug in aggregated mode where weights vector and values vector didn't match in length
+# Modified aggregation approach to ensure proper pairing between AGB values and their weights
+# This solved the "'x' and 'w' must have the same length" error during weighted mean calculation
 
 
 
@@ -184,7 +188,7 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
                          threshold = 0, map_year = NULL, map_resolution = NULL,
                          esacci_biomass_year = "latest", esacci_biomass_version = "latest",
                          esacci_folder = "data/ESACCI-BIOMASS", gedi_l4b_folder = "data/GEDI_L4B/",
-                         gedi_l4b_band = "MU", gedi_l4b_resolution = 0.001, 
+                         gedi_l4b_band = "MU", gedi_l4b_resolution = 0.001,
                          gfc_folder = "data/GFC", gfc_dataset_year = "latest",
                          timeout = 600, parallel = FALSE, n_cores = parallel::detectCores() - 1,
                          memfrac = 0.3, worker_memfrac = 0.2, batch_size = NULL,
@@ -412,10 +416,38 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
     # x <- x[with(x, order(Ynew, Xnew)), ]
 
     # AGB_T_HA is aggregated using inverse variance weighed mean
-    x <- stats::aggregate(stats::formula(AGB_T_HA ~ Xnew + Ynew), data = plot_data,
-                   FUN = function(x) stats::weighted.mean(x, plot_data$inv[plot_data$AGB_T_HA %in% x], na.rm = TRUE))
+    # Previous implementation has issue with matching weights to values
+    # x <- stats::aggregate(stats::formula(AGB_T_HA ~ Xnew + Ynew), data = plot_data,
+    #                FUN = function(x) stats::weighted.mean(x, plot_data$inv[plot_data$AGB_T_HA %in% x], na.rm = TRUE))
+    # x <- x[with(x, order(Ynew, Xnew)), ]
+
+    # New implementation - Ensures weights match correctly with values
+    # Create a data frame with just the columns needed for aggregation
+    agg_data <- data.frame(
+      Xnew = plot_data$Xnew,
+      Ynew = plot_data$Ynew,
+      AGB_T_HA = plot_data$AGB_T_HA,
+      inv = plot_data$inv
+    )
+
+    # Use an aggregation that preserves the relationship between values and weights
+    x <- stats::aggregate(
+      cbind(AGB_T_HA, inv) ~ Xnew + Ynew,
+      data = agg_data,
+      FUN = function(x) if(is.matrix(x)) x else as.numeric(x)
+    )
+
+    # Now calculate weighted means for each group using the correctly paired values and weights
+    x$weighted_mean <- mapply(function(agb, inv) {
+      stats::weighted.mean(agb, inv, na.rm = TRUE)
+    }, x$AGB_T_HA, x$inv)
+
+    # Order the result
     x <- x[with(x, order(Ynew, Xnew)), ]
-    plotsTMP$AGB_T_HA <- x$AGB_T_HA
+    #plotsTMP$AGB_T_HA <- x$AGB_T_HA
+
+    # Assign the weighted means to plotsTMP
+    plotsTMP$AGB_T_HA <- x$weighted_mean
 
     names(plotsTMP) <- c("POINT_X", "POINT_Y", "AGB_T_HA_ORIG", "SIZE_HA", "varPlot", "AGB_T_HA")
 
@@ -564,27 +596,18 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
     parallel::clusterExport(cl, varlist = names(worker_env), envir = worker_env)
 
     # Define the helper functions with correct parameters for the worker environment
-    worker_safe_sampleTreeCover <- function(roi, thresholds, weighted_mean, forest_mask, 
+    worker_safe_sampleTreeCover <- function(roi, thresholds, weighted_mean, forest_mask,
                                          gfc_folder, gfc_dataset_year) {
       max_tries <- 3
       wait_time <- 2
-    
-      # Debug prints
-      cat("DEBUG: worker_safe_sampleTreeCover called with:\n")
-      cat("  gfc_folder =", gfc_folder, "\n")
-      cat("  gfc_dataset_year =", gfc_dataset_year, "\n")
-      cat("  thresholds =", thresholds, "\n")
-    
+
       for (try in 1:max_tries) {
         tryCatch({
-          cat("DEBUG: Attempt", try, "- Calling sampleTreeCover\n")
-          result <- sampleTreeCover(roi = roi, thresholds = thresholds, weighted_mean = weighted_mean, 
-                                 forest_mask = forest_mask, gfc_folder = gfc_folder, 
+          result <- sampleTreeCover(roi = roi, thresholds = thresholds, weighted_mean = weighted_mean,
+                                 forest_mask = forest_mask, gfc_folder = gfc_folder,
                                  gfc_dataset_year = gfc_dataset_year)
-          cat("DEBUG: sampleTreeCover succeeded\n")
           return(result)
         }, error=function(e) {
-          cat("DEBUG: Error in sampleTreeCover attempt", try, ":", e$message, "\n")
           if (try < max_tries) {
             warning(paste("Error in sampleTreeCover:", e$message, ". Retrying in", wait_time, "seconds."))
             Sys.sleep(wait_time)
@@ -650,7 +673,7 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
       parallel::clusterExport(cl, c("MakeBlockPolygon", "sampleTreeCover", "sampleAGBmap"),
                               envir = asNamespace("Plot2Map"))
     }
-    
+
     # Make 'parallel' variable available to workers
     parallel::clusterExport(cl, "parallel", envir = environment())
 
@@ -855,7 +878,7 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
                               timeout = timeout)
         }
         res <- c(treeCovers * plot_data$AGB_T_HA[i], plot_data$AGB_T_HA_ORIG[i],
-                 agb_value, plot_data$SIZE_HA[i], plot_data$n[i], 
+                 agb_value, plot_data$SIZE_HA[i], plot_data$n[i],
                  plot_data$POINT_X[i], plot_data$POINT_Y[i])
         res
       } else {
@@ -964,27 +987,18 @@ safe_sampleAGBmap <- function(roi, weighted_mean, dataset, agb_raster,
 }
 
 
-safe_sampleTreeCover <- function(roi, thresholds, weighted_mean, forest_mask, 
+safe_sampleTreeCover <- function(roi, thresholds, weighted_mean, forest_mask,
                             gfc_folder, gfc_dataset_year) {
   max_tries <- 3
   wait_time <- 2
-  
-  # Debug prints
-  cat("DEBUG: safe_sampleTreeCover called with:\n")
-  cat("  gfc_folder =", gfc_folder, "\n")
-  cat("  gfc_dataset_year =", gfc_dataset_year, "\n")
-  cat("  thresholds =", thresholds, "\n")
-  
+
   for (try in 1:max_tries) {
     tryCatch({
-      cat("DEBUG: Attempt", try, "- Calling sampleTreeCover\n")
-      result <- sampleTreeCover(roi = roi, thresholds = thresholds, weighted_mean = weighted_mean, 
-                               forest_mask = forest_mask, gfc_folder = gfc_folder, 
+      result <- sampleTreeCover(roi = roi, thresholds = thresholds, weighted_mean = weighted_mean,
+                               forest_mask = forest_mask, gfc_folder = gfc_folder,
                                gfc_dataset_year = gfc_dataset_year)
-      cat("DEBUG: sampleTreeCover succeeded\n")
       return(result)
     }, error=function(e) {
-      cat("DEBUG: Error in sampleTreeCover attempt", try, ":", e$message, "\n")
       if (try < max_tries) {
         warning(paste("Error in sampleTreeCover:", e$message, ". Retrying in", wait_time, "seconds."))
         Sys.sleep(wait_time)

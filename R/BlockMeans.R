@@ -358,35 +358,32 @@ sampleTreeCover <- function(
     # Get Hansen GFC tree cover tile names for the ROI using calculate_gfc_tiles
     gfcTiles <- suppressMessages(suppressWarnings(calculate_gfc_tiles(roi)))
     tile_ids <- gfcTiles$tile_id
-    
-    # Debug information
-    cat(paste("DEBUG: Using gfc_folder =", gfc_folder, "\n"))
-    cat(paste("DEBUG: Using dataset_str =", dataset_str, "\n"))
-    
+
+
     download_gfc_tiles(gfcTiles, gfc_folder, images = "treecover2000", dataset = dataset_str, timeout = 1000)
 
     # Process each tile ID from the tiles returned by calculate_gfc_tiles
     forest_cover_all <- lapply(tile_ids, function(tile_id) {
       # Construct file name using the tile ID
       file_name <- paste0("Hansen_", dataset_str, "_treecover2000_", tile_id, ".tif")
-      
+
       # Process the file
       message("Processing tile: ", file_name)
-      
+
       # Verify if the file was downloaded successfully
       if (!file.exists(file.path(gfc_folder, file_name))) {
         warning(paste0("Failed to download or access ", file_name, ". Skipping this tile."))
         return(NULL)
       }
-      
+
       # Try to extract values from the raster
       tryCatch({
         raster_obj <- terra::rast(file.path(gfc_folder, file_name))
-        
+
         message("Extracting values for ROI...")
         extracted_vals <- terra::extract(raster_obj, sf::st_as_sf(roi), weights = weighted_mean, normalizeWeights = FALSE)
         colnames(extracted_vals)[2] <- "treecover"
-        
+
         message("Extraction complete")
         return(extracted_vals)
       }, error = function(e) {
