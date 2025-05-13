@@ -35,6 +35,11 @@
 # Fixed critical issue with forest threshold filtering in non-aggregated mode
 # Previously the non-aggregated mode was skipping threshold filtering for plots ≥ 1 hectare
 # Now always applies threshold filtering consistently in both modes
+# 12/05/2025:
+# Fixed parameter passing in parallel mode for gfc_folder and gfc_dataset_year
+# Created explicit worker versions of helper functions with proper parameter handling
+# Added debug logging to track parameter passing in parallel mode
+# Ensured consistent function behavior between sequential and parallel execution modes
 
 
 
@@ -72,6 +77,7 @@
 #' @inheritParams download_esacci_biomass
 #' @inheritParams download_gedi_l4b
 #' @inheritParams sampleAGBmap
+#' @inheritParams sampleTreeCover
 #'
 #' @return A data frame with the following columns:
 #'   \item{plotAGB_[threshold]}{AGB values for the given forest threshold (e.g., plotAGB_10 if threshold=10).
@@ -178,8 +184,9 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
                          threshold = 0, map_year = NULL, map_resolution = NULL,
                          esacci_biomass_year = "latest", esacci_biomass_version = "latest",
                          esacci_folder = "data/ESACCI-BIOMASS", gedi_l4b_folder = "data/GEDI_L4B/",
-                         gedi_l4b_band = "MU", gedi_l4b_resolution = 0.001, timeout = 600,
-                         parallel = FALSE, n_cores = parallel::detectCores() - 1,
+                         gedi_l4b_band = "MU", gedi_l4b_resolution = 0.001, 
+                         gfc_folder = "data/GFC", gfc_dataset_year = "latest",
+                         timeout = 600, parallel = FALSE, n_cores = parallel::detectCores() - 1,
                          memfrac = 0.3, worker_memfrac = 0.2, batch_size = NULL,
                          crop_rasters = TRUE) {
 
@@ -549,17 +556,88 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
     worker_env$gedi_l4b_folder <- gedi_l4b_folder
     worker_env$gedi_l4b_band <- gedi_l4b_band
     worker_env$gedi_l4b_resolution <- gedi_l4b_resolution
+    worker_env$gfc_folder <- gfc_folder
+    worker_env$gfc_dataset_year <- gfc_dataset_year
     worker_env$timeout <- timeout
 
     # Export the variables to the workers
     parallel::clusterExport(cl, varlist = names(worker_env), envir = worker_env)
 
-    # Export the functions needed by workers
-    # Get the current package environment where the functions are defined
-    env <- environment()
+    # Define the helper functions with correct parameters for the worker environment
+    worker_safe_sampleTreeCover <- function(roi, thresholds, weighted_mean, forest_mask, 
+                                         gfc_folder, gfc_dataset_year) {
+      max_tries <- 3
+      wait_time <- 2
+    
+      # Debug prints
+      cat("DEBUG: worker_safe_sampleTreeCover called with:\n")
+      cat("  gfc_folder =", gfc_folder, "\n")
+      cat("  gfc_dataset_year =", gfc_dataset_year, "\n")
+      cat("  thresholds =", thresholds, "\n")
+    
+      for (try in 1:max_tries) {
+        tryCatch({
+          cat("DEBUG: Attempt", try, "- Calling sampleTreeCover\n")
+          result <- sampleTreeCover(roi = roi, thresholds = thresholds, weighted_mean = weighted_mean, 
+                                 forest_mask = forest_mask, gfc_folder = gfc_folder, 
+                                 gfc_dataset_year = gfc_dataset_year)
+          cat("DEBUG: sampleTreeCover succeeded\n")
+          return(result)
+        }, error=function(e) {
+          cat("DEBUG: Error in sampleTreeCover attempt", try, ":", e$message, "\n")
+          if (try < max_tries) {
+            warning(paste("Error in sampleTreeCover:", e$message, ". Retrying in", wait_time, "seconds."))
+            Sys.sleep(wait_time)
+            # Force garbage collection between retries
+            gc(full = TRUE, verbose = FALSE)
+          } else {
+            stop(paste("sampleTreeCover failed after", max_tries, "tries:", e$message))
+          }
+        })
+      }
+      return(NA)
+    }
 
-    # Export the helper functions defined within invDasymetry
-    parallel::clusterExport(cl, c("safe_sampleTreeCover", "safe_sampleAGBmap"), envir = env)
+    worker_safe_sampleAGBmap <- function(roi, weighted_mean, dataset, agb_raster,
+                                      esacci_biomass_year, esacci_biomass_version,
+                                      esacci_folder, gedi_l4b_folder,
+                                      gedi_l4b_band, gedi_l4b_resolution,
+                                      n_cores, timeout) {
+      max_tries <- 3
+      wait_time <- 2
+
+      # Set a lower memory limit for workers when in parallel processing
+      if (n_cores > 1) {
+        old_memfrac <- terra::terraOptions()$memfrac
+        on.exit(terra::terraOptions(memfrac = old_memfrac), add = TRUE)
+        terra::terraOptions(memfrac = 0.2)
+      }
+
+      for (try in 1:max_tries) {
+        tryCatch({
+          result <- sampleAGBmap(roi=roi, weighted_mean=weighted_mean, dataset=dataset, agb_raster=agb_raster,
+                               esacci_biomass_year=esacci_biomass_year, esacci_biomass_version=esacci_biomass_version,
+                               esacci_folder=esacci_folder, gedi_l4b_folder=gedi_l4b_folder,
+                               gedi_l4b_band=gedi_l4b_band,
+                               gedi_l4b_resolution=gedi_l4b_resolution,
+                               n_cores=n_cores, timeout=timeout)
+          return(result)
+        }, error=function(e) {
+          if (try < max_tries) {
+            warning(paste("Error in sampleAGBmap:", e$message, ". Retrying in", wait_time, "seconds."))
+            Sys.sleep(wait_time)
+            # Force garbage collection between retries
+            gc(full = TRUE, verbose = FALSE)
+          } else {
+            stop(paste("sampleAGBmap failed after", max_tries, "tries:", e$message))
+          }
+        })
+      }
+      return(NA)
+    }
+
+    # Export the worker versions of the helper functions
+    parallel::clusterExport(cl, c("worker_safe_sampleTreeCover", "worker_safe_sampleAGBmap"), envir = environment())
 
     # Export MakeBlockPolygon from the package namespace
     # In development mode, we need to use a different approach
@@ -572,6 +650,9 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
       parallel::clusterExport(cl, c("MakeBlockPolygon", "sampleTreeCover", "sampleAGBmap"),
                               envir = asNamespace("Plot2Map"))
     }
+    
+    # Make 'parallel' variable available to workers
+    parallel::clusterExport(cl, "parallel", envir = environment())
 
     parallel::clusterEvalQ(cl, {
       # Configure terra to use less memory per worker (fixed value)
@@ -737,15 +818,33 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
       }
 
       # Always use sampleTreeCover to apply consistent threshold filtering
-      treeCovers <- safe_sampleTreeCover(roi = pol, thresholds = threshold,
-                                         weighted_mean = weighted_mean, forest_mask = forest_mask_local)
+      # In parallel mode, use the worker version of the function
+      if (parallel) {
+        treeCovers <- worker_safe_sampleTreeCover(roi = pol, thresholds = threshold,
+                                             weighted_mean = weighted_mean, forest_mask = forest_mask_local,
+                                             gfc_folder = gfc_folder, gfc_dataset_year = gfc_dataset_year)
+      } else {
+        treeCovers <- safe_sampleTreeCover(roi = pol, thresholds = threshold,
+                                         weighted_mean = weighted_mean, forest_mask = forest_mask_local,
+                                         gfc_folder = gfc_folder, gfc_dataset_year = gfc_dataset_year)
+      }
 
       wghts2 <- ifelse(is.null(aggr), FALSE, weighted_mean)
 
       # Clean up raster objects once we're done with them to free memory
       result_row <- if (!is.null(aggr)) {
         # Aggregated mode
-        res <- c(treeCovers * plot_data$AGB_T_HA[i], plot_data$AGB_T_HA_ORIG[i],
+        # In parallel mode, use the worker version of the function
+        agb_value <- if (parallel) {
+            worker_safe_sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset,
+                              agb_raster = agb_raster_local,
+                              esacci_biomass_year = esacci_biomass_year,
+                              esacci_biomass_version = esacci_biomass_version,
+                              esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder,
+                              gedi_l4b_band = gedi_l4b_band,
+                              gedi_l4b_resolution = gedi_l4b_resolution, n_cores = 1,
+                              timeout = timeout)
+        } else {
             safe_sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset,
                               agb_raster = agb_raster_local,
                               esacci_biomass_year = esacci_biomass_year,
@@ -753,21 +852,36 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
                               esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder,
                               gedi_l4b_band = gedi_l4b_band,
                               gedi_l4b_resolution = gedi_l4b_resolution, n_cores = 1,
-                              timeout = timeout),
-            plot_data$SIZE_HA[i], plot_data$n[i], plot_data$POINT_X[i], plot_data$POINT_Y[i])
+                              timeout = timeout)
+        }
+        res <- c(treeCovers * plot_data$AGB_T_HA[i], plot_data$AGB_T_HA_ORIG[i],
+                 agb_value, plot_data$SIZE_HA[i], plot_data$n[i], 
+                 plot_data$POINT_X[i], plot_data$POINT_Y[i])
         res
       } else {
         # Non-aggregated mode
-        res <- c(treeCovers * plot_data$AGB_T_HA[i], plot_data$AGB_T_HA[i],
-              plot_data$AGB_T_HA_ORIG[i],
-              safe_sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset,
+        # In parallel mode, use the worker version of the function
+        agb_value <- if (parallel) {
+            worker_safe_sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset,
                               agb_raster = agb_raster_local,
                               esacci_biomass_year = esacci_biomass_year,
                               esacci_biomass_version = esacci_biomass_version,
                               esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder,
                               gedi_l4b_band = gedi_l4b_band,
                               gedi_l4b_resolution = gedi_l4b_resolution, n_cores = 1,
-                              timeout = timeout),
+                              timeout = timeout)
+        } else {
+            safe_sampleAGBmap(roi = pol, weighted_mean = wghts2, dataset = dataset,
+                              agb_raster = agb_raster_local,
+                              esacci_biomass_year = esacci_biomass_year,
+                              esacci_biomass_version = esacci_biomass_version,
+                              esacci_folder = esacci_folder, gedi_l4b_folder = gedi_l4b_folder,
+                              gedi_l4b_band = gedi_l4b_band,
+                              gedi_l4b_resolution = gedi_l4b_resolution, n_cores = 1,
+                              timeout = timeout)
+        }
+        res <- c(treeCovers * plot_data$AGB_T_HA[i], plot_data$AGB_T_HA[i],
+              plot_data$AGB_T_HA_ORIG[i], agb_value,
               plot_data$SIZE_HA[i], plot_data$POINT_X[i], plot_data$POINT_Y[i])
         res
       }
@@ -850,15 +964,27 @@ safe_sampleAGBmap <- function(roi, weighted_mean, dataset, agb_raster,
 }
 
 
-safe_sampleTreeCover <- function(roi, thresholds, weighted_mean, forest_mask) {
+safe_sampleTreeCover <- function(roi, thresholds, weighted_mean, forest_mask, 
+                            gfc_folder, gfc_dataset_year) {
   max_tries <- 3
   wait_time <- 2
-
+  
+  # Debug prints
+  cat("DEBUG: safe_sampleTreeCover called with:\n")
+  cat("  gfc_folder =", gfc_folder, "\n")
+  cat("  gfc_dataset_year =", gfc_dataset_year, "\n")
+  cat("  thresholds =", thresholds, "\n")
+  
   for (try in 1:max_tries) {
     tryCatch({
-      result <- sampleTreeCover(roi = roi, thresholds = thresholds, weighted_mean = weighted_mean, forest_mask = forest_mask)
+      cat("DEBUG: Attempt", try, "- Calling sampleTreeCover\n")
+      result <- sampleTreeCover(roi = roi, thresholds = thresholds, weighted_mean = weighted_mean, 
+                               forest_mask = forest_mask, gfc_folder = gfc_folder, 
+                               gfc_dataset_year = gfc_dataset_year)
+      cat("DEBUG: sampleTreeCover succeeded\n")
       return(result)
     }, error=function(e) {
+      cat("DEBUG: Error in sampleTreeCover attempt", try, ":", e$message, "\n")
       if (try < max_tries) {
         warning(paste("Error in sampleTreeCover:", e$message, ". Retrying in", wait_time, "seconds."))
         Sys.sleep(wait_time)

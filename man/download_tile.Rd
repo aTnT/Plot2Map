@@ -4,7 +4,7 @@
 \alias{download_tile}
 \title{Download a single GFC tile}
 \usage{
-download_tile(tile_url, local_path, timeout = 300)
+download_tile(tile_url, local_path, timeout = 1000)
 }
 \arguments{
 \item{tile_url}{URL of the tile to download}

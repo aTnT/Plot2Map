@@ -126,8 +126,9 @@ compute_treecover <- function(year, gfc_folder = "data/GFC", treecover_threshold
                 envir = environment())
 
   clusterEvalQ(cl, {
-    library(terra)
-    library(stringr)
+    # Import packages using :: notation instead of library()
+    requireNamespace("terra", quietly = TRUE)
+    requireNamespace("stringr", quietly = TRUE)
   })
 
   result_rasters <- pbapply::pblapply(common_ids, function(id) {
@@ -377,19 +378,24 @@ verify_download <- function(tile_url, local_path) {
 #' @importFrom utils download.file
 #'
 #' @keywords internal
-download_tile <- function(tile_url, local_path, timeout = 300) {
+download_tile <- function(tile_url, local_path, timeout = 1000) {
   options(timeout=timeout)
-  ret_code <- download.file(tile_url, local_path, mode="wb", timeout = timeout)
-  if (ret_code != 0) {
-    message(paste('Warning: problem downloading', basename(local_path)))
+  tryCatch({
+    ret_code <- download.file(tile_url, local_path, mode="wb", quiet = FALSE)
+    if (ret_code != 0) {
+      message(paste('Warning: problem downloading', basename(local_path)))
+      return(1)
+    } else if (verify_download(tile_url, local_path) != 0) {
+      message(paste("Warning: verification failed on", basename(local_path)))
+      return(2)
+    } else {
+      message(paste("Successfully downloaded", basename(local_path)))
+      return(0)
+    }
+  }, error = function(e) {
+    message(paste('Error downloading', basename(local_path), ':', e$message))
     return(1)
-  } else if (verify_download(tile_url, local_path) != 0) {
-    message(paste("Warning: verification failed on", basename(local_path)))
-    return(2)
-  } else {
-    message(paste("Successfully downloaded", basename(local_path)))
-    return(0)
-  }
+  })
 }
 
 #' Create a global grid of GFC tiles
@@ -417,7 +423,7 @@ create_gfc_tiles_grid <- function() {
             # Skip areas outside Hansen coverage (south of -60°)
             if (lat < -60) next
 
-            # Create the polygon coordinates
+            # Create the polygon coordinates - the polygon represents the area covered by the tile
             poly_coords <- matrix(c(
                 lon, lat,
                 lon+10, lat,
@@ -429,20 +435,33 @@ create_gfc_tiles_grid <- function() {
             # Create the polygon
             poly <- sf::st_polygon(list(poly_coords))
 
-            # Generate tile name using Hansen GFC naming convention
-            # Handle special cases for latitude naming
-            if (lat == 0) {
+            # Generate tile name using the correct Hansen GFC naming convention
+            # For a polygon spanning lat to lat+10 and lon to lon+10,
+            # the correct tile name is (lat+10)N_lon - this represents the top-left corner
+
+            # Handle special cases for latitude naming according to Hansen GFC convention
+            north_lat <- lat + 10  # The northern (top) edge of the tile
+
+            # Hansen GFC naming convention edge cases:
+            # 1. Tiles are named after their top-left corner
+            # 2. The equatorial tile (0 to -10) is named "00N" not "10S"
+            # 3. For all other tiles, they use the latitude of the northern edge with the sign
+            if (north_lat == 0) {
                 lat_str <- "00N"  # Equatorial North
-            } else if (lat > 0) {
-                lat_str <- sprintf("%02dN", lat)  # Northern hemisphere
-            } else if (lat == -10) {
-                lat_str <- "10S"  # Special -10 to 0° range
+            } else if (north_lat > 0) {
+                lat_str <- sprintf("%02dN", north_lat)  # Northern hemisphere
+            } else if (north_lat == -10 && lat == -10) {
+                # Special case: equatorial tile (0 to -10)
+                lat_str <- "00N"
             } else {
-                lat_str <- sprintf("%02dS", abs(lat))  # Southern hemisphere
+                lat_str <- sprintf("%02dS", abs(north_lat))  # Southern hemisphere
             }
 
-            # Handle longitude
-            if (lon >= 0) {
+            # Handle longitude - we want the western (left) edge of the tile
+            # Special case for -180/180 boundary (use 180W consistently)
+            if (lon == 180 || lon == -180) {
+                lon_str <- "180W"
+            } else if (lon >= 0) {
                 lon_str <- sprintf("%03dE", lon)
             } else {
                 lon_str <- sprintf("%03dW", abs(lon))
@@ -565,7 +584,7 @@ calculate_gfc_tiles <- function(aoi, recreate_grid = FALSE) {
 download_gfc_tiles <- function(tiles, output_dir,
                               images = c("treecover2000", "lossyear"),
                               dataset = "GFC-2023-v1.11",
-                              timeout = 300) {
+                              timeout = 1000) {
     # Validate input
     if (!inherits(tiles, "sf")) {
         stop("tiles must be an sf object")
@@ -617,6 +636,8 @@ download_gfc_tiles <- function(tiles, output_dir,
 
             if (download_result == 0) {
                 downloaded_files <- c(downloaded_files, local_path)
+            } else {
+                warning(paste("Failed to download", file_url, "- will continue processing other tiles"))
             }
         }
     }

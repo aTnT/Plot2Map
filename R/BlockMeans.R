@@ -355,52 +355,44 @@ sampleTreeCover <- function(
       message("Error extracting values from forest_mask: ", e$message)
     })
   } else {
-    # Get Hansen GFC tree cover tile names for the ROI
-    gfcTile <- suppressMessages(suppressWarnings(calculate_gfc_tiles(roi)))
-    download_gfc_tiles(gfcTile, gfc_folder, images = "treecover2000", dataset = dataset_str, timeout = 1000)
+    # Get Hansen GFC tree cover tile names for the ROI using calculate_gfc_tiles
+    gfcTiles <- suppressMessages(suppressWarnings(calculate_gfc_tiles(roi)))
+    tile_ids <- gfcTiles$tile_id
+    
+    # Debug information
+    cat(paste("DEBUG: Using gfc_folder =", gfc_folder, "\n"))
+    cat(paste("DEBUG: Using dataset_str =", dataset_str, "\n"))
+    
+    download_gfc_tiles(gfcTiles, gfc_folder, images = "treecover2000", dataset = dataset_str, timeout = 1000)
 
-    # Get overlapping tile/s (up to 4 possible tiles)
-    bb <- sf::st_bbox(roi)
-    crds <- expand.grid(x = bb[c(1, 3)], y = bb[c(2, 4)])
-    fnms <- character(4)
-
-    for (i in 1:nrow(crds)) {
-      lon <- 10 * (crds[i, 1] %/% 10)
-      lat <- 10 * (crds[i, 2] %/% 10) + 10
-      LtX <- ifelse(lon < 0, "W", "E")
-      LtY <- ifelse(lat < 0, "S", "N")
-      WE <- paste0(sprintf('%03d', abs(lon)), LtX)
-      NS <- paste0(sprintf('%02d', abs(lat)), LtY)
-
-      fnms[i] <- paste0("Hansen_", dataset_str, "_treecover2000_", NS, "_", WE, ".tif")
-    }
-
-    # Process each tile
-    forest_cover_all <- lapply(unique(fnms), function(f) {
-      # Print the current file being processed
-      message("Processing tile: ", f)
-
+    # Process each tile ID from the tiles returned by calculate_gfc_tiles
+    forest_cover_all <- lapply(tile_ids, function(tile_id) {
+      # Construct file name using the tile ID
+      file_name <- paste0("Hansen_", dataset_str, "_treecover2000_", tile_id, ".tif")
+      
+      # Process the file
+      message("Processing tile: ", file_name)
+      
       # Verify if the file was downloaded successfully
-      if (!file.exists(file.path(gfc_folder, f))) {
-        stop(paste0("Failed to download ", f, ". Please try again later or check the input arguments."))
+      if (!file.exists(file.path(gfc_folder, file_name))) {
+        warning(paste0("Failed to download or access ", file_name, ". Skipping this tile."))
+        return(NULL)
       }
-
+      
       # Try to extract values from the raster
       tryCatch({
-        raster_obj <- terra::rast(file.path(gfc_folder, f))
-
+        raster_obj <- terra::rast(file.path(gfc_folder, file_name))
+        
         message("Extracting values for ROI...")
         extracted_vals <- terra::extract(raster_obj, sf::st_as_sf(roi), weights = weighted_mean, normalizeWeights = FALSE)
         colnames(extracted_vals)[2] <- "treecover"
-
+        
         message("Extraction complete")
+        return(extracted_vals)
       }, error = function(e) {
-        message("Error extracting values from ", f, ": ", e$message)
+        message("Error extracting values from ", file_name, ": ", e$message)
         return(NULL)
       })
-
-      # Return extracted values
-      return(extracted_vals)
     })
 
     # Combine all extracted values

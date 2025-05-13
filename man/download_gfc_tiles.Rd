@@ -9,7 +9,7 @@ download_gfc_tiles(
   output_dir,
   images = c("treecover2000", "lossyear"),
   dataset = "GFC-2023-v1.11",
-  timeout = 300
+  timeout = 1000
 )
 }
 \arguments{

@@ -24,6 +24,8 @@ invDasymetry(
   gedi_l4b_folder = "data/GEDI_L4B/",
   gedi_l4b_band = "MU",
   gedi_l4b_resolution = 0.001,
+  gfc_folder = "data/GFC",
+  gfc_dataset_year = "latest",
   timeout = 600,
   parallel = FALSE,
   n_cores = parallel::detectCores() - 1,
@@ -80,6 +82,10 @@ Only pixels with tree cover percentage above this threshold will contribute to b
 
 \item{gedi_l4b_resolution}{Numeric, the spatial resolution of the processed output GeoTIFF in degrees. The native resolution of the GEDI L4B gridded dataset is 1 km,
 approximately 0.001 degrees at the equator. Default is 0.001.}
+
+\item{gfc_folder}{Character string specifying the directory to download GFC data.}
+
+\item{gfc_dataset_year}{Numeric value describing which version of the Hansen data to use: any year in the 2018-2023 range or "latest" (default).}
 
 \item{timeout}{Number of seconds for reaching file download timeout.}
 
