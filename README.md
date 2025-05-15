@@ -30,27 +30,23 @@ devtools::install_github("aTnT/Plot2Map")
 
 ### Plot data pre-processing
 
-Here's a basic workflow using Plot2Map. Let's start by creating a sample dataset
-of 10 plots.
+Here's a basic workflow using Plot2Map. We'll be using the plots dataset
+provided with the package.
 
 ```R
 library(Plot2Map)
 
-set.seed(42)
-sampled_plots <- plots[sample(nrow(plots), 10), ]
-print(sampled_plots)
+# Load sample plot data. In a real application, this would be your own data
+data(plots)
 
-#      PLOT_ID     POINT_X   POINT_Y  AGB_T_HA AVG_YEAR SIZE_HA
-# 2369     EU2   1.3059145  42.59214  87.87177     2001   0.196
-# 5273     EU2  -0.1585048  42.63245 150.97321     2004   0.196
-# 1252     EU2  -1.0662342  39.61600  58.63558     2006   0.196
-# 356      EU2  -5.1210978  40.02713  37.31206     2004   0.196
-# 7700     EU1  15.2187262  59.81792  67.79700     2008   0.015
-# 3954     EU2  -7.1823899  37.34714  94.59592     2007   0.196
-# 5403     EU2  -7.2162433  37.34765  45.56841     2007   0.196
-# 932      EU2  -2.7070556  42.68534  55.14102     2003   0.196
-# 5637    AUS1 145.8683679 -20.69546  53.69000     2004   0.160
-# 4002     EU2  -3.9889352  40.33963  46.49786     2000   0.196
+head(plots)
+#   PLOT_ID   POINT_X     POINT_Y AGB_T_HA AVG_YEAR SIZE_HA
+# 1    AFR7  24.53906   0.9925556   407.60   2011.5       1
+# 2    AFR7  24.52981   0.8063056   291.20   2011.5       1
+# 3    AFR7  24.52256   0.8274167   366.00   2011.5       1
+# 4   AFR10  12.74900   6.2112000    24.90   2007.0       1
+# 5    AUS1 145.62743 -37.5924562   699.46   2014.0       1
+# 6    AUS1 115.98288 -34.5775977   595.41   2012.0       1
 ```
 
 We now preprocess the sampled plot data. The first step is to remove plots that
@@ -58,46 +54,63 @@ have been deforested based on the Global Forest Change (GFC) dataset (Hansen et 
 We use `Deforested()` that processes each plot, downloads the necessary GFC forest loss tiles,
 and determines if the plot has been deforested beyond a set deforestation threshold or 
 if the deforestation occurred before or during the specified map year. In the example
-below we use the default 5% deforestation threshold, and assume a map year of 2023:
+below we use the default 5% deforestation threshold, and we will validate an AGB
+map from 2022:
 
 ```R
-sampled_plots <- Deforested(sampled_plots,  map_year = 2023)
-print(sampled_plots)
+# To reduce data download needs we will only use plots within the "EU2" plot id region
+# Keep in mind that this still requires a significant amount of data to be downloaded
+preprocessed_plots <- Deforested(plots[plots$PLOT_ID == "EU2", ] , map_year = 2022)
+
+# (...)
+# Hansen_GFC-2023-v1.11_lossyear_40N_010W.tif already exists and verified - skipping
+# Processing row 5328 with PLOT_ID EU2 and buffered area 0.19 ha ... 
+# 
+# Hansen_GFC-2023-v1.11_lossyear_40N_010W.tif already exists and verified - skipping
+# Deforestation detected in 100% of the buffered area in plot row 5328 with PLOT_ID EU2. 
+# The earliest measured year of deforestation is 2016.
+# 
+# Removed 354 plot(s) that have > 5 % deforested area before/during the 2022 map year.
+
+print(preprocessed_plots)
 
 # $non_deforested_plots
-# Simple feature collection with 9 features and 4 fields
+# Simple feature collection with 4974 features and 4 fields
 # Geometry type: POINT
 # Dimension:     XY
-# Bounding box:  xmin: -7.216243 ymin: -20.69546 xmax: 145.8684 ymax: 59.81792
+# Bounding box:  xmin: -7.451944 ymin: 36.06354 xmax: 3.24262 ymax: 43.45025
 # Geodetic CRS:  WGS 84
-#   PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA                    geometry
-# 1     EU2  87.87177     2001   0.196   POINT (1.305915 42.59214)
-# 2     EU2 150.97321     2004   0.196 POINT (-0.1585048 42.63245)
-# 3     EU2  58.63558     2006   0.196    POINT (-1.066234 39.616)
-# 4     EU2  37.31206     2004   0.196  POINT (-5.121098 40.02713)
-# 5     EU1  67.79700     2008   0.015   POINT (15.21873 59.81792)
-# 6     EU2  45.56841     2007   0.196  POINT (-7.216243 37.34765)
-# 7     EU2  55.14102     2003   0.196  POINT (-2.707056 42.68534)
-# 8    AUS1  53.69000     2004   0.160  POINT (145.8684 -20.69546)
-# 9     EU2  46.49786     2000   0.196  POINT (-3.988935 40.33963)
+# First 10 features:
+#    PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA                    geometry
+# 1      EU2  45.90801     2002   0.196  POINT (-6.740698 38.14153)
+# 2      EU2  51.24531     2006   0.196   POINT (-5.06974 37.89271)
+# 3      EU2  69.61214     2004   0.196   POINT (-2.326055 38.2154)
+# 4      EU2  58.50748     2002   0.196  POINT (-4.500239 40.56834)
+# 5      EU2 130.73962     2000   0.196  POINT (-4.524572 43.13481)
+# 6      EU2  16.50173     2005   0.196 POINT (-0.9116234 42.72071)
+# 7      EU2  25.77160     2006   0.196   POINT (-5.17236 38.28734)
+# 8      EU2  77.99414     2001   0.196   POINT (2.830552 42.15426)
+# 9      EU2  85.97881     2001   0.196  POINT (-4.866867 39.29276)
+# 10     EU2  41.99649     2005   0.196  POINT (-2.718447 42.86548)
 # 
 # $all_plots
-# Simple feature collection with 10 features and 6 fields
+# Simple feature collection with 5328 features and 6 fields
 # Geometry type: POINT
 # Dimension:     XY
-# Bounding box:  xmin: -7.216243 ymin: -20.69546 xmax: 145.8684 ymax: 59.81792
+# Bounding box:  xmin: -7.451944 ymin: 36.06354 xmax: 3.24262 ymax: 43.46688
 # Geodetic CRS:  WGS 84
-#      PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA                    geometry defo defo_start_year
-# 2369     EU2  87.87177     2001   0.196   POINT (1.305915 42.59214)    0              NA
-# 5273     EU2 150.97321     2004   0.196 POINT (-0.1585048 42.63245)    0              NA
-# 1252     EU2  58.63558     2006   0.196    POINT (-1.066234 39.616)    0              NA
-# 356      EU2  37.31206     2004   0.196  POINT (-5.121098 40.02713)    0              NA
-# 7700     EU1  67.79700     2008   0.015   POINT (15.21873 59.81792)    0              NA
-# 3954     EU2  94.59592     2007   0.196   POINT (-7.18239 37.34714)    1            2021
-# 5403     EU2  45.56841     2007   0.196  POINT (-7.216243 37.34765)    0              NA
-# 932      EU2  55.14102     2003   0.196  POINT (-2.707056 42.68534)    0              NA
-# 5637    AUS1  53.69000     2004   0.160  POINT (145.8684 -20.69546)    0              NA
-# 4002     EU2  46.49786     2000   0.196  POINT (-3.988935 40.33963)    0              NA
+# First 10 features:
+#     PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA                    geometry defo defo_start_year
+# 299     EU2  45.90801     2002   0.196  POINT (-6.740698 38.14153)    0              NA
+# 300     EU2  51.24531     2006   0.196   POINT (-5.06974 37.89271)    0              NA
+# 301     EU2  69.61214     2004   0.196   POINT (-2.326055 38.2154)    0              NA
+# 302     EU2  58.50748     2002   0.196  POINT (-4.500239 40.56834)    0              NA
+# 303     EU2 130.73962     2000   0.196  POINT (-4.524572 43.13481)    0              NA
+# 304     EU2  16.50173     2005   0.196 POINT (-0.9116234 42.72071)    0              NA
+# 305     EU2  25.77160     2006   0.196   POINT (-5.17236 38.28734)    0              NA
+# 306     EU2  77.99414     2001   0.196   POINT (2.830552 42.15426)    0              NA
+# 307     EU2  85.97881     2001   0.196  POINT (-4.866867 39.29276)    0              NA
+# 308     EU2  41.99649     2005   0.196  POINT (-2.718447 42.86548)    0              NA
 ```
 
 We can see that the function returns a list containing two elements:
@@ -113,19 +126,16 @@ to assign corresponding FAO ecological zones (biomes), Global Ecological Zones (
 and continents (zones) to each plot:
 
 ```R
-sampled_plots <- BiomePair(sampled_plots$non_deforested_plots)
-print(sampled_plots)
+preprocessed_plots_biome <- BiomePair(preprocessed_plots$non_deforested_plots)
+head(preprocessed_plots_biome)
 
-#   PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA     POINT_X   POINT_Y      ZONE                 FAO.ecozone         GEZ
-# 1    AUS1  53.69000     2004   0.160 145.8683679 -20.69546 Australia          Tropical shrubland    Tropical
-# 2     EU1  67.79700     2008   0.015  15.2187262  59.81792    Europe    Boreal coniferous forest      Boreal
-# 3     EU2  87.87177     2001   0.196   1.3059145  42.59214    Europe   Temperate mountain system   Temperate
-# 4     EU2  45.56841     2007   0.196  -7.2162433  37.34765    Europe      Subtropical dry forest Subtropical
-# 5     EU2  58.63558     2006   0.196  -1.0662342  39.61600    Europe      Subtropical dry forest Subtropical
-# 6     EU2  37.31206     2004   0.196  -5.1210978  40.02713    Europe      Subtropical dry forest Subtropical
-# 7     EU2  46.49786     2000   0.196  -3.9889352  40.33963    Europe      Subtropical dry forest Subtropical
-# 8     EU2 150.97321     2004   0.196  -0.1585048  42.63245    Europe   Temperate mountain system   Temperate
-# 9     EU2  55.14102     2003   0.196  -2.7070556  42.68534    Europe Subtropical mountain system Subtropical
+#   PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA  POINT_X  POINT_Y   ZONE               FAO.ecozone         GEZ
+# 1     EU2  26.57895     2001   0.196 1.967619 42.37488 Europe Temperate mountain system   Temperate
+# 2     EU2 207.19827     2001   0.196 1.943181 42.38366 Europe Temperate mountain system   Temperate
+# 3     EU2 106.25631     2001   0.196 2.319521 42.40453 Europe Temperate mountain system   Temperate
+# 4     EU2  56.08846     2001   0.196 1.820888 42.42750 Europe Temperate mountain system   Temperate
+# 5     EU2 143.96612     2001   0.196 3.036482 42.45157 Europe    Subtropical dry forest Subtropical
+# 6     EU2 100.97905     2001   0.196 1.723664 42.42646 Europe Temperate mountain system   Temperate
 ```
 
 In the step below we use `TempApplyVar()` to adjust plot biomass values to align with
@@ -136,19 +146,16 @@ In the example below we apply temporal adjustment and calculate variance to all 
 within the plot data:
 
 ```R
-sampled_plots <- TempApplyVar(sampled_plots, 2023)
-print(sampled_plots)
+preprocessed_plots_biome_temp <- TempApplyVar(preprocessed_plots_biome, 2022)
+head(preprocessed_plots_biome_temp)
 
-#   PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA     POINT_X   POINT_Y      ZONE                 FAO.ecozone         GEZ AGB_T_HA_ORIG sdGrowth
-# 1    AUS1 129.69000     2004   0.160 145.8683679 -20.69546 Australia          Tropical shrubland    Tropical      53.69000     76.0
-# 2     EU1  84.29700     2008   0.015  15.2187262  59.81792    Europe    Boreal coniferous forest      Boreal      67.79700     16.5
-# 3     EU2  87.87177     2001   0.196   1.3059145  42.59214    Europe   Temperate mountain system   Temperate      87.87177      0.0
-# 4     EU2 109.56841     2007   0.196  -7.2162433  37.34765    Europe      Subtropical dry forest Subtropical      45.56841     64.0
-# 5     EU2 126.63558     2006   0.196  -1.0662342  39.61600    Europe      Subtropical dry forest Subtropical      58.63558     68.0
-# 6     EU2 113.31206     2004   0.196  -5.1210978  40.02713    Europe      Subtropical dry forest Subtropical      37.31206     76.0
-# 7     EU2 138.49786     2000   0.196  -3.9889352  40.33963    Europe      Subtropical dry forest Subtropical      46.49786     92.0
-# 8     EU2 150.97321     2004   0.196  -0.1585048  42.63245    Europe   Temperate mountain system   Temperate     150.97321      0.0
-# 9     EU2 105.14102     2003   0.196  -2.7070556  42.68534    Europe Subtropical mountain system Subtropical      55.14102     50.0
+#   PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA  POINT_X  POINT_Y   ZONE               FAO.ecozone         GEZ AGB_T_HA_ORIG sdGrowth
+# 1     EU2  91.67895     2001   0.196 1.967619 42.37488 Europe Temperate mountain system   Temperate      26.57895     65.1
+# 2     EU2 207.19827     2001   0.196 1.943181 42.38366 Europe Temperate mountain system   Temperate     207.19827      0.0
+# 3     EU2 106.25631     2001   0.196 2.319521 42.40453 Europe Temperate mountain system   Temperate     106.25631      0.0
+# 4     EU2 121.18846     2001   0.196 1.820888 42.42750 Europe Temperate mountain system   Temperate      56.08846     65.1
+# 5     EU2 164.96612     2001   0.196 3.036482 42.45157 Europe    Subtropical dry forest Subtropical     143.96612     21.0
+# 6     EU2 100.97905     2001   0.196 1.723664 42.42646 Europe Temperate mountain system   Temperate     100.97905      0.0
 ```
 Note how the `$AGB_T_HA`, `$AGB_T_HA_ORIG` and `$sdGrowth` columns are added to the plot dataset. The first corresponding 
 to the adjusted biomass values for the specified `map_year`, the second keeping the original biomass values before adjustment and the 
@@ -160,52 +167,42 @@ last adding the temporal standard deviation of the biomass adjustment.
 
 Now let's suppose we want to validate an AGB map on the `sampled_plots` data above.
 We give an example of doing this with the `invDasymetry()` function where the AGB
-map is the [ESA-CCI AGB dataset](https://dx.doi.org/10.5285/bf535053562141c6bb7ad831f5998d77).
+map is the ESA-CCI AGB dataset.
 
 This function performs inverse dasymetric mapping on plot data. It selects plots
-based on given criteria, optionally aggregates them, and calculates forest
-fraction and AGB for each plot or cell:
-
+based on given criteria, optionally aggregates them, and calculates tree cover fraction and AGB
+for each plot or cell. In our case we use a tree cover threshold of 10% meaning that only areas
+with tree cover percentage above this threshold will contribute to biomass estimates.
 
 ```R
 # Validate AGB map
-AGBdata <- invDasymetry(plot_data = sampled_plots,
-                       clmn = "ZONE",
-                       value = "Europe",
+AGBdata <- invDasymetry(plot_data = preprocessed_plots_biome_temp,
                        dataset = "esacci",
                        is_poly = FALSE,
-                       threshold = 10)
-
-# 8 plots being processed...
-#   |                                                                                                       |   0%ℹ Loading Plot2Map
-#   |=============                                                                                          |  12%1 tiles to download/check.
-# 0 file(s) succeeded, 1 file(s) skipped, 0 file(s) failed.
-# Processing tile: Hansen_GFC-2023-v1.11_treecover2000_60N_010E.tif
-# Extracting values for ROI...
-# Extraction complete
-# Processing file: N60E010_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2021-fv5.0.tif
-# File not found locally. Attempting to download...
-# Downloading 1 ESA CCI Biomass v5.01 file(s) for year 2021...
-#   |++++++++++++++++++++++++++++++++++++++++++++++++++| 100% elapsed=12s  
-# Download successful: N60E010_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2021-fv5.0.tif
-# Loading raster
-# Extracting values for ROI...
-# Extraction complete
-# AGB values extracted (weighted mean = FALSE): 1 values
-#
-# (...)
-#                       
+                       threshold = 10,
+                       map_year = 2022,
+                       parallel = TRUE)
+                       
+# memfrac   : 0.5
+# tolerance : 0.1
+# verbose   : FALSE
+# todisk    : FALSE
+# tempdir   : /tmp/RtmpjdE3bA
+# datatype  : FLT4S
+# memmin    : 1
+# progress  : 3
+# 4975 plots or cells being processed...
+# Processing 4975 plots in 100 batches of up to 50 plots each
 # Processing complete. Results: 
 # 
-#          plotAGB_10 tfPlotAGB orgPlotAGB mapAGB SIZE_HA          x        y
-# result.1   21.07425  84.29700   67.79700      0   0.015 15.2187262 59.81792
-# result.2   87.87177  87.87177   87.87177     87   0.196  1.3059145 42.59214
-# result.3  109.56841 109.56841   45.56841     47   0.196 -7.2162433 37.34765
-# result.4  110.80614 126.63558   58.63558     11   0.196 -1.0662342 39.61600
-# result.5    0.00000 113.31206   37.31206      7   0.196 -5.1210978 40.02713
-# result.6  138.49786 138.49786   46.49786      1   0.196 -3.9889352 40.33963
-# result.7    0.00000 150.97321  150.97321     72   0.196 -0.1585048 42.63245
-# result.8  105.14102 105.14102   55.14102     89   0.196 -2.7070556 42.68534                   
+#     plotAGB_10 tfPlotAGB orgPlotAGB mapAGB SIZE_HA          x        y
+# 1    91.678952  91.67895  26.578952     49   0.196  1.9676189 42.37488
+# 2   207.198266 207.19827 207.198266     95   0.196  1.9431806 42.38366
+# 3   106.256307 106.25631 106.256307    133   0.196  2.3195210 42.40453
+# 4   121.188457 121.18846  56.088457      6   0.196  1.8208879 42.42750
+# 5   164.966116 164.96612 143.966116    105   0.196  3.0364816 42.45157
+# 6    88.356669 100.97905 100.979051    114   0.196  1.7236641 42.42646
+# (...)
 ```
 
 Now that we have the validation data from `invDasymetry()`, we can analyze and visualize the results. The function returns a data frame with several columns, including:
@@ -226,53 +223,89 @@ dir.create(out_dir, showWarnings = FALSE)
 
 # Visualize results with binned plot
 Binned(AGBdata$plotAGB_10, AGBdata$mapAGB, 
-       "Europe - Binned Comparison", 
-       "binned_Europe.png", 
-       outDir = out_dir)
+       "EU2 Plots - Binned Comparison")
+```
+![binned_fig](man/figures/binned_plot_readme.png)
 
+```R
 # Create a scatter plot
 Scatter(AGBdata$plotAGB_10, AGBdata$mapAGB, 
-        "Europe - Scatter Plot", 
-        "scatter_Europe.png", 
-        outDir = out_dir)
+        "EU2 Plots - Scatter Plot")
+```
+![scatter_fig](man/figures/scatter_plot_readme.png)
 
+```R
 # Calculate accuracy metrics
 # Use fewer intervals since we have a small sample
-accuracy_results <- Accuracy(df = AGBdata, intervals = 6, dir = out_dir, str = "Europe")
-print(accuracy_results)
-#    AGB bin (Mg/ha)  n AGBref (Mg/ha) AGBmap (Mg/ha) RMSD varPlot
-# 1            0-100  4             27             42   38       1
-# 2          100-150  4            116             37   91       1
-# 19           total 24             72             39   70       1
+Accuracy(AGBdata, intervals = 6)
+
+#   AGB bin (Mg/ha)    n AGBref (Mg/ha) AGBmap (Mg/ha) RMSD varPlot
+# 1           0-100 3104             40             40   40       1
+# 2         100-150 1556            121             89   63       1
+# 3         150-200  157            170            128   76       1
+# 4         200-250   53            219            166   84       1
+# 5         250-300   19            270            146  139       1
+# 6            >300   20            371            159  227       1
+# 7           total 4909             74             60   53       1
 ```
 
-The output of the `Accuracy()` function provides a comprehensive assessment of map accuracy, including:
-
-- Binned statistics by AGB ranges
-- Mean Square Deviation (MSD)
-- Plot variance
-- Map variance
-- Overall statistics like RMSE, bias, and R²
+The output of the `Accuracy()` function provides an assessment of map accuracy including
+binned statistics by AGB ranges.
 
 ### Handling Uncertainty
 
-Plot2Map also provides tools for calculating and incorporating uncertainty in your analyses. The `calculateTotalUncertainty()` function combines measurement, sampling, and growth uncertainties:
+Plot2Map also provides a tool for calculating and incorporating plot uncertainty in plot data.
+The `calculateTotalUncertainty()` function combines measurement, sampling, and growth uncertainties:
 
 ```R
-# Calculate total uncertainty
-uncertainty_results <- calculateTotalUncertainty(sampled_plots, 
-                                               map_year = 2023,
+# Calculate total plot uncertainty
+preprocessed_plots_biome_temp_uncertainty <- calculateTotalUncertainty(preprocessed_plots_biome_temp, 
+                                               map_year = 2022,
                                                map_resolution = 100)
+                                               
 # Calculating tree measurement uncertainty using RF model
 # Calculating sampling uncertainty using Rejou-Mechain approach
+# Loading sampling error data from package file
 # Using existing growth uncertainty (sdGrowth) values
-# Total uncertainty calculated for plot data of type: point                                               
+# Total uncertainty calculated for plot data of type: point
 
 # Print the uncertainty components
-print(uncertainty_results$uncertainty_components)
+print(preprocessed_plots_biome_temp_uncertainty$uncertainty_components)
+
 # measurement    sampling      growth 
-#   0.2323145   0.2530749   0.5146106 
+#   0.2337400   0.1331422   0.6331177 
+
+# Inspect plot data with uncertainty
+head(preprocessed_plots_biome_temp_uncertainty$data)
+#   PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA  POINT_X  POINT_Y   ZONE               FAO.ecozone         GEZ AGB_T_HA_ORIG sdGrowth   sdTree RS_HA ratio     sdSE   varPlot  sdTotal
+# 1     EU2  91.67895     2001   0.196 1.967619 42.37488 Europe Temperate mountain system   Temperate      26.57895     65.1 21.28590     1 0.196 22.01657 5175.8289 71.94323
+# 2     EU2 207.19827     2001   0.196 1.943181 42.38366 Europe Temperate mountain system   Temperate     207.19827      0.0 29.50758     1 0.196 22.01657 1355.4264 36.81612
+# 3     EU2 106.25631     2001   0.196 2.319521 42.40453 Europe Temperate mountain system   Temperate     106.25631      0.0 21.56276     1 0.196 22.01657  949.6819 30.81691
+# 4     EU2 121.18846     2001   0.196 1.820888 42.42750 Europe Temperate mountain system   Temperate      56.08846     65.1 24.19848     1 0.196 22.01657 5308.3057 72.85812
+# 5     EU2 164.96612     2001   0.196 3.036482 42.45157 Europe    Subtropical dry forest Subtropical     143.96612     21.0 35.91662     1 0.196 22.01657 2215.7332 47.07157
+# 6     EU2 100.97905     2001   0.196 1.723664 42.42646 Europe Temperate mountain system   Temperate     100.97905      0.0 21.25330     1 0.196 22.01657  936.4321 30.60118
 ```
+
+   
+### Aggregated Analysis and Spatial Correlation
+
+Plot2Map allows for spatial aggregation of plots into larger cells for analysis at different scales:
+
+```R
+# Aggregated analysis at 0.1 degree resolution with minimum 3 plots per cell
+AGBdata_agg <- invDasymetry(plot_data = preprocessed_plots_biome_temp_uncertainty$data,
+                           clmn = "ZONE", 
+                           value = "Europe",
+                           aggr = 0.1,         # 0.1 degree aggregation
+                           minPlots = 3,       # Minimum 3 plots per cell
+                           dataset = "esacci",
+                           is_poly = FALSE)
+
+# Visualize aggregated results
+Binned(AGBdata_agg$plotAGB_10, AGBdata_agg$mapAGB, 
+      "Europe - Aggregated 0.1 arc-deg")
+```
+
 
 ### Working with Different Plot Types
 
@@ -293,96 +326,8 @@ Plot2Map can handle various types of plot data:
 
 5. **Lidar-based reference maps**:
    - Processed with `RefLidar()`
-   
-   
-### Aggregated Analysis and Spatial Correlation
 
-Plot2Map allows for spatial aggregation of plots into larger cells for analysis at different scales:
-
-```R
-# Aggregated analysis at 0.1 degree resolution with minimum 3 plots per cell
-AGBdata_agg <- invDasymetry(plot_data = sampled_plots,
-                           clmn = "ZONE", 
-                           value = "Europe",
-                           aggr = 0.1,         # 0.1 degree aggregation
-                           minPlots = 3,       # Minimum 3 plots per cell
-                           dataset = "esacci",
-                           is_poly = FALSE)
-
-# Visualize aggregated results
-Binned(AGBdata_agg$plotAGB_10, AGBdata_agg$mapAGB, 
-      "Europe - Aggregated", 
-      "binned_agg_Europe.png",
-      outDir = out_dir)
-```
-
-For spatial correlation analysis, you can use:
-
-```R
-# Calculate spatial correlation parameters
-spatcor_results <- SpatCor(AGBdata, distance_km = 100)
-print(spatcor_results)
-```
-
-### Complete Workflow Example
-
-Here's a complete workflow example combining all the key steps:
-
-```R
-library(Plot2Map)
-
-# Load and preprocess plot data
-data(plots)
-
-# Select plots from a specific region
-europe_plots <- plots[plots$ZONE == "Europe", ]
-
-# Remove deforested plots
-non_deforested <- Deforested(europe_plots, map_year = 2020)$non_deforested_plots
-
-# Add ecological zone information
-eco_plots <- BiomePair(non_deforested)
-
-# Calculate total uncertainty including all components
-plots_with_uncertainty <- calculateTotalUncertainty(
-  eco_plots, 
-  map_year = 2020, 
-  map_resolution = 100
-)
-
-# Validate against ESA-CCI biomass map
-validation_results <- invDasymetry(
-  plot_data = plots_with_uncertainty$data,
-  clmn = "GEZ",
-  value = "Temperate", 
-  dataset = "esacci",
-  threshold = 10
-)
-
-# Create output directory
-results_dir <- "validation_results"
-dir.create(results_dir, showWarnings = FALSE)
-
-# Visualize results
-Binned(validation_results$plotAGB_10, validation_results$mapAGB,
-      "Temperate Zone Validation", 
-      "temperate_validation.png",
-      outDir = results_dir)
-
-# Calculate accuracy metrics
-accuracy_stats <- Accuracy(df = validation_results, intervals = 6, 
-                          dir = results_dir, 
-                          str = "temperate_2020")
-
-# Print summary statistics
-print(accuracy_stats)
-```
-
-
-## Vignettes
-
-* Plot data preparation
-
+See the "Plot data preparation" vignette for more information.
 
 
 ## References

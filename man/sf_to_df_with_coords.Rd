@@ -18,7 +18,9 @@ adding "POINT_X" and "POINT_Y" columns for longitude and latitude.
 If the input sf object is not in WGS 84, it will be transformed.
 }
 \examples{
+\dontrun{
 library(sf)
 # Assuming 'sampled_plots$non_deforested_plots' is your sf object
 df <- sf_to_df_with_coords(sampled_plots$non_deforested_plots)
+}
 }

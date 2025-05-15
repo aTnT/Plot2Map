@@ -18,6 +18,7 @@ and latitude (\code{POINT_Y}) coordinates from the geometry column. These coordi
 to the \code{sf} object.
 }
 \examples{
+\dontrun{
 library(sf)
 # Example sf object
 sampled_plots <- st_as_sf(data.frame(
@@ -30,5 +31,5 @@ sampled_plots <- st_as_sf(data.frame(
 
 # Convert to include POINT_X and POINT_Y
 updated_sf <- sf_to_sf_with_coords(sampled_plots)
-
+}
 }

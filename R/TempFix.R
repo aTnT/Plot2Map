@@ -107,7 +107,7 @@ TempApply <- function(plt, map_year, gez = "all") {
 
     # Checker of rows
     if (sum(nrow(plt.old)) == sum(nrow(plt.new))) {
-      message('Growth rates applied correspondingly per eco-region.')
+      #message('Growth rates applied correspondingly per eco-region.')
     } else {
       stop('Something is wrong, nr of dataframe rows different before/after applying growth rates.')
     }
@@ -218,7 +218,7 @@ TempVar <- function(plt, map_year, gez = "all") {
 
     # Checker of rows
     if (sum(nrow(plt.old)) == sum(nrow(plt.new))) {
-      message('Growth rates applied correspondingly per eco-region.')
+      #message('Growth rates applied correspondingly per eco-region.')
     } else {
       stop('Something is wrong, nr of dataframe rows different before/after applying growth rates.')
     }
