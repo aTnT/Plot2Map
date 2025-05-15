@@ -258,11 +258,7 @@
 </ul>
 <p>We can now visualize the relationship between the reference plot data and map values using the plotting functions:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Create output directory for results</span></span>
-<span><span class="va">out_dir</span> <span class="op">&lt;-</span> <span class="st">"results"</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">out_dir</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Visualize results with binned plot</span></span>
+<code class="sourceCode R"><span><span class="co"># Visualize results with binned plot</span></span>
 <span><span class="fu"><a href="reference/Binned.html">Binned</a></span><span class="op">(</span><span class="va">AGBdata</span><span class="op">$</span><span class="va">plotAGB_10</span>, <span class="va">AGBdata</span><span class="op">$</span><span class="va">mapAGB</span>, </span>
 <span>       <span class="st">"EU2 Plots - Binned Comparison"</span><span class="op">)</span></span></code></pre></div>
 <div class="float">
@@ -323,7 +319,7 @@
 <span><span class="co"># 6     EU2 100.97905     2001   0.196 1.723664 42.42646 Europe Temperate mountain system   Temperate     100.97905      0.0 21.25330     1 0.196 22.01657  936.4321 30.60118</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="aggregated-analysis-and-spatial-correlation">Aggregated Analysis and Spatial Correlation<a class="anchor" aria-label="anchor" href="#aggregated-analysis-and-spatial-correlation"></a>
+<h3 id="aggregated-analysis">Aggregated Analysis<a class="anchor" aria-label="anchor" href="#aggregated-analysis"></a>
 </h3>
 <p>Plot2Map allows for spatial aggregation of plots into larger cells for analysis at different scales:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
