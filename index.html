@@ -106,64 +106,76 @@
 <div class="section level3">
 <h3 id="plot-data-pre-processing">Plot data pre-processing<a class="anchor" aria-label="anchor" href="#plot-data-pre-processing"></a>
 </h3>
-<p>Here’s a basic workflow using Plot2Map. Let’s start by creating a sample dataset of 10 plots.</p>
+<p>Here’s a basic workflow using Plot2Map. We’ll be using the plots dataset provided with the package.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://aTnT.github.io/Plot2Map/" class="external-link">Plot2Map</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="va">sampled_plots</span> <span class="op">&lt;-</span> <span class="va">plots</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">plots</span><span class="op">)</span>, <span class="fl">10</span><span class="op">)</span>, <span class="op">]</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sampled_plots</span><span class="op">)</span></span>
+<span><span class="co"># Load sample plot data. In a real application, this would be your own data</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">plots</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co">#      PLOT_ID     POINT_X   POINT_Y  AGB_T_HA AVG_YEAR SIZE_HA</span></span>
-<span><span class="co"># 2369     EU2   1.3059145  42.59214  87.87177     2001   0.196</span></span>
-<span><span class="co"># 5273     EU2  -0.1585048  42.63245 150.97321     2004   0.196</span></span>
-<span><span class="co"># 1252     EU2  -1.0662342  39.61600  58.63558     2006   0.196</span></span>
-<span><span class="co"># 356      EU2  -5.1210978  40.02713  37.31206     2004   0.196</span></span>
-<span><span class="co"># 7700     EU1  15.2187262  59.81792  67.79700     2008   0.015</span></span>
-<span><span class="co"># 3954     EU2  -7.1823899  37.34714  94.59592     2007   0.196</span></span>
-<span><span class="co"># 5403     EU2  -7.2162433  37.34765  45.56841     2007   0.196</span></span>
-<span><span class="co"># 932      EU2  -2.7070556  42.68534  55.14102     2003   0.196</span></span>
-<span><span class="co"># 5637    AUS1 145.8683679 -20.69546  53.69000     2004   0.160</span></span>
-<span><span class="co"># 4002     EU2  -3.9889352  40.33963  46.49786     2000   0.196</span></span></code></pre></div>
-<p>We now preprocess the sampled plot data. The first step is to remove plots that have been deforested based on the Global Forest Change (GFC) dataset (Hansen et al., 2013). We use <code><a href="reference/Deforested.html">Deforested()</a></code> that processes each plot, downloads the necessary GFC forest loss tiles, and determines if the plot has been deforested beyond a set deforestation threshold or if the deforestation occurred before or during the specified map year. In the example below we use the default 5% deforestation threshold, and assume a map year of 2023:</p>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">plots</span><span class="op">)</span></span>
+<span><span class="co">#   PLOT_ID   POINT_X     POINT_Y AGB_T_HA AVG_YEAR SIZE_HA</span></span>
+<span><span class="co"># 1    AFR7  24.53906   0.9925556   407.60   2011.5       1</span></span>
+<span><span class="co"># 2    AFR7  24.52981   0.8063056   291.20   2011.5       1</span></span>
+<span><span class="co"># 3    AFR7  24.52256   0.8274167   366.00   2011.5       1</span></span>
+<span><span class="co"># 4   AFR10  12.74900   6.2112000    24.90   2007.0       1</span></span>
+<span><span class="co"># 5    AUS1 145.62743 -37.5924562   699.46   2014.0       1</span></span>
+<span><span class="co"># 6    AUS1 115.98288 -34.5775977   595.41   2012.0       1</span></span></code></pre></div>
+<p>We now preprocess the sampled plot data. The first step is to remove plots that have been deforested based on the Global Forest Change (GFC) dataset (Hansen et al., 2013). We use <code><a href="reference/Deforested.html">Deforested()</a></code> that processes each plot, downloads the necessary GFC forest loss tiles, and determines if the plot has been deforested beyond a set deforestation threshold or if the deforestation occurred before or during the specified map year. In the example below we use the default 5% deforestation threshold, and we will validate an AGB map from 2022:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sampled_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/Deforested.html">Deforested</a></span><span class="op">(</span><span class="va">sampled_plots</span>,  map_year <span class="op">=</span> <span class="fl">2023</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sampled_plots</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># To reduce data download needs we will only use plots within the "EU2" plot id region</span></span>
+<span><span class="co"># Keep in mind that this still requires a significant amount of data to be downloaded</span></span>
+<span><span class="va">preprocessed_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/Deforested.html">Deforested</a></span><span class="op">(</span><span class="va">plots</span><span class="op">[</span><span class="va">plots</span><span class="op">$</span><span class="va">PLOT_ID</span> <span class="op">==</span> <span class="st">"EU2"</span>, <span class="op">]</span> , map_year <span class="op">=</span> <span class="fl">2022</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># (...)</span></span>
+<span><span class="co"># Hansen_GFC-2023-v1.11_lossyear_40N_010W.tif already exists and verified - skipping</span></span>
+<span><span class="co"># Processing row 5328 with PLOT_ID EU2 and buffered area 0.19 ha ... </span></span>
+<span><span class="co"># </span></span>
+<span><span class="co"># Hansen_GFC-2023-v1.11_lossyear_40N_010W.tif already exists and verified - skipping</span></span>
+<span><span class="co"># Deforestation detected in 100% of the buffered area in plot row 5328 with PLOT_ID EU2. </span></span>
+<span><span class="co"># The earliest measured year of deforestation is 2016.</span></span>
+<span><span class="co"># </span></span>
+<span><span class="co"># Removed 354 plot(s) that have &gt; 5 % deforested area before/during the 2022 map year.</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">preprocessed_plots</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># $non_deforested_plots</span></span>
-<span><span class="co"># Simple feature collection with 9 features and 4 fields</span></span>
+<span><span class="co"># Simple feature collection with 4974 features and 4 fields</span></span>
 <span><span class="co"># Geometry type: POINT</span></span>
 <span><span class="co"># Dimension:     XY</span></span>
-<span><span class="co"># Bounding box:  xmin: -7.216243 ymin: -20.69546 xmax: 145.8684 ymax: 59.81792</span></span>
+<span><span class="co"># Bounding box:  xmin: -7.451944 ymin: 36.06354 xmax: 3.24262 ymax: 43.45025</span></span>
 <span><span class="co"># Geodetic CRS:  WGS 84</span></span>
-<span><span class="co">#   PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA                    geometry</span></span>
-<span><span class="co"># 1     EU2  87.87177     2001   0.196   POINT (1.305915 42.59214)</span></span>
-<span><span class="co"># 2     EU2 150.97321     2004   0.196 POINT (-0.1585048 42.63245)</span></span>
-<span><span class="co"># 3     EU2  58.63558     2006   0.196    POINT (-1.066234 39.616)</span></span>
-<span><span class="co"># 4     EU2  37.31206     2004   0.196  POINT (-5.121098 40.02713)</span></span>
-<span><span class="co"># 5     EU1  67.79700     2008   0.015   POINT (15.21873 59.81792)</span></span>
-<span><span class="co"># 6     EU2  45.56841     2007   0.196  POINT (-7.216243 37.34765)</span></span>
-<span><span class="co"># 7     EU2  55.14102     2003   0.196  POINT (-2.707056 42.68534)</span></span>
-<span><span class="co"># 8    AUS1  53.69000     2004   0.160  POINT (145.8684 -20.69546)</span></span>
-<span><span class="co"># 9     EU2  46.49786     2000   0.196  POINT (-3.988935 40.33963)</span></span>
+<span><span class="co"># First 10 features:</span></span>
+<span><span class="co">#    PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA                    geometry</span></span>
+<span><span class="co"># 1      EU2  45.90801     2002   0.196  POINT (-6.740698 38.14153)</span></span>
+<span><span class="co"># 2      EU2  51.24531     2006   0.196   POINT (-5.06974 37.89271)</span></span>
+<span><span class="co"># 3      EU2  69.61214     2004   0.196   POINT (-2.326055 38.2154)</span></span>
+<span><span class="co"># 4      EU2  58.50748     2002   0.196  POINT (-4.500239 40.56834)</span></span>
+<span><span class="co"># 5      EU2 130.73962     2000   0.196  POINT (-4.524572 43.13481)</span></span>
+<span><span class="co"># 6      EU2  16.50173     2005   0.196 POINT (-0.9116234 42.72071)</span></span>
+<span><span class="co"># 7      EU2  25.77160     2006   0.196   POINT (-5.17236 38.28734)</span></span>
+<span><span class="co"># 8      EU2  77.99414     2001   0.196   POINT (2.830552 42.15426)</span></span>
+<span><span class="co"># 9      EU2  85.97881     2001   0.196  POINT (-4.866867 39.29276)</span></span>
+<span><span class="co"># 10     EU2  41.99649     2005   0.196  POINT (-2.718447 42.86548)</span></span>
 <span><span class="co"># </span></span>
 <span><span class="co"># $all_plots</span></span>
-<span><span class="co"># Simple feature collection with 10 features and 6 fields</span></span>
+<span><span class="co"># Simple feature collection with 5328 features and 6 fields</span></span>
 <span><span class="co"># Geometry type: POINT</span></span>
 <span><span class="co"># Dimension:     XY</span></span>
-<span><span class="co"># Bounding box:  xmin: -7.216243 ymin: -20.69546 xmax: 145.8684 ymax: 59.81792</span></span>
+<span><span class="co"># Bounding box:  xmin: -7.451944 ymin: 36.06354 xmax: 3.24262 ymax: 43.46688</span></span>
 <span><span class="co"># Geodetic CRS:  WGS 84</span></span>
-<span><span class="co">#      PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA                    geometry defo defo_start_year</span></span>
-<span><span class="co"># 2369     EU2  87.87177     2001   0.196   POINT (1.305915 42.59214)    0              NA</span></span>
-<span><span class="co"># 5273     EU2 150.97321     2004   0.196 POINT (-0.1585048 42.63245)    0              NA</span></span>
-<span><span class="co"># 1252     EU2  58.63558     2006   0.196    POINT (-1.066234 39.616)    0              NA</span></span>
-<span><span class="co"># 356      EU2  37.31206     2004   0.196  POINT (-5.121098 40.02713)    0              NA</span></span>
-<span><span class="co"># 7700     EU1  67.79700     2008   0.015   POINT (15.21873 59.81792)    0              NA</span></span>
-<span><span class="co"># 3954     EU2  94.59592     2007   0.196   POINT (-7.18239 37.34714)    1            2021</span></span>
-<span><span class="co"># 5403     EU2  45.56841     2007   0.196  POINT (-7.216243 37.34765)    0              NA</span></span>
-<span><span class="co"># 932      EU2  55.14102     2003   0.196  POINT (-2.707056 42.68534)    0              NA</span></span>
-<span><span class="co"># 5637    AUS1  53.69000     2004   0.160  POINT (145.8684 -20.69546)    0              NA</span></span>
-<span><span class="co"># 4002     EU2  46.49786     2000   0.196  POINT (-3.988935 40.33963)    0              NA</span></span></code></pre></div>
+<span><span class="co"># First 10 features:</span></span>
+<span><span class="co">#     PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA                    geometry defo defo_start_year</span></span>
+<span><span class="co"># 299     EU2  45.90801     2002   0.196  POINT (-6.740698 38.14153)    0              NA</span></span>
+<span><span class="co"># 300     EU2  51.24531     2006   0.196   POINT (-5.06974 37.89271)    0              NA</span></span>
+<span><span class="co"># 301     EU2  69.61214     2004   0.196   POINT (-2.326055 38.2154)    0              NA</span></span>
+<span><span class="co"># 302     EU2  58.50748     2002   0.196  POINT (-4.500239 40.56834)    0              NA</span></span>
+<span><span class="co"># 303     EU2 130.73962     2000   0.196  POINT (-4.524572 43.13481)    0              NA</span></span>
+<span><span class="co"># 304     EU2  16.50173     2005   0.196 POINT (-0.9116234 42.72071)    0              NA</span></span>
+<span><span class="co"># 305     EU2  25.77160     2006   0.196   POINT (-5.17236 38.28734)    0              NA</span></span>
+<span><span class="co"># 306     EU2  77.99414     2001   0.196   POINT (2.830552 42.15426)    0              NA</span></span>
+<span><span class="co"># 307     EU2  85.97881     2001   0.196  POINT (-4.866867 39.29276)    0              NA</span></span>
+<span><span class="co"># 308     EU2  41.99649     2005   0.196  POINT (-2.718447 42.86548)    0              NA</span></span></code></pre></div>
 <p>We can see that the function returns a list containing two elements:</p>
 <ul>
 <li><p><code>$non_deforested_plots</code>: A <code>sf</code> object with non-deforested plots.</p></li>
@@ -171,80 +183,64 @@
 </ul>
 <p>In the next step we assign ecological zones and continents to plot locations. We use <code><a href="reference/BiomePair.html">BiomePair()</a></code> for this. This function overlays plot locations with pre-processed data to assign corresponding FAO ecological zones (biomes), Global Ecological Zones (GEZ) and continents (zones) to each plot:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sampled_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/BiomePair.html">BiomePair</a></span><span class="op">(</span><span class="va">sampled_plots</span><span class="op">$</span><span class="va">non_deforested_plots</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sampled_plots</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">preprocessed_plots_biome</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/BiomePair.html">BiomePair</a></span><span class="op">(</span><span class="va">preprocessed_plots</span><span class="op">$</span><span class="va">non_deforested_plots</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">preprocessed_plots_biome</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co">#   PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA     POINT_X   POINT_Y      ZONE                 FAO.ecozone         GEZ</span></span>
-<span><span class="co"># 1    AUS1  53.69000     2004   0.160 145.8683679 -20.69546 Australia          Tropical shrubland    Tropical</span></span>
-<span><span class="co"># 2     EU1  67.79700     2008   0.015  15.2187262  59.81792    Europe    Boreal coniferous forest      Boreal</span></span>
-<span><span class="co"># 3     EU2  87.87177     2001   0.196   1.3059145  42.59214    Europe   Temperate mountain system   Temperate</span></span>
-<span><span class="co"># 4     EU2  45.56841     2007   0.196  -7.2162433  37.34765    Europe      Subtropical dry forest Subtropical</span></span>
-<span><span class="co"># 5     EU2  58.63558     2006   0.196  -1.0662342  39.61600    Europe      Subtropical dry forest Subtropical</span></span>
-<span><span class="co"># 6     EU2  37.31206     2004   0.196  -5.1210978  40.02713    Europe      Subtropical dry forest Subtropical</span></span>
-<span><span class="co"># 7     EU2  46.49786     2000   0.196  -3.9889352  40.33963    Europe      Subtropical dry forest Subtropical</span></span>
-<span><span class="co"># 8     EU2 150.97321     2004   0.196  -0.1585048  42.63245    Europe   Temperate mountain system   Temperate</span></span>
-<span><span class="co"># 9     EU2  55.14102     2003   0.196  -2.7070556  42.68534    Europe Subtropical mountain system Subtropical</span></span></code></pre></div>
+<span><span class="co">#   PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA  POINT_X  POINT_Y   ZONE               FAO.ecozone         GEZ</span></span>
+<span><span class="co"># 1     EU2  26.57895     2001   0.196 1.967619 42.37488 Europe Temperate mountain system   Temperate</span></span>
+<span><span class="co"># 2     EU2 207.19827     2001   0.196 1.943181 42.38366 Europe Temperate mountain system   Temperate</span></span>
+<span><span class="co"># 3     EU2 106.25631     2001   0.196 2.319521 42.40453 Europe Temperate mountain system   Temperate</span></span>
+<span><span class="co"># 4     EU2  56.08846     2001   0.196 1.820888 42.42750 Europe Temperate mountain system   Temperate</span></span>
+<span><span class="co"># 5     EU2 143.96612     2001   0.196 3.036482 42.45157 Europe    Subtropical dry forest Subtropical</span></span>
+<span><span class="co"># 6     EU2 100.97905     2001   0.196 1.723664 42.42646 Europe Temperate mountain system   Temperate</span></span></code></pre></div>
 <p>In the step below we use <code><a href="reference/TempApplyVar.html">TempApplyVar()</a></code> to adjust plot biomass values to align with the map year by adding or subtracting annual growth increment to older or newer plots. The function uses growth data from a model-based estimate of growth-age relationships. The function also computes the temporal variance (standard deviation) of biomass changes based on growth-rate standard deviations. In the example below we apply temporal adjustment and calculate variance to all Global Ecological Zones (GEZ) within the plot data:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sampled_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/TempApplyVar.html">TempApplyVar</a></span><span class="op">(</span><span class="va">sampled_plots</span>, <span class="fl">2023</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">sampled_plots</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">preprocessed_plots_biome_temp</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/TempApplyVar.html">TempApplyVar</a></span><span class="op">(</span><span class="va">preprocessed_plots_biome</span>, <span class="fl">2022</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">preprocessed_plots_biome_temp</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co">#   PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA     POINT_X   POINT_Y      ZONE                 FAO.ecozone         GEZ AGB_T_HA_ORIG sdGrowth</span></span>
-<span><span class="co"># 1    AUS1 129.69000     2004   0.160 145.8683679 -20.69546 Australia          Tropical shrubland    Tropical      53.69000     76.0</span></span>
-<span><span class="co"># 2     EU1  84.29700     2008   0.015  15.2187262  59.81792    Europe    Boreal coniferous forest      Boreal      67.79700     16.5</span></span>
-<span><span class="co"># 3     EU2  87.87177     2001   0.196   1.3059145  42.59214    Europe   Temperate mountain system   Temperate      87.87177      0.0</span></span>
-<span><span class="co"># 4     EU2 109.56841     2007   0.196  -7.2162433  37.34765    Europe      Subtropical dry forest Subtropical      45.56841     64.0</span></span>
-<span><span class="co"># 5     EU2 126.63558     2006   0.196  -1.0662342  39.61600    Europe      Subtropical dry forest Subtropical      58.63558     68.0</span></span>
-<span><span class="co"># 6     EU2 113.31206     2004   0.196  -5.1210978  40.02713    Europe      Subtropical dry forest Subtropical      37.31206     76.0</span></span>
-<span><span class="co"># 7     EU2 138.49786     2000   0.196  -3.9889352  40.33963    Europe      Subtropical dry forest Subtropical      46.49786     92.0</span></span>
-<span><span class="co"># 8     EU2 150.97321     2004   0.196  -0.1585048  42.63245    Europe   Temperate mountain system   Temperate     150.97321      0.0</span></span>
-<span><span class="co"># 9     EU2 105.14102     2003   0.196  -2.7070556  42.68534    Europe Subtropical mountain system Subtropical      55.14102     50.0</span></span></code></pre></div>
+<span><span class="co">#   PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA  POINT_X  POINT_Y   ZONE               FAO.ecozone         GEZ AGB_T_HA_ORIG sdGrowth</span></span>
+<span><span class="co"># 1     EU2  91.67895     2001   0.196 1.967619 42.37488 Europe Temperate mountain system   Temperate      26.57895     65.1</span></span>
+<span><span class="co"># 2     EU2 207.19827     2001   0.196 1.943181 42.38366 Europe Temperate mountain system   Temperate     207.19827      0.0</span></span>
+<span><span class="co"># 3     EU2 106.25631     2001   0.196 2.319521 42.40453 Europe Temperate mountain system   Temperate     106.25631      0.0</span></span>
+<span><span class="co"># 4     EU2 121.18846     2001   0.196 1.820888 42.42750 Europe Temperate mountain system   Temperate      56.08846     65.1</span></span>
+<span><span class="co"># 5     EU2 164.96612     2001   0.196 3.036482 42.45157 Europe    Subtropical dry forest Subtropical     143.96612     21.0</span></span>
+<span><span class="co"># 6     EU2 100.97905     2001   0.196 1.723664 42.42646 Europe Temperate mountain system   Temperate     100.97905      0.0</span></span></code></pre></div>
 <p>Note how the <code>$AGB_T_HA</code>, <code>$AGB_T_HA_ORIG</code> and <code>$sdGrowth</code> columns are added to the plot dataset. The first corresponding to the adjusted biomass values for the specified <code>map_year</code>, the second keeping the original biomass values before adjustment and the last adding the temporal standard deviation of the biomass adjustment.</p>
 </div>
 <div class="section level3">
 <h3 id="agb-map-validation">AGB map validation<a class="anchor" aria-label="anchor" href="#agb-map-validation"></a>
 </h3>
-<p>Now let’s suppose we want to validate an AGB map on the <code>sampled_plots</code> data above. We give an example of doing this with the <code><a href="reference/invDasymetry.html">invDasymetry()</a></code> function where the AGB map is the <a href="https://dx.doi.org/10.5285/bf535053562141c6bb7ad831f5998d77" class="external-link">ESA-CCI AGB dataset</a>.</p>
-<p>This function performs inverse dasymetric mapping on plot data. It selects plots based on given criteria, optionally aggregates them, and calculates forest fraction and AGB for each plot or cell:</p>
+<p>Now let’s suppose we want to validate an AGB map on the <code>sampled_plots</code> data above. We give an example of doing this with the <code><a href="reference/invDasymetry.html">invDasymetry()</a></code> function where the AGB map is the ESA-CCI AGB dataset.</p>
+<p>This function performs inverse dasymetric mapping on plot data. It selects plots based on given criteria, optionally aggregates them, and calculates tree cover fraction and AGB for each plot or cell. In our case we use a tree cover threshold of 10% meaning that only areas with tree cover percentage above this threshold will contribute to biomass estimates.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Validate AGB map</span></span>
-<span><span class="va">AGBdata</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/invDasymetry.html">invDasymetry</a></span><span class="op">(</span>plot_data <span class="op">=</span> <span class="va">sampled_plots</span>,</span>
-<span>                       clmn <span class="op">=</span> <span class="st">"ZONE"</span>,</span>
-<span>                       value <span class="op">=</span> <span class="st">"Europe"</span>,</span>
+<span><span class="va">AGBdata</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/invDasymetry.html">invDasymetry</a></span><span class="op">(</span>plot_data <span class="op">=</span> <span class="va">preprocessed_plots_biome_temp</span>,</span>
 <span>                       dataset <span class="op">=</span> <span class="st">"esacci"</span>,</span>
 <span>                       is_poly <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>                       threshold <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># 8 plots being processed...</span></span>
-<span><span class="co">#   |                                                                                                       |   0%ℹ Loading Plot2Map</span></span>
-<span><span class="co">#   |=============                                                                                          |  12%1 tiles to download/check.</span></span>
-<span><span class="co"># 0 file(s) succeeded, 1 file(s) skipped, 0 file(s) failed.</span></span>
-<span><span class="co"># Processing tile: Hansen_GFC-2023-v1.11_treecover2000_60N_010E.tif</span></span>
-<span><span class="co"># Extracting values for ROI...</span></span>
-<span><span class="co"># Extraction complete</span></span>
-<span><span class="co"># Processing file: N60E010_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2021-fv5.0.tif</span></span>
-<span><span class="co"># File not found locally. Attempting to download...</span></span>
-<span><span class="co"># Downloading 1 ESA CCI Biomass v5.01 file(s) for year 2021...</span></span>
-<span><span class="co">#   |++++++++++++++++++++++++++++++++++++++++++++++++++| 100% elapsed=12s  </span></span>
-<span><span class="co"># Download successful: N60E010_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2021-fv5.0.tif</span></span>
-<span><span class="co"># Loading raster</span></span>
-<span><span class="co"># Extracting values for ROI...</span></span>
-<span><span class="co"># Extraction complete</span></span>
-<span><span class="co"># AGB values extracted (weighted mean = FALSE): 1 values</span></span>
-<span><span class="co">#</span></span>
-<span><span class="co"># (...)</span></span>
-<span><span class="co">#                       </span></span>
+<span>                       threshold <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>                       map_year <span class="op">=</span> <span class="fl">2022</span>,</span>
+<span>                       parallel <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>                       </span>
+<span><span class="co"># memfrac   : 0.5</span></span>
+<span><span class="co"># tolerance : 0.1</span></span>
+<span><span class="co"># verbose   : FALSE</span></span>
+<span><span class="co"># todisk    : FALSE</span></span>
+<span><span class="co"># tempdir   : /tmp/RtmpjdE3bA</span></span>
+<span><span class="co"># datatype  : FLT4S</span></span>
+<span><span class="co"># memmin    : 1</span></span>
+<span><span class="co"># progress  : 3</span></span>
+<span><span class="co"># 4975 plots or cells being processed...</span></span>
+<span><span class="co"># Processing 4975 plots in 100 batches of up to 50 plots each</span></span>
 <span><span class="co"># Processing complete. Results: </span></span>
 <span><span class="co"># </span></span>
-<span><span class="co">#          plotAGB_10 tfPlotAGB orgPlotAGB mapAGB SIZE_HA          x        y</span></span>
-<span><span class="co"># result.1   21.07425  84.29700   67.79700      0   0.015 15.2187262 59.81792</span></span>
-<span><span class="co"># result.2   87.87177  87.87177   87.87177     87   0.196  1.3059145 42.59214</span></span>
-<span><span class="co"># result.3  109.56841 109.56841   45.56841     47   0.196 -7.2162433 37.34765</span></span>
-<span><span class="co"># result.4  110.80614 126.63558   58.63558     11   0.196 -1.0662342 39.61600</span></span>
-<span><span class="co"># result.5    0.00000 113.31206   37.31206      7   0.196 -5.1210978 40.02713</span></span>
-<span><span class="co"># result.6  138.49786 138.49786   46.49786      1   0.196 -3.9889352 40.33963</span></span>
-<span><span class="co"># result.7    0.00000 150.97321  150.97321     72   0.196 -0.1585048 42.63245</span></span>
-<span><span class="co"># result.8  105.14102 105.14102   55.14102     89   0.196 -2.7070556 42.68534                   </span></span></code></pre></div>
+<span><span class="co">#     plotAGB_10 tfPlotAGB orgPlotAGB mapAGB SIZE_HA          x        y</span></span>
+<span><span class="co"># 1    91.678952  91.67895  26.578952     49   0.196  1.9676189 42.37488</span></span>
+<span><span class="co"># 2   207.198266 207.19827 207.198266     95   0.196  1.9431806 42.38366</span></span>
+<span><span class="co"># 3   106.256307 106.25631 106.256307    133   0.196  2.3195210 42.40453</span></span>
+<span><span class="co"># 4   121.188457 121.18846  56.088457      6   0.196  1.8208879 42.42750</span></span>
+<span><span class="co"># 5   164.966116 164.96612 143.966116    105   0.196  3.0364816 42.45157</span></span>
+<span><span class="co"># 6    88.356669 100.97905 100.979051    114   0.196  1.7236641 42.42646</span></span>
+<span><span class="co"># (...)</span></span></code></pre></div>
 <p>Now that we have the validation data from <code><a href="reference/invDasymetry.html">invDasymetry()</a></code>, we can analyze and visualize the results. The function returns a data frame with several columns, including:</p>
 <ul>
 <li>
@@ -268,51 +264,81 @@
 <span></span>
 <span><span class="co"># Visualize results with binned plot</span></span>
 <span><span class="fu"><a href="reference/Binned.html">Binned</a></span><span class="op">(</span><span class="va">AGBdata</span><span class="op">$</span><span class="va">plotAGB_10</span>, <span class="va">AGBdata</span><span class="op">$</span><span class="va">mapAGB</span>, </span>
-<span>       <span class="st">"Europe - Binned Comparison"</span>, </span>
-<span>       <span class="st">"binned_Europe.png"</span>, </span>
-<span>       outDir <span class="op">=</span> <span class="va">out_dir</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Create a scatter plot</span></span>
+<span>       <span class="st">"EU2 Plots - Binned Comparison"</span><span class="op">)</span></span></code></pre></div>
+<div class="float">
+<img src="reference/figures/binned_plot_readme.png" alt="binned_fig"><div class="figcaption">binned_fig</div>
+</div>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Create a scatter plot</span></span>
 <span><span class="fu"><a href="reference/Scatter.html">Scatter</a></span><span class="op">(</span><span class="va">AGBdata</span><span class="op">$</span><span class="va">plotAGB_10</span>, <span class="va">AGBdata</span><span class="op">$</span><span class="va">mapAGB</span>, </span>
-<span>        <span class="st">"Europe - Scatter Plot"</span>, </span>
-<span>        <span class="st">"scatter_Europe.png"</span>, </span>
-<span>        outDir <span class="op">=</span> <span class="va">out_dir</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Calculate accuracy metrics</span></span>
+<span>        <span class="st">"EU2 Plots - Scatter Plot"</span><span class="op">)</span></span></code></pre></div>
+<div class="float">
+<img src="reference/figures/scatter_plot_readme.png" alt="scatter_fig"><div class="figcaption">scatter_fig</div>
+</div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Calculate accuracy metrics</span></span>
 <span><span class="co"># Use fewer intervals since we have a small sample</span></span>
-<span><span class="va">accuracy_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/Accuracy.html">Accuracy</a></span><span class="op">(</span>df <span class="op">=</span> <span class="va">AGBdata</span>, intervals <span class="op">=</span> <span class="fl">6</span>, dir <span class="op">=</span> <span class="va">out_dir</span>, str <span class="op">=</span> <span class="st">"Europe"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">accuracy_results</span><span class="op">)</span></span>
-<span><span class="co">#    AGB bin (Mg/ha)  n AGBref (Mg/ha) AGBmap (Mg/ha) RMSD varPlot</span></span>
-<span><span class="co"># 1            0-100  4             27             42   38       1</span></span>
-<span><span class="co"># 2          100-150  4            116             37   91       1</span></span>
-<span><span class="co"># 19           total 24             72             39   70       1</span></span></code></pre></div>
-<p>The output of the <code><a href="reference/Accuracy.html">Accuracy()</a></code> function provides a comprehensive assessment of map accuracy, including:</p>
-<ul>
-<li>Binned statistics by AGB ranges</li>
-<li>Mean Square Deviation (MSD)</li>
-<li>Plot variance</li>
-<li>Map variance</li>
-<li>Overall statistics like RMSE, bias, and R²</li>
-</ul>
+<span><span class="fu"><a href="reference/Accuracy.html">Accuracy</a></span><span class="op">(</span><span class="va">AGBdata</span>, intervals <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">#   AGB bin (Mg/ha)    n AGBref (Mg/ha) AGBmap (Mg/ha) RMSD varPlot</span></span>
+<span><span class="co"># 1           0-100 3104             40             40   40       1</span></span>
+<span><span class="co"># 2         100-150 1556            121             89   63       1</span></span>
+<span><span class="co"># 3         150-200  157            170            128   76       1</span></span>
+<span><span class="co"># 4         200-250   53            219            166   84       1</span></span>
+<span><span class="co"># 5         250-300   19            270            146  139       1</span></span>
+<span><span class="co"># 6            &gt;300   20            371            159  227       1</span></span>
+<span><span class="co"># 7           total 4909             74             60   53       1</span></span></code></pre></div>
+<p>The output of the <code><a href="reference/Accuracy.html">Accuracy()</a></code> function provides an assessment of map accuracy including binned statistics by AGB ranges.</p>
 </div>
 <div class="section level3">
 <h3 id="handling-uncertainty">Handling Uncertainty<a class="anchor" aria-label="anchor" href="#handling-uncertainty"></a>
 </h3>
-<p>Plot2Map also provides tools for calculating and incorporating uncertainty in your analyses. The <code><a href="reference/calculateTotalUncertainty.html">calculateTotalUncertainty()</a></code> function combines measurement, sampling, and growth uncertainties:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Calculate total uncertainty</span></span>
-<span><span class="va">uncertainty_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/calculateTotalUncertainty.html">calculateTotalUncertainty</a></span><span class="op">(</span><span class="va">sampled_plots</span>, </span>
-<span>                                               map_year <span class="op">=</span> <span class="fl">2023</span>,</span>
+<p>Plot2Map also provides a tool for calculating and incorporating plot uncertainty in plot data. The <code><a href="reference/calculateTotalUncertainty.html">calculateTotalUncertainty()</a></code> function combines measurement, sampling, and growth uncertainties:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Calculate total plot uncertainty</span></span>
+<span><span class="va">preprocessed_plots_biome_temp_uncertainty</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/calculateTotalUncertainty.html">calculateTotalUncertainty</a></span><span class="op">(</span><span class="va">preprocessed_plots_biome_temp</span>, </span>
+<span>                                               map_year <span class="op">=</span> <span class="fl">2022</span>,</span>
 <span>                                               map_resolution <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<span>                                               </span>
 <span><span class="co"># Calculating tree measurement uncertainty using RF model</span></span>
 <span><span class="co"># Calculating sampling uncertainty using Rejou-Mechain approach</span></span>
+<span><span class="co"># Loading sampling error data from package file</span></span>
 <span><span class="co"># Using existing growth uncertainty (sdGrowth) values</span></span>
-<span><span class="co"># Total uncertainty calculated for plot data of type: point                                               </span></span>
+<span><span class="co"># Total uncertainty calculated for plot data of type: point</span></span>
 <span></span>
 <span><span class="co"># Print the uncertainty components</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">uncertainty_results</span><span class="op">$</span><span class="va">uncertainty_components</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">preprocessed_plots_biome_temp_uncertainty</span><span class="op">$</span><span class="va">uncertainty_components</span><span class="op">)</span></span>
+<span></span>
 <span><span class="co"># measurement    sampling      growth </span></span>
-<span><span class="co">#   0.2323145   0.2530749   0.5146106 </span></span></code></pre></div>
+<span><span class="co">#   0.2337400   0.1331422   0.6331177 </span></span>
+<span></span>
+<span><span class="co"># Inspect plot data with uncertainty</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">preprocessed_plots_biome_temp_uncertainty</span><span class="op">$</span><span class="va">data</span><span class="op">)</span></span>
+<span><span class="co">#   PLOT_ID  AGB_T_HA AVG_YEAR SIZE_HA  POINT_X  POINT_Y   ZONE               FAO.ecozone         GEZ AGB_T_HA_ORIG sdGrowth   sdTree RS_HA ratio     sdSE   varPlot  sdTotal</span></span>
+<span><span class="co"># 1     EU2  91.67895     2001   0.196 1.967619 42.37488 Europe Temperate mountain system   Temperate      26.57895     65.1 21.28590     1 0.196 22.01657 5175.8289 71.94323</span></span>
+<span><span class="co"># 2     EU2 207.19827     2001   0.196 1.943181 42.38366 Europe Temperate mountain system   Temperate     207.19827      0.0 29.50758     1 0.196 22.01657 1355.4264 36.81612</span></span>
+<span><span class="co"># 3     EU2 106.25631     2001   0.196 2.319521 42.40453 Europe Temperate mountain system   Temperate     106.25631      0.0 21.56276     1 0.196 22.01657  949.6819 30.81691</span></span>
+<span><span class="co"># 4     EU2 121.18846     2001   0.196 1.820888 42.42750 Europe Temperate mountain system   Temperate      56.08846     65.1 24.19848     1 0.196 22.01657 5308.3057 72.85812</span></span>
+<span><span class="co"># 5     EU2 164.96612     2001   0.196 3.036482 42.45157 Europe    Subtropical dry forest Subtropical     143.96612     21.0 35.91662     1 0.196 22.01657 2215.7332 47.07157</span></span>
+<span><span class="co"># 6     EU2 100.97905     2001   0.196 1.723664 42.42646 Europe Temperate mountain system   Temperate     100.97905      0.0 21.25330     1 0.196 22.01657  936.4321 30.60118</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="aggregated-analysis-and-spatial-correlation">Aggregated Analysis and Spatial Correlation<a class="anchor" aria-label="anchor" href="#aggregated-analysis-and-spatial-correlation"></a>
+</h3>
+<p>Plot2Map allows for spatial aggregation of plots into larger cells for analysis at different scales:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Aggregated analysis at 0.1 degree resolution with minimum 3 plots per cell</span></span>
+<span><span class="va">AGBdata_agg</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/invDasymetry.html">invDasymetry</a></span><span class="op">(</span>plot_data <span class="op">=</span> <span class="va">preprocessed_plots_biome_temp_uncertainty</span><span class="op">$</span><span class="va">data</span>,</span>
+<span>                           clmn <span class="op">=</span> <span class="st">"ZONE"</span>, </span>
+<span>                           value <span class="op">=</span> <span class="st">"Europe"</span>,</span>
+<span>                           aggr <span class="op">=</span> <span class="fl">0.1</span>,         <span class="co"># 0.1 degree aggregation</span></span>
+<span>                           minPlots <span class="op">=</span> <span class="fl">3</span>,       <span class="co"># Minimum 3 plots per cell</span></span>
+<span>                           dataset <span class="op">=</span> <span class="st">"esacci"</span>,</span>
+<span>                           is_poly <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Visualize aggregated results</span></span>
+<span><span class="fu"><a href="reference/Binned.html">Binned</a></span><span class="op">(</span><span class="va">AGBdata_agg</span><span class="op">$</span><span class="va">plotAGB_10</span>, <span class="va">AGBdata_agg</span><span class="op">$</span><span class="va">mapAGB</span>, </span>
+<span>      <span class="st">"Europe - Aggregated 0.1 arc-deg"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="working-with-different-plot-types">Working with Different Plot Types<a class="anchor" aria-label="anchor" href="#working-with-different-plot-types"></a>
@@ -354,92 +380,8 @@
 </ul>
 </li>
 </ol>
+<p>See the “Plot data preparation” vignette for more information.</p>
 </div>
-<div class="section level3">
-<h3 id="aggregated-analysis-and-spatial-correlation">Aggregated Analysis and Spatial Correlation<a class="anchor" aria-label="anchor" href="#aggregated-analysis-and-spatial-correlation"></a>
-</h3>
-<p>Plot2Map allows for spatial aggregation of plots into larger cells for analysis at different scales:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Aggregated analysis at 0.1 degree resolution with minimum 3 plots per cell</span></span>
-<span><span class="va">AGBdata_agg</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/invDasymetry.html">invDasymetry</a></span><span class="op">(</span>plot_data <span class="op">=</span> <span class="va">sampled_plots</span>,</span>
-<span>                           clmn <span class="op">=</span> <span class="st">"ZONE"</span>, </span>
-<span>                           value <span class="op">=</span> <span class="st">"Europe"</span>,</span>
-<span>                           aggr <span class="op">=</span> <span class="fl">0.1</span>,         <span class="co"># 0.1 degree aggregation</span></span>
-<span>                           minPlots <span class="op">=</span> <span class="fl">3</span>,       <span class="co"># Minimum 3 plots per cell</span></span>
-<span>                           dataset <span class="op">=</span> <span class="st">"esacci"</span>,</span>
-<span>                           is_poly <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Visualize aggregated results</span></span>
-<span><span class="fu"><a href="reference/Binned.html">Binned</a></span><span class="op">(</span><span class="va">AGBdata_agg</span><span class="op">$</span><span class="va">plotAGB_10</span>, <span class="va">AGBdata_agg</span><span class="op">$</span><span class="va">mapAGB</span>, </span>
-<span>      <span class="st">"Europe - Aggregated"</span>, </span>
-<span>      <span class="st">"binned_agg_Europe.png"</span>,</span>
-<span>      outDir <span class="op">=</span> <span class="va">out_dir</span><span class="op">)</span></span></code></pre></div>
-<p>For spatial correlation analysis, you can use:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Calculate spatial correlation parameters</span></span>
-<span><span class="va">spatcor_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/SpatCor.html">SpatCor</a></span><span class="op">(</span><span class="va">AGBdata</span>, distance_km <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">spatcor_results</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="complete-workflow-example">Complete Workflow Example<a class="anchor" aria-label="anchor" href="#complete-workflow-example"></a>
-</h3>
-<p>Here’s a complete workflow example combining all the key steps:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://aTnT.github.io/Plot2Map/" class="external-link">Plot2Map</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Load and preprocess plot data</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">plots</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Select plots from a specific region</span></span>
-<span><span class="va">europe_plots</span> <span class="op">&lt;-</span> <span class="va">plots</span><span class="op">[</span><span class="va">plots</span><span class="op">$</span><span class="va">ZONE</span> <span class="op">==</span> <span class="st">"Europe"</span>, <span class="op">]</span></span>
-<span></span>
-<span><span class="co"># Remove deforested plots</span></span>
-<span><span class="va">non_deforested</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/Deforested.html">Deforested</a></span><span class="op">(</span><span class="va">europe_plots</span>, map_year <span class="op">=</span> <span class="fl">2020</span><span class="op">)</span><span class="op">$</span><span class="va">non_deforested_plots</span></span>
-<span></span>
-<span><span class="co"># Add ecological zone information</span></span>
-<span><span class="va">eco_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/BiomePair.html">BiomePair</a></span><span class="op">(</span><span class="va">non_deforested</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Calculate total uncertainty including all components</span></span>
-<span><span class="va">plots_with_uncertainty</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/calculateTotalUncertainty.html">calculateTotalUncertainty</a></span><span class="op">(</span></span>
-<span>  <span class="va">eco_plots</span>, </span>
-<span>  map_year <span class="op">=</span> <span class="fl">2020</span>, </span>
-<span>  map_resolution <span class="op">=</span> <span class="fl">100</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Validate against ESA-CCI biomass map</span></span>
-<span><span class="va">validation_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/invDasymetry.html">invDasymetry</a></span><span class="op">(</span></span>
-<span>  plot_data <span class="op">=</span> <span class="va">plots_with_uncertainty</span><span class="op">$</span><span class="va">data</span>,</span>
-<span>  clmn <span class="op">=</span> <span class="st">"GEZ"</span>,</span>
-<span>  value <span class="op">=</span> <span class="st">"Temperate"</span>, </span>
-<span>  dataset <span class="op">=</span> <span class="st">"esacci"</span>,</span>
-<span>  threshold <span class="op">=</span> <span class="fl">10</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Create output directory</span></span>
-<span><span class="va">results_dir</span> <span class="op">&lt;-</span> <span class="st">"validation_results"</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">results_dir</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Visualize results</span></span>
-<span><span class="fu"><a href="reference/Binned.html">Binned</a></span><span class="op">(</span><span class="va">validation_results</span><span class="op">$</span><span class="va">plotAGB_10</span>, <span class="va">validation_results</span><span class="op">$</span><span class="va">mapAGB</span>,</span>
-<span>      <span class="st">"Temperate Zone Validation"</span>, </span>
-<span>      <span class="st">"temperate_validation.png"</span>,</span>
-<span>      outDir <span class="op">=</span> <span class="va">results_dir</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Calculate accuracy metrics</span></span>
-<span><span class="va">accuracy_stats</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/Accuracy.html">Accuracy</a></span><span class="op">(</span>df <span class="op">=</span> <span class="va">validation_results</span>, intervals <span class="op">=</span> <span class="fl">6</span>, </span>
-<span>                          dir <span class="op">=</span> <span class="va">results_dir</span>, </span>
-<span>                          str <span class="op">=</span> <span class="st">"temperate_2020"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Print summary statistics</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">accuracy_stats</span><span class="op">)</span></span></code></pre></div>
-</div>
-</div>
-<div class="section level2">
-<h2 id="vignettes">Vignettes<a class="anchor" aria-label="anchor" href="#vignettes"></a>
-</h2>
-<ul>
-<li>Plot data preparation</li>
-</ul>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
