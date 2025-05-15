@@ -217,10 +217,6 @@ Now that we have the validation data from `invDasymetry()`, we can analyze and v
 We can now visualize the relationship between the reference plot data and map values using the plotting functions:
 
 ```R
-# Create output directory for results
-out_dir <- "results"
-dir.create(out_dir, showWarnings = FALSE)
-
 # Visualize results with binned plot
 Binned(AGBdata$plotAGB_10, AGBdata$mapAGB, 
        "EU2 Plots - Binned Comparison")
@@ -287,7 +283,7 @@ head(preprocessed_plots_biome_temp_uncertainty$data)
 ```
 
    
-### Aggregated Analysis and Spatial Correlation
+### Aggregated Analysis
 
 Plot2Map allows for spatial aggregation of plots into larger cells for analysis at different scales:
 
