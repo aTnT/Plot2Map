@@ -210,7 +210,7 @@
 <div class="section level3">
 <h3 id="agb-map-validation">AGB map validation<a class="anchor" aria-label="anchor" href="#agb-map-validation"></a>
 </h3>
-<p>Now let’s suppose we want to validate an AGB map on the <code>sampled_plots</code> data above. We give an example of doing this with the <code><a href="reference/invDasymetry.html">invDasymetry()</a></code> function where the AGB map is the ESA-CCI AGB dataset.</p>
+<p>Now let’s suppose we want to validate an AGB map on the <code>preprocessed_plots_biome_temp</code> data above. We give an example of doing this with the <code><a href="reference/invDasymetry.html">invDasymetry()</a></code> function where the AGB map is the ESA-CCI AGB dataset.</p>
 <p>This function performs inverse dasymetric mapping on plot data. It selects plots based on given criteria, optionally aggregates them, and calculates tree cover fraction and AGB for each plot or cell. In our case we use a tree cover threshold of 10% meaning that only areas with tree cover percentage above this threshold will contribute to biomass estimates.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Validate AGB map</span></span>
@@ -289,7 +289,7 @@
 <div class="section level3">
 <h3 id="handling-uncertainty">Handling Uncertainty<a class="anchor" aria-label="anchor" href="#handling-uncertainty"></a>
 </h3>
-<p>Plot2Map also provides a tool for calculating and incorporating plot uncertainty in plot data. The <code><a href="reference/calculateTotalUncertainty.html">calculateTotalUncertainty()</a></code> function combines measurement, sampling, and growth uncertainties:</p>
+<p>Plot2Map also provides a tool for calculating and incorporating plot uncertainty in plot data. The <code><a href="reference/calculateTotalUncertainty.html">calculateTotalUncertainty()</a></code> function combines measurement, sampling, and growth uncertainties. When uncertainty is not provided to plot data in the form of a <code>varPlot</code> column during inverse dasymetric mapping, <code><a href="reference/invDasymetry.html">invDasymetry()</a></code> will call <code><a href="reference/calculateTotalUncertainty.html">calculateTotalUncertainty()</a></code> to calculate and add plot uncertainty to plot data automatically.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Calculate total plot uncertainty</span></span>
 <span><span class="va">preprocessed_plots_biome_temp_uncertainty</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/calculateTotalUncertainty.html">calculateTotalUncertainty</a></span><span class="op">(</span><span class="va">preprocessed_plots_biome_temp</span>, </span>
