@@ -165,7 +165,7 @@ last adding the temporal standard deviation of the biomass adjustment.
 
 ### AGB map validation
 
-Now let's suppose we want to validate an AGB map on the `sampled_plots` data above.
+Now let's suppose we want to validate an AGB map on the `preprocessed_plots_biome_temp` data above.
 We give an example of doing this with the `invDasymetry()` function where the AGB
 map is the ESA-CCI AGB dataset.
 
@@ -251,7 +251,9 @@ binned statistics by AGB ranges.
 ### Handling Uncertainty
 
 Plot2Map also provides a tool for calculating and incorporating plot uncertainty in plot data.
-The `calculateTotalUncertainty()` function combines measurement, sampling, and growth uncertainties:
+The `calculateTotalUncertainty()` function combines measurement, sampling, and growth uncertainties. When uncertainty 
+is not provided to plot data in the form of a `varPlot` column during inverse dasymetric mapping, `invDasymetry()` will
+call `calculateTotalUncertainty()` to calculate and add plot uncertainty to plot data automatically.
 
 ```R
 # Calculate total plot uncertainty
