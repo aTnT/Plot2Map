@@ -35,6 +35,6 @@ test_that("sample_lidar_folder returns correct folder paths", {
   expect_true(dir.exists(lidar_folder))
   
   # Test with non-existent folder (should error)
-  # Use regex to match error message
-  expect_error(sample_lidar_folder("NonExistentFolder"), "Can't find package file")
+  # Use regex to match either possible error message
+  expect_error(sample_lidar_folder("NonExistentFolder"), "(Can't find package file|no file found)")
 })
