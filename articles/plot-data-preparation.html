@@ -237,6 +237,8 @@ bounding box defining each plot:</p>
 <span><span class="co"># 6   NOU06     2010   288.10</span></span>
 <span></span>
 <span><span class="va">SRS</span> <span class="op">&lt;-</span> <span class="fl">32622</span> <span class="co"># plot data source spatial reference system</span></span>
+<span></span>
+<span><span class="va">plots_corners_AGB</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/Polygonize.html">Polygonize</a></span><span class="op">(</span><span class="va">plots_corners</span>, <span class="va">SRS</span><span class="op">)</span></span>
 <span><span class="co"># Converting coordinates from source SRS (32622) to EPSG:4326 / WGS84</span></span>
 <span><span class="va">plots_corners_AGB</span><span class="op">$</span><span class="va">AGB_T_HA</span> <span class="op">&lt;-</span> <span class="va">plots_AGB</span><span class="op">$</span><span class="va">AGB_T_HA</span></span>
 <span><span class="va">plots_corners_AGB</span><span class="op">$</span><span class="va">AVG_YEAR</span> <span class="op">&lt;-</span> <span class="va">plots_AGB</span><span class="op">$</span><span class="va">AVG_YEAR</span></span>
