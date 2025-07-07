@@ -178,19 +178,19 @@ head(plots_AGB)
 # 5   NOU05     2010   234.60
 # 6   NOU06     2010   288.10
 
-SRS <- 32622 # plot data spatial reference system
-plots_corners_AGB <- Polygonize(plots_corners, SRS)
+SRS <- 32622 # plot data source spatial reference system
+# Converting coordinates from source SRS (32622) to EPSG:4326 / WGS84
 plots_corners_AGB$AGB_T_HA <- plots_AGB$AGB_T_HA
 plots_corners_AGB$AVG_YEAR <- plots_AGB$AVG_YEAR
-
+ 
 head(plots_corners_AGB)
-#       ID PLOT_ID        SIZE_HA   POINT_X       POINT_Y AGB_T_HA AVG_YEAR
-# NOU01  1   NOU01 0.6971249 [ha] -55.48901  3.888050e-04   431.90     2010
-# NOU02  1   NOU02 1.8970650 [ha] -55.48835  1.302744e-04   368.41     2010
-# NOU03  1   NOU03 2.6599369 [ha] -55.48853  1.519248e-04   525.65     2010
-# NOU04  1   NOU04 2.2067426 [ha] -55.48865  4.301939e-05   429.87     2010
-# NOU05  1   NOU05 0.1436755 [ha] -55.48813  6.329935e-04   234.60     2010
-# NOU06  1   NOU06 0.2499998 [ha] -55.48886 -4.925199e-04   288.10     2010
+#       ID PLOT_ID         SIZE_HA   POINT_X  POINT_Y AGB_T_HA AVG_YEAR
+# NOU01  1   NOU01  2.0000014 [ha] -52.68839 4.067844   431.90     2010
+# NOU02  1   NOU02 10.0000058 [ha] -52.67643 4.085602   368.41     2010
+# NOU03  1   NOU03  6.0000008 [ha] -52.68235 4.039235   525.65     2010
+# NOU04  1   NOU04 12.0000037 [ha] -52.68352 4.082891   429.87     2010
+# NOU05  1   NOU05  0.2499999 [ha] -52.67710 4.041068   234.60     2010
+# NOU06  1   NOU06  0.2499998 [ha] -52.67789 4.039038   288.10     2010
 
 ```
 
@@ -259,20 +259,26 @@ head(xyTree)
 # 6 11 74.91944 14.36806
 
 # Calculate mean AGB and SD by PLOT_ID using BIOMASS package's height-diameter model
-plots_trees_agb_sd <- MeasurementErr(plotTree, xyTree, "India")
+plots_trees_agb_sd <- sd_tree(plotTree, xyTree, "India")
+# The reference dataset contains 289 wood density values
+# Your taxonomic table contains 122 taxa
+# No tree height data found in original plot data. Calculating height using BIOMASS height-diameter model.
+# Warning message:
+# In BIOMASS::getWoodDensity(genus = plot$genus, species = plot$species,  :
+#   DRYAD data only stored 289 wood density values in your region of interest. You could provide additional wood densities (parameter addWoodDensityData) or widen your region (region="World")
 
 print(plots_trees_agb_sd)
 #    PLOT_ID  POINT_X  POINT_Y SIZE_HA AVG_YEAR   AGB_T_HA    sdTree
-# 1       11 74.91944 14.36806       1     1998 185.812601 12.272846
-# 2       12 74.62778 15.16667       1     1998 301.668486 19.112798
-# 3       13 74.63667 14.24944       1     1998 160.599641 16.647684
-# 4       14 74.66806 14.24528       1     1998 349.610949 20.916878
-# 5       15 75.11806 14.28333       1     1998 303.425709 19.913703
-# 6       16 75.13583 14.28389       1     1998 427.535715 39.376169
-# 7       17 74.87222 14.42500       1     1998 233.888981 12.691625
-# 8       18 75.30806 14.44583       1     1998   5.313496  1.659927
-# 9       19 75.17222 14.34861       1     1998  81.295106 10.029705
-# 10     110 75.28639 14.08750       1     1998  72.996814  6.807416
+# 1        1 74.91944 14.36806       1     1998 185.527727 12.248335
+# 2        2 74.62778 15.16667       1     1998 301.968606 19.298196
+# 3        3 74.63667 14.24944       1     1998 160.733560 17.332449
+# 4        4 74.66806 14.24528       1     1998 351.992736 20.154294
+# 5        5 75.11806 14.28333       1     1998 305.638906 20.040947
+# 6        6 75.13583 14.28389       1     1998 425.775593 38.229345
+# 7        7 74.87222 14.42500       1     1998 234.641786 13.436895
+# 8        8 75.30806 14.44583       1     1998   5.398583  1.654017
+# 9        9 75.17222 14.34861       1     1998  81.813532  9.714730
+# 10      10 75.28639 14.08750       1     1998  73.081759  6.591937
 
 ```
 
@@ -460,14 +466,21 @@ head(xyTree)
 # 5 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} 53.0327 -3.910179
 # 6 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} 53.0327 -3.910179
 
-plots_trees_nested_agb_sd <- MeasurementErr(plotTree, xyTree, 'Europe')
+plots_trees_nested_agb_sd <- sd_tree(plotTree, xyTree, 'Europe')
+# The reference dataset contains 77 wood density values
+# Your taxonomic table contains 1 taxa
+# Using actual tree height from the provided plot data.
+# Warning message:
+# In BIOMASS::getWoodDensity(genus = plot$genus, species = plot$species,  :
+#   DRYAD data only stored 77 wood density values in your region of interest. You could provide additional wood densities (parameter addWoodDensityData) or widen your region (region="World")
+
 print(plots_trees_nested_agb_sd)
 #                                  PLOT_ID   POINT_X  POINT_Y SIZE_HA AVG_YEAR AGB_T_HA   sdTree
-# 1 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} -3.910179 53.03270    0.01     2010 192.3808 27.40171
-# 2 {224FD85B-6B64-4075-B51F-BA2D390AB4EF} -3.908944 53.03241    0.01     2010 243.1564 65.49890
-# 3 {22E69595-D9BE-4BB1-8660-E2E7457E2068} -3.910026 53.03247    0.01     2010 303.7086 42.19278
-# 4 {89B25687-EDA0-4704-B00D-93EDDA162779} -3.909820 53.03270    0.01     2010 291.0694 47.14336
-# 5 {B4980FC2-4DA9-4897-93E2-07D03233D2F4} -3.908851 53.03252    0.01     2010 432.0858 91.30732
+# 1 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} -3.910179 53.03270    0.01     2010 191.1393 27.52151
+# 2 {224FD85B-6B64-4075-B51F-BA2D390AB4EF} -3.908944 53.03241    0.01     2010 243.5213 68.40316
+# 3 {22E69595-D9BE-4BB1-8660-E2E7457E2068} -3.910026 53.03247    0.01     2010 302.0629 42.43342
+# 4 {89B25687-EDA0-4704-B00D-93EDDA162779} -3.909820 53.03270    0.01     2010 287.5870 47.53895
+# 5 {B4980FC2-4DA9-4897-93E2-07D03233D2F4} -3.908851 53.03252    0.01     2010 427.2943 90.30131
 
 ```
 
@@ -496,14 +509,14 @@ slb.cv <- RefLidar(slb.cv.dir)
 # Enter numeric index of the first letter of YEAR: 9
 # Enter numeric index of the last letter of YEAR: 12
 
-head(slb.cv)
-#    PLOT_ID   POINT_X   POINT_Y        CV AVG_YEAR
-# 21 BON_A01 -67.28247 -9.859331 10.991895     2018
-# 54 BON_A01 -67.28337 -9.860239 13.910153     2018
-# 55 BON_A01 -67.28247 -9.860239  9.466972     2018
-# 56 BON_A01 -67.28156 -9.860239 10.045134     2018
-# 87 BON_A01 -67.28428 -9.861147  4.744854     2018
-# 88 BON_A01 -67.28337 -9.861147  2.984538     2018
+tail(slb.cv)
+#      PLOT_ID   POINT_X   POINT_Y        CV AVG_YEAR
+# 1135 BON_A01 -67.28973 -9.889289 0.3526200     2018
+# 1136 BON_A01 -67.28882 -9.889289 0.3432670     2018
+# 1137 BON_A01 -67.28791 -9.889289 0.3390796     2018
+# 1138 BON_A01 -67.28700 -9.889289 0.3368152     2018
+# 1170 BON_A01 -67.28882 -9.890197 0.3561200     2018
+# 1171 BON_A01 -67.28791 -9.890197 0.3443113     2018
 
 # Obtaining the Above Ground Biomass for each cell in the dataset:
 plots_lidar <- RefLidar(slb.agb.dir)
@@ -517,17 +530,63 @@ plots_lidar <- RefLidar(slb.agb.dir)
 # Enter numeric index of the first letter of YEAR: 9
 # Enter numeric index of the last letter of YEAR: 12
 
+tail(plots_lidar)
+#      PLOT_ID   POINT_X   POINT_Y      AGB AVG_YEAR
+# 1135 BON_A01 -67.28973 -9.889289 214.9921     2018
+# 1136 BON_A01 -67.28882 -9.889289 227.4593     2018
+# 1137 BON_A01 -67.28791 -9.889289 233.1332     2018
+# 1138 BON_A01 -67.28700 -9.889289 236.3842     2018
+# 1170 BON_A01 -67.28882 -9.890197 210.6665     2018
+# 1171 BON_A01 -67.28791 -9.890197 226.1070     2018
+
 # Calculating the Standard Deviation (SD = CV * AGB) and adding it to the final plot data:
 plots_lidar$sdTree <- slb.cv$CV * plots_lidar$AGB
-head(plots_lidar)
-#    PLOT_ID   POINT_X   POINT_Y       AGB AVG_YEAR    sdTree
-# 21 BON_A01 -67.28247 -9.859331 0.2824650     2018  3.104826
-# 54 BON_A01 -67.28337 -9.860239 0.1802490     2018  2.507291
-# 55 BON_A01 -67.28247 -9.860239 0.3926857     2018  3.717545
-# 56 BON_A01 -67.28156 -9.860239 0.3369435     2018  3.384643
-# 87 BON_A01 -67.28428 -9.861147 1.4032360     2018  6.658150
-# 88 BON_A01 -67.28337 -9.861147 6.1049371     2018 18.220417
+tail(plots_lidar)
+#      PLOT_ID   POINT_X   POINT_Y      AGB AVG_YEAR   sdTree
+# 1135 BON_A01 -67.28973 -9.889289 214.9921     2018 75.81052
+# 1136 BON_A01 -67.28882 -9.889289 227.4593     2018 78.07928
+# 1137 BON_A01 -67.28791 -9.889289 233.1332     2018 79.05070
+# 1138 BON_A01 -67.28700 -9.889289 236.3842     2018 79.61778
+# 1170 BON_A01 -67.28882 -9.890197 210.6665     2018 75.02255
+# 1171 BON_A01 -67.28791 -9.890197 226.1070     2018 77.85120
 
+# Add biome information
+plots_lidar <- BiomePair(plots_lidar)
+
+# Add SIZE_HA column (required for calculateTotalUncertainty)
+plots_lidar$SIZE_HA <- 1  # For 100m resolution (100m x 100m = 1 ha)
+
+# Rename AGB column to AGB_T_HA to match what calculateTotalUncertainty expects
+names(plots_lidar)[names(plots_lidar) == "AGB"] <- "AGB_T_HA"
+
+# Calculate total uncertainty (measurement, sampling, and growth)
+plots_lidar_unc <- calculateTotalUncertainty(plots_lidar, map_year = 2018, map_resolution = 100)
+# Using existing sdTree values for tree_level data
+# Calculating sampling uncertainty using Rejou-Mechain approach
+# Loading sampling error data from package file
+# Calculating growth uncertainty by biome
+# Total uncertainty calculated for plot data of type: tree_level
+
+head(plots_lidar_unc$data)
+#     PLOT_ID AGB_T_HA AVG_YEAR   sdTree      ZONE         FAO.ecozone      GEZ SIZE_HA   POINT_X   POINT_Y
+# 1 BON_A01 210.6665     2018 75.02255 S.America Tropical rainforest Tropical       1 -67.28882 -9.890197
+# 2 BON_A01 226.1070     2018 77.85120 S.America Tropical rainforest Tropical       1 -67.28791 -9.890197
+# 3 BON_A01 227.4593     2018 78.07928 S.America Tropical rainforest Tropical       1 -67.28882 -9.889289
+# 4 BON_A01 233.1332     2018 79.05070 S.America Tropical rainforest Tropical       1 -67.28791 -9.889289
+# 5 BON_A01 214.9921     2018 75.81052 S.America Tropical rainforest Tropical       1 -67.28973 -9.889289
+# 6 BON_A01 195.5950     2018 72.22207 S.America Tropical rainforest Tropical       1 -67.29064 -9.888382
+#   RS_HA ratio     sdSE sdGrowth  varPlot  sdTotal
+# 1     1     1 16.34357        0 5895.496 76.78213
+# 2     1     1 16.34357        0 6327.922 79.54824
+# 3     1     1 16.34357        0 6363.486 79.77146
+# 4     1     1 16.34357        0 6516.126 80.72252
+# 5     1     1 16.34357        0 6014.347 77.55222
+# 6     1     1 16.34357        0 5483.140 74.04823
+
+# See the relative contribution of different uncertainty components
+plots_lidar_unc$uncertainty_components
+# measurement    sampling      growth 
+#  0.91475934  0.08524066  0.00000000 
 ```
 
 

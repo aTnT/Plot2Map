@@ -9,10 +9,15 @@
 # ID PLOT_ID      SIZE_HA POINT_X   POINT_Y
 # plot1  1   plot1 1236404 [ha]     0.5 0.5000063
 
+# 07/07/2025:
+# - Suppressed warning about setting CRS without transformation
+# - Added message to inform user about coordinate transformation from source SRS to WGS84
+
 
 #' Create polygons from plot coordinates
 #'
-#' This function creates polygons from subplot corner coordinates or irregular plot shapes.
+#' This function creates polygons from subplot corner coordinates or irregular plot shapes,
+#' converting from a source SRS to EPSG:4326 / WSG84.
 #' It can handle both rectangular and non-rectangular plots, as well as circular plots.
 #'
 #' @param df A data frame containing plot coordinates and identification labels.
@@ -39,10 +44,16 @@ Polygonize <- function(df, SRS) {
   if (!requireNamespace("lwgeom", quietly = TRUE)) {
     stop("The lwgeom package is required for accurate area calculations. Please install it with install.packages('lwgeom')")
   }
+  # Split data by plot ID
   dat <- split(df, df$id)
   pol <- lapply(dat, function(x) polyIrreg(x))
   pol1 <- st_make_valid(st_as_sf(do.call(rbind, pol)))
-  st_crs(pol1) <- st_crs(SRS)
+
+  # Suppress warning about setting CRS without transformation
+  suppressWarnings({
+    st_crs(pol1) <- st_crs(SRS)
+  })
+  message("Converting coordinates from source SRS (", SRS, ") to EPSG:4326 / WGS84")
 
   pol1$PLOT_ID <- row.names(pol1)
   pol1$SIZE_HA <- round(st_area(pol1) / 10000, 2)    # QA: keep the rounding to 2 digits?

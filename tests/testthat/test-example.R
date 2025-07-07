@@ -30,10 +30,11 @@ test_that("sample_lidar_folder returns correct folder paths", {
   # Test with valid folder
   lidar_folder <- sample_lidar_folder("SustainableLandscapeBrazil_v04/SLB_AGBmaps")
   expect_type(lidar_folder, "character")
-  expect_equal(lidar_folder, "extdata/SustainableLandscapeBrazil_v04/SLB_AGBmaps")
-
-  # The function should return the path even if it doesn't exist
-  # (The path is relative to the package root)
-  nonexistent_folder <- sample_lidar_folder("NonExistentFolder")
-  expect_equal(nonexistent_folder, "extdata/NonExistentFolder")
+  # Now expect an absolute path that contains the directory
+  expect_true(grepl("SustainableLandscapeBrazil_v04/SLB_AGBmaps$", lidar_folder))
+  expect_true(dir.exists(lidar_folder))
+  
+  # Test with non-existent folder (should error)
+  # Use regex to match error message
+  expect_error(sample_lidar_folder("NonExistentFolder"), "Can't find package file")
 })

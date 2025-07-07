@@ -15,7 +15,8 @@ Polygonize(df, SRS)
 A data frame with polygon information, including PLOT_ID, SIZE_HA, POINT_X, and POINT_Y.
 }
 \description{
-This function creates polygons from subplot corner coordinates or irregular plot shapes.
+This function creates polygons from subplot corner coordinates or irregular plot shapes,
+converting from a source SRS to EPSG:4326 / WSG84.
 It can handle both rectangular and non-rectangular plots, as well as circular plots.
 }
 \examples{

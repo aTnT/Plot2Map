@@ -7,7 +7,7 @@
 sample_lidar_folder(folder)
 }
 \arguments{
-\item{file}{Name of folder.}
+\item{folder}{Name of folder within the extdata directory.}
 }
 \description{
 This package comes bundled with a number of sample files in its \code{inst/extdata}
