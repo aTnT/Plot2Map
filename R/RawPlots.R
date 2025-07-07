@@ -1,7 +1,8 @@
 ## Updates made to the new framework:
 # 20/03/25:
 # Update to reflect commit b9000c1 at https://github.com/arnanaraza/Plot2Map
-
+# 07/07/25:
+# Fixed bug in RawPlots causing PLOT_ID to become NA when selecting parcel id column
 
 
 #' Format Plot Data
@@ -40,7 +41,12 @@ RawPlots <- function(plots, mapYear = NULL) {
     } else {
       colname <- valid_cols[choice - 1]
       col_data <- plots[[colname]]
-      # If the column isn’t numeric, try converting via character
+      # Special handling for Plot ID column
+      if (prompt == "Which column is your unique Plot ID?") {
+        # Return raw column data for Plot ID without conversion
+        return(col_data)
+      }
+      # If the column isn't numeric, try converting via character
       if (!is.numeric(col_data)) {
         col_data <- as.numeric(as.character(col_data))
       }
@@ -71,6 +77,12 @@ RawPlots <- function(plots, mapYear = NULL) {
                     FEZ      = fez,
                     GEZ      = gez,
                     AVG_YEAR = year)
+
+  # Convert PLOT_ID to unique identifiers using factor approach
+  if (!all(is.na(plt$PLOT_ID))) {
+    # Use the same approach as RawPlotsTree for consistency
+    plt$PLOT_ID <- as.character(as.factor(plt$PLOT_ID))
+  }
 
   # Filter rows where AGB is not NA
   plt <- subset(plt, !is.na(AGB_T_HA))
@@ -148,4 +160,3 @@ RawPlotsTree <- function(plots) {
 
   return(list(plt, plt1))
 }
-
