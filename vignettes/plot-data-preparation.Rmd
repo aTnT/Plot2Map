@@ -179,6 +179,8 @@ head(plots_AGB)
 # 6   NOU06     2010   288.10
 
 SRS <- 32622 # plot data source spatial reference system
+
+plots_corners_AGB <- Polygonize(plots_corners, SRS)
 # Converting coordinates from source SRS (32622) to EPSG:4326 / WGS84
 plots_corners_AGB$AGB_T_HA <- plots_AGB$AGB_T_HA
 plots_corners_AGB$AVG_YEAR <- plots_AGB$AVG_YEAR
