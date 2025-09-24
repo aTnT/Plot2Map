@@ -28,6 +28,12 @@
 # 7. Fixed and expanded examples with comprehensive use cases for all function parameters
 # 8. Added detailed parameter descriptions with required columns and expected formats
 # 9. Added comprehensive documentation of the step-by-step calculation process
+# 24/09/2025:
+# Enhanced height estimation mechanism in sd_tree function:
+# - HDmodel initialisation and checking for brms package dependency
+# - Implemented plot-specific Feldpausch region mapping using BIOMASS::computeFeldRegion()
+# - Added multi-region dataset support with coordinate-to-Feldpausch region detection
+# - Enhanced error handling with informative user messages
 
 
 #' Calculate AGB and standard deviations from tree-level data
@@ -70,13 +76,15 @@
 #' The function performs the following steps:
 #' 1. Filters trees with diameter >= 10cm.
 #' 2. Corrects taxonomy and retrieves wood density data.
-#' 3. Computes or uses provided tree height data.
+#' 3. Computes or uses provided tree height data. When height data is missing and the brms
+#'    package is unavailable, automatically detects Feldpausch regions using coordinates
+#'    and BIOMASS::computeFeldRegion() for height-diameter relationships.
 #' 4. Runs Monte Carlo simulation for AGB estimation.
 #' 5. Calculates plot-level AGB and standard deviation.
 #' 6. Scales values per hectare.
 #'
 #' @importFrom dplyr filter select group_by summarize mutate inner_join arrange
-#' @importFrom BIOMASS correctTaxo getWoodDensity modelHD retrieveH AGBmonteCarlo
+#' @importFrom BIOMASS correctTaxo getWoodDensity modelHD retrieveH AGBmonteCarlo computeFeldRegion
 #'
 #' @examples
 #' plotsTree <- utils::read.csv(sample_file("SampleTree.csv"))
@@ -87,11 +95,18 @@
 #'
 #' plot_uncertainties <- sd_tree(plotsTree, xyTree, region = "India")
 #' head(plot_uncertainties)
+#' 
+#' @references
+#' Feldpausch, T.R., et al. (2012). _Tree height integrated into pantropical forest biomass estimates._
+#' Biogeosciences, 9, 3381–3403.
 #'
 #' @export
 sd_tree <- function(plot, xy, region = "World") {
 
   plot <- subset(plot, diameter>=10) #filter those above 10cm in diameter
+
+  # Initialise HDmodel to ensure it exists
+  HDmodel <- NULL
   #  blowup <- plot[1,5] / 10000
   # print(paste('plot size is', blowup, 'ha'))
 
@@ -112,10 +127,103 @@ sd_tree <- function(plot, xy, region = "World") {
     message('Using actual tree height from the provided plot data.')
   }else{
     message('No tree height data found in original plot data. Calculating height using BIOMASS height-diameter model.')
-    HDmodel <- modelHD(D = BIOMASS::NouraguesHD$D, H = BIOMASS::NouraguesHD$H,
+    HDmodel <- BIOMASS::modelHD(D = BIOMASS::NouraguesHD$D, H = BIOMASS::NouraguesHD$H,
                        method='weibull',  useWeight = TRUE, drawGraph = FALSE, plot = NULL)
-    dataHlocal <- retrieveH(D = plot$diameter, model = HDmodel)
-    plot$height <- dataHlocal$H
+    if (!is.null(HDmodel)) {
+      dataHlocal <- BIOMASS::retrieveH(D = plot$diameter, model = HDmodel)
+      plot$height <- dataHlocal$H
+    } else {
+      # Use BIOMASS coordinate-based approach or user-specified regions
+      message('Model-based height estimation unavailable (requires brms package). Attempting coordinate-based or regional approach.')
+
+      height_success <- FALSE
+
+      # 1. Fast plot-specific region mapping using BIOMASS
+      if (!is.null(xy) && all(c("x", "y") %in% names(xy))) {
+        tryCatch({
+          # 1.1 Create unique plot-region mapping using BIOMASS::computeFeldRegion
+          unique_plots <- unique(xy[, c("id", "x", "y")])
+          coords_matrix <- cbind(unique_plots$x, unique_plots$y)
+          detected_regions <- BIOMASS::computeFeldRegion(coords_matrix)
+
+          # Create plot-region mapping
+          plot_region_map <- data.frame(
+            id = unique_plots$id,
+            region = detected_regions,
+            stringsAsFactors = FALSE
+          )
+
+          message("Detected regions for plots: ", paste(unique(detected_regions), collapse = ", "))
+
+          # 1.2 Apply region-specific height estimation by plot group
+          plot$height <- NA  # Initialise height column
+
+          for (plot_region in unique(detected_regions)) {
+            # Get plots in this region
+            region_plot_ids <- plot_region_map$id[plot_region_map$region == plot_region]
+            region_trees <- plot[plot$id %in% region_plot_ids, ]
+
+            if (nrow(region_trees) > 0) {
+              # Get heights for this region
+              dataHlocal <- BIOMASS::retrieveH(D = region_trees$diameter, region = plot_region)
+
+              # Assign heights back to the correct trees
+              if (!all(is.na(dataHlocal$H))) {
+                plot$height[plot$id %in% region_plot_ids] <- dataHlocal$H
+              }
+            }
+          }
+
+          # Check if we got valid heights
+          if (!all(is.na(plot$height))) {
+            message("Using plot-specific regional height estimation (BIOMASS computeFeldRegion).")
+            height_success <- TRUE
+          }
+        }, error = function(e) {
+          message("Plot-specific region mapping failed: ", e$message, ". Trying user-specified region.")
+        })
+      }
+
+      # 2. If coordinates failed or unavailable, try user-specified region
+      if (!height_success && !is.null(region)) {
+        tryCatch({
+          dataHlocal <- BIOMASS::retrieveH(D = plot$diameter, region = region)
+
+          # Check if we got valid heights
+          if (!all(is.na(dataHlocal$H))) {
+            plot$height <- dataHlocal$H
+            message("Using regional height estimation with '", region, "'.")
+            height_success <- TRUE
+          }
+        }, error = function(e) {
+          message("Regional approach with '", region, "' failed: ", e$message)
+        })
+      }
+
+      # 3. If both approaches failed, provide clear guidance
+      if (!height_success) {
+        coord_msg <- if (is.null(xy) || !all(c("x", "y") %in% names(xy))) {
+          "No coordinate data (x, y columns) found for automatic region detection."
+        } else {
+          "Coordinate-based estimation failed."
+        }
+
+        region_msg <- if (is.null(region)) {
+          "No region parameter provided."
+        } else {
+          paste0("Regional estimation with '", region, "' failed.")
+        }
+
+        stop("Height-diameter model creation failed and height estimation unsuccessful.\n",
+             coord_msg, " ", region_msg, "\n\n",
+             "This requires either:\n",
+             "  1. Installing the 'brms' package for local modeling: install.packages('brms'), OR\n",
+             "  2. Providing height data in your input dataset, OR\n",
+             "  3. Providing coordinate data (x, y columns) for automatic region detection, OR\n",
+             "  4. Using a valid BIOMASS region: Africa, CAfrica, EAfrica, WAfrica, SAmerica, ",
+             "BrazilianShield, ECAmazonia, GuianaShield, WAmazonia, SEAsia, NAustralia, Pantropical")
+      }
+    }
   }
 
   #run MC simulation
@@ -124,6 +232,10 @@ sd_tree <- function(plot, xy, region = "World") {
              function(x) BIOMASS::AGBmonteCarlo(D = x$diameter, WD = x$wd, errWD = x$sd.wd,
                                        H = x$height, errH = x$height, Dpropag ='chave2004'),simplify = F)
   }else{
+    # Defensive check for HDmodel availability
+    if(is.null(HDmodel)) {
+      stop("Height data missing and HDmodel unavailable. Cannot proceed with AGB calculation.")
+    }
     mc <- by(plot, plot$id,
              function(x) BIOMASS::AGBmonteCarlo(D = x$diameter, WD = x$wd, errWD = x$sd.wd,
                                        HDmodel = HDmodel, Dpropag = "chave2004"),simplify = F)}

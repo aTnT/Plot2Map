@@ -10,8 +10,10 @@ test_that("sd_tree calculates correct standard deviations", {
   plotsTree <- utils::read.csv(sample_file("SampleTree.csv"), stringsAsFactors = FALSE)
   xyTree <- utils::read.csv(sample_file("SampleTreeXY.csv"), stringsAsFactors = FALSE)
 
-  # Run function
-  result <- sd_tree(plotsTree, xyTree, region = "World")
+  # Run function (suppress expected warnings about brms package)
+  suppressWarnings({
+    result <- sd_tree(plotsTree, xyTree, region = "World")
+  })
 
   # Check structure and column names
   expect_true(inherits(result, "data.frame"))
@@ -456,4 +458,128 @@ test_that("sample_file('rf1.RData') loads correctly", {
       expect_true(is.numeric(pred$predictions))
     })
   }
+})
+
+test_that("sd_tree handles height estimation with plot-specific region mapping", {
+  # Load test data without height column
+  plotsTree <- utils::read.csv(sample_file("SampleTree.csv"), stringsAsFactors = FALSE)
+  xyTree <- utils::read.csv(sample_file("SampleTreeXY.csv"), stringsAsFactors = FALSE)
+
+  # Test 1: Without height data but with coordinate-based region detection (should work)
+  # Use smaller subset for faster testing
+  # Suppress expected warnings about brms package availability
+  suppressWarnings({
+    result_no_height <- sd_tree(plotsTree[1:100, ], xyTree[1:100, ], region = "World")
+  })
+
+  # Check that function completed successfully with plot-specific region mapping
+  expect_true(inherits(result_no_height, "data.frame"))
+  expect_named(result_no_height, c('PLOT_ID', 'POINT_X', 'POINT_Y', 'SIZE_HA', 'AVG_YEAR', 'AGB_T_HA', 'sdTree'))
+  expect_true(nrow(result_no_height) > 0)
+  expect_true(all(result_no_height$sdTree >= 0))
+  expect_true(all(result_no_height$AGB_T_HA >= 0))
+
+  # Test 2: With height data provided (should work regardless of brms availability)
+  plotsTree_with_height <- plotsTree[1:100, ]  # Use smaller subset
+  set.seed(42) # For reproducible results
+  plotsTree_with_height$height <- runif(nrow(plotsTree_with_height), min = 5, max = 30)
+
+  result_with_height <- sd_tree(plotsTree_with_height, xyTree[1:100, ], region = "World")
+
+  # Check that function completed successfully with height data
+  expect_true(inherits(result_with_height, "data.frame"))
+  expect_named(result_with_height, c('PLOT_ID', 'POINT_X', 'POINT_Y', 'SIZE_HA', 'AVG_YEAR', 'AGB_T_HA', 'sdTree'))
+  expect_true(nrow(result_with_height) > 0)
+  expect_true(all(result_with_height$sdTree >= 0))
+  expect_true(all(result_with_height$AGB_T_HA >= 0))
+
+  # Test 3: Should show messages about plot-specific region mapping
+  suppressWarnings({
+    expect_message({
+      result_coords <- sd_tree(plotsTree[1:50, ], xyTree[1:50, ], region = "World")
+    }, "Using plot-specific regional height estimation.*computeFeldRegion")
+  })
+})
+
+test_that("sd_tree messages correctly indicate height estimation method", {
+  # Load test data
+  plotsTree <- utils::read.csv(sample_file("SampleTree.csv"), stringsAsFactors = FALSE)
+  xyTree <- utils::read.csv(sample_file("SampleTreeXY.csv"), stringsAsFactors = FALSE)
+
+  # Test 1: Without height data - should show messages about fallback approach
+  suppressWarnings({
+    expect_message({
+      result1 <- sd_tree(plotsTree, xyTree, region = "World")
+    }, "No tree height data found in original plot data")
+  })
+
+  # Test 2: With height data - should show height available message
+  plotsTree_with_height <- plotsTree
+  plotsTree_with_height$height <- runif(nrow(plotsTree_with_height), min = 5, max = 30)
+
+  expect_message({
+    result2 <- sd_tree(plotsTree_with_height, xyTree, region = "World")
+  }, "Using actual tree height from the provided plot data")
+})
+
+test_that("sd_tree handles multi-region datasets correctly", {
+  # Load test data
+  plotsTree <- utils::read.csv(sample_file("SampleTree.csv"), stringsAsFactors = FALSE)
+  xyTree <- utils::read.csv(sample_file("SampleTreeXY.csv"), stringsAsFactors = FALSE)
+
+  # Create a simulated multi-region dataset
+  xyTree_multiregion <- xyTree[1:100, ]  # Use smaller subset for faster testing
+  plotsTree_multiregion <- plotsTree[1:100, ]
+
+  # Modify some coordinates to simulate different regions
+  set.seed(123)
+  # Change coordinates for rows 51-100 to Brazil (should detect different region)
+  xyTree_multiregion[51:100, "x"] <- runif(50, -65, -55)  # Brazil longitude
+  xyTree_multiregion[51:100, "y"] <- runif(50, -15, -5)   # Brazil latitude
+
+  # Test that function handles multi-region data
+  suppressWarnings({
+    expect_message({
+      result_multiregion <- sd_tree(plotsTree_multiregion, xyTree_multiregion, region = "World")
+    }, "Detected regions for plots")
+  })
+
+  # Should complete successfully
+  expect_true(inherits(result_multiregion, "data.frame"))
+  expect_true(nrow(result_multiregion) > 0)
+  expect_true(all(result_multiregion$AGB_T_HA >= 0))
+  expect_true(all(result_multiregion$sdTree >= 0))
+})
+
+test_that("sd_tree defensive height model handling works correctly", {
+  # Load test data without height
+  plotsTree <- utils::read.csv(sample_file("SampleTree.csv"), stringsAsFactors = FALSE)
+  xyTree <- utils::read.csv(sample_file("SampleTreeXY.csv"), stringsAsFactors = FALSE)
+
+  # The function should work with smart fallbacks when HDmodel creation fails
+  suppressWarnings({
+    result_no_height <- sd_tree(plotsTree, xyTree, region = "World")
+  })
+
+  # Should complete successfully with fallback
+  expect_true(inherits(result_no_height, "data.frame"))
+  expect_true(all(result_no_height$AGB_T_HA >= 0))
+  expect_true(all(result_no_height$sdTree >= 0))
+
+  # Test that the function works when height data is provided
+  plotsTree_with_height <- plotsTree
+  plotsTree_with_height$height <- runif(nrow(plotsTree_with_height), min = 5, max = 30)
+
+  result_with_height <- sd_tree(plotsTree_with_height, xyTree, region = "World")
+
+  # Should complete successfully with height data
+  expect_true(inherits(result_with_height, "data.frame"))
+
+  # Should have calculated biomass values
+  expect_true(all(is.numeric(result_with_height$AGB_T_HA)))
+  expect_true(all(is.numeric(result_with_height$sdTree)))
+
+  # All values should be non-negative
+  expect_true(all(result_with_height$AGB_T_HA >= 0))
+  expect_true(all(result_with_height$sdTree >= 0))
 })
