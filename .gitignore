@@ -37,6 +37,7 @@ rsconnect/
 
 /docs
 /data
+!/data/AGBref.rda
 /tests/test_data
 /docker
 CLAUDE.md
@@ -44,3 +45,27 @@ CLAUDE.md
 .Renviron
 private*
 results/
+
+
+
+# temp
+.Rbuildignore
+.Rprofile
+Plot2Map.Rproj
+README2.Rmd
+Rplots.pdf
+TODO.md
+ai-docs/
+benchmark_memory.R
+codecov.yml
+dev/
+invDasy_script.R
+tests/testthat/data/
+tests/testthat/test-invDasymetry_parallel.R
+tests/testthat/Rplots.pdf
+validate_invDasymetry_script.R
+vignettes/inverse-dasymetric-mapping.Rmd
+/doc/
+/Meta/
+
+/data/ALSdata_AGBmaps_for_AGBref

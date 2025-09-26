@@ -68,7 +68,9 @@ The function performs the following steps:
 \enumerate{
 \item Filters trees with diameter >= 10cm.
 \item Corrects taxonomy and retrieves wood density data.
-\item Computes or uses provided tree height data.
+\item Computes or uses provided tree height data. When height data is missing and the brms
+package is unavailable, automatically detects Feldpausch regions using coordinates
+and BIOMASS::computeFeldRegion() for height-diameter relationships.
 \item Runs Monte Carlo simulation for AGB estimation.
 \item Calculates plot-level AGB and standard deviation.
 \item Scales values per hectare.
@@ -84,4 +86,8 @@ head(xyTree)
 plot_uncertainties <- sd_tree(plotsTree, xyTree, region = "India")
 head(plot_uncertainties)
 
+}
+\references{
+Feldpausch, T.R., et al. (2012). \emph{Tree height integrated into pantropical forest biomass estimates.}
+Biogeosciences, 9, 3381–3403.
 }
