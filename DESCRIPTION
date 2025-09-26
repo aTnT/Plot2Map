@@ -14,8 +14,9 @@ RoxygenNote: 7.3.2
 Depends: 
     R (>= 3.5)
 LazyData: true
-Suggests: 
+Suggests:
     brms,
+    gdalcubes,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0),
@@ -29,7 +30,6 @@ Imports:
     dplyr,
     earthdatalogin,
     foreach,
-    gdalcubes,
     geosphere,
     graphics,
     grDevices,

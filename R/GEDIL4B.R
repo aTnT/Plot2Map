@@ -47,7 +47,7 @@
 #'
 #' @importFrom earthdatalogin edl_netrc
 #' @importFrom sf st_bbox st_as_sf
-#' @importFrom gdalcubes stac_image_collection cube_view raster_cube write_tif
+# gdalcubes functions are called with :: notation since it's in Suggests
 #' @importFrom rstac stac stac_search post_request items_fetch
 #' @importFrom terra rast values global plot
 #'
