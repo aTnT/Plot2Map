@@ -45,10 +45,8 @@
 #'
 #'   Consult the reference below for more details about the bands.
 #'
-#' @importFrom earthdatalogin edl_netrc
+# earthdatalogin, rstac, and gdalcubes functions are called with :: notation since they're in Suggests
 #' @importFrom sf st_bbox st_as_sf
-# gdalcubes functions are called with :: notation since it's in Suggests
-#' @importFrom rstac stac stac_search post_request items_fetch
 #' @importFrom terra rast values global plot
 #'
 #' @references [Dubayah, R., et al. (2022). GEDI L4B Gridded Biomass Data, Version 2.1. NASA Earthdata.](https://doi.org/10.3334/ORNLDAAC/2299)

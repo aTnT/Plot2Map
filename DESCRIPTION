@@ -16,8 +16,10 @@ Depends:
 LazyData: true
 Suggests:
     brms,
+    earthdatalogin,
     gdalcubes,
     knitr,
+    rstac,
     rmarkdown,
     testthat (>= 3.0.0),
     lwgeom,
@@ -28,7 +30,6 @@ Imports:
     BIOMASS,
     doParallel,
     dplyr,
-    earthdatalogin,
     foreach,
     geosphere,
     graphics,
@@ -39,7 +40,6 @@ Imports:
     pbapply,
     plotrix,
     rlang,
-    rstac,
     rvest,
     sf,
     stats,
