@@ -154,11 +154,18 @@ set to 'World', but you can restrict the WD estimates to a single region :</p><u
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The function performs the following steps:</p><ol><li><p>Filters trees with diameter &gt;= 10cm.</p></li>
 <li><p>Corrects taxonomy and retrieves wood density data.</p></li>
-<li><p>Computes or uses provided tree height data.</p></li>
+<li><p>Computes or uses provided tree height data. When height data is missing and the brms
+package is unavailable, automatically detects Feldpausch regions using coordinates
+and BIOMASS::computeFeldRegion() for height-diameter relationships.</p></li>
 <li><p>Runs Monte Carlo simulation for AGB estimation.</p></li>
 <li><p>Calculates plot-level AGB and standard deviation.</p></li>
 <li><p>Scales values per hectare.</p></li>
 </ol></div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Feldpausch, T.R., et al. (2012). <em>Tree height integrated into pantropical forest biomass estimates.</em>
+Biogeosciences, 9, 3381–3403.</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
