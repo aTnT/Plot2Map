@@ -6,8 +6,10 @@
     }
   };
 </script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Roboto-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Calculate AGB and standard deviations from tree-level data — sd_tree"><meta name="description" content="This function calculates plot-level Above Ground Biomass (AGB) and Standard Deviation using tree-level data and plot locations.
-It uses the BIOMASS package for AGB calculation and standard deviation estimation."><meta property="og:description" content="This function calculates plot-level Above Ground Biomass (AGB) and Standard Deviation using tree-level data and plot locations.
-It uses the BIOMASS package for AGB calculation and standard deviation estimation."><meta property="og:image" content="https://atnt.github.io/Plot2Map/logo.png"></head><body>
+It uses the BIOMASS package for AGB calculation and standard deviation estimation. The function automatically detects
+common column name variations and applies taxonomic correction using BIOMASS::correctTaxo."><meta property="og:description" content="This function calculates plot-level Above Ground Biomass (AGB) and Standard Deviation using tree-level data and plot locations.
+It uses the BIOMASS package for AGB calculation and standard deviation estimation. The function automatically detects
+common column name variations and applies taxonomic correction using BIOMASS::correctTaxo."><meta property="og:image" content="https://atnt.github.io/Plot2Map/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -51,12 +53,13 @@ It uses the BIOMASS package for AGB calculation and standard deviation estimatio
 
     <div class="ref-description section level2">
     <p>This function calculates plot-level Above Ground Biomass (AGB) and Standard Deviation using tree-level data and plot locations.
-It uses the BIOMASS package for AGB calculation and standard deviation estimation.</p>
+It uses the BIOMASS package for AGB calculation and standard deviation estimation. The function automatically detects
+common column name variations and applies taxonomic correction using BIOMASS::correctTaxo.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sd_tree</span><span class="op">(</span><span class="va">plot</span>, <span class="va">xy</span>, region <span class="op">=</span> <span class="st">"World"</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sd_tree</span><span class="op">(</span><span class="va">plot</span>, <span class="va">xy</span>, region <span class="op">=</span> <span class="st">"World"</span>, max_retries <span class="op">=</span> <span class="fl">3</span>, retry_delay <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -64,34 +67,34 @@ It uses the BIOMASS package for AGB calculation and standard deviation estimatio
 
 
 <dl><dt id="arg-plot">plot<a class="anchor" aria-label="anchor" href="#arg-plot"></a></dt>
-<dd><p>A data frame containing tree-level data. Must include the following columns:</p><dl><dt>id</dt>
-<dd><p>Unique identifier for each tree or plot (character or numeric).</p></dd>
+<dd><p>A data frame containing tree-level data. The function automatically detects column names with flexible patterns:</p><dl><dt>ID column</dt>
+<dd><p>Detects: id, ID, code, CODE, plot, PLOT, plot_id, PLOT_ID, plotId, PlotId</p></dd>
 
-<dt>diameter</dt>
-<dd><p>Diameter at breast height (DBH) of trees in centimeters (numeric).</p></dd>
+<dt>Diameter column</dt>
+<dd><p>Detects: diameter, dbh, DBH, D_idtree, d_idtree, dbh_allo, DBH_allo, diam, d, D</p></dd>
 
-<dt>genus</dt>
-<dd><p>Genus of the tree species (character).</p></dd>
+<dt>Genus column</dt>
+<dd><p>Detects: Genus_accepted, genus_accepted (preferred), genus, Genus, GENUS</p></dd>
 
-<dt>species</dt>
-<dd><p>Species of the tree (character).</p></dd>
+<dt>Species column</dt>
+<dd><p>Detects: Species_accepted, species_accepted (preferred), species, Species, SPECIES, sp, SP</p></dd>
 
-<dt>height</dt>
-<dd><p>Tree height in meters (optional, numeric).</p></dd>
+<dt>Height column (optional)</dt>
+<dd><p>Detects: height, HEIGHT, H, h, h95, H95, HC, hc, tree_height, TREE_HEIGHT</p></dd>
 
 
 </dl></dd>
 
 
 <dt id="arg-xy">xy<a class="anchor" aria-label="anchor" href="#arg-xy"></a></dt>
-<dd><p>A data frame containing plot location data. Must include the following columns:</p><dl><dt>id</dt>
-<dd><p>Unique identifier for each plot (character or numeric).</p></dd>
+<dd><p>A data frame containing plot location data. The function automatically detects column names:</p><dl><dt>ID column</dt>
+<dd><p>Detects: id, ID, code, CODE, plot, PLOT, plot_id, PLOT_ID, plotId, PlotId</p></dd>
 
-<dt>x</dt>
-<dd><p>X-coordinate of the plot location (numeric).</p></dd>
+<dt>X coordinate</dt>
+<dd><p>Detects: x, X, xutmr, XUTMR, utm_x, UTM_X, longitude, LONGITUDE, long, lon</p></dd>
 
-<dt>y</dt>
-<dd><p>Y-coordinate of the plot location (numeric).</p></dd>
+<dt>Y coordinate</dt>
+<dd><p>Detects: y, Y, yutmr, YUTMR, utm_y, UTM_Y, latitude, LATITUDE, lat</p></dd>
 
 <dt>size</dt>
 <dd><p>Plot size in square meters (numeric).</p></dd>
@@ -124,6 +127,14 @@ set to 'World', but you can restrict the WD estimates to a single region :</p><u
 <li><p><code>World</code>: World</p></li>
 </ul></dd>
 
+
+<dt id="arg-max-retries">max_retries<a class="anchor" aria-label="anchor" href="#arg-max-retries"></a></dt>
+<dd><p>Maximum number of retry attempts for taxonomic correction API calls (default: 3).</p></dd>
+
+
+<dt id="arg-retry-delay">retry_delay<a class="anchor" aria-label="anchor" href="#arg-retry-delay"></a></dt>
+<dd><p>Initial delay in seconds between retry attempts, with exponential backoff (default: 1).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -152,8 +163,13 @@ set to 'World', but you can restrict the WD estimates to a single region :</p><u
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The function performs the following steps:</p><ol><li><p>Filters trees with diameter &gt;= 10cm.</p></li>
-<li><p>Corrects taxonomy and retrieves wood density data.</p></li>
+    <p>The function performs the following steps:</p><ol><li><p>Flexible column dDetection: automatically detects and maps column name variations to standard names.
+The function provides information about which columns are being used.</p></li>
+<li><p>Taxonomic correction: applies BIOMASS::correctTaxo() to standardize genus and species names,
+with preference for accepted taxonomic names (e.g., Genus_accepted over genus).
+Uses a retry mechanism to handle temporary API failures/delays.</p></li>
+<li><p>Filters trees with diameter &gt;= 10cm.</p></li>
+<li><p>Retrieves wood density data using corrected taxonomy.</p></li>
 <li><p>Computes or uses provided tree height data. When height data is missing and the brms
 package is unavailable, automatically detects Feldpausch regions using coordinates
 and BIOMASS::computeFeldRegion() for height-diameter relationships.</p></li>
@@ -161,6 +177,16 @@ and BIOMASS::computeFeldRegion() for height-diameter relationships.</p></li>
 <li><p>Calculates plot-level AGB and standard deviation.</p></li>
 <li><p>Scales values per hectare.</p></li>
 </ol></div>
+    <div class="section level2">
+    <h2 id="column-name-flexibility">Column Name Flexibility<a class="anchor" aria-label="anchor" href="#column-name-flexibility"></a></h2>
+
+
+<p>This function resolves GitHub issue #6 by providing robust column name detection.
+It handles common variations found in real-world datasets, including:</p><ul><li><p>Research databases with standardized column names (e.g., D_idtree, xutmr/yutmr)</p></li>
+<li><p>Field data with simple column names (e.g., dbh, x/y)</p></li>
+<li><p>Taxonomically corrected data with accepted names (e.g., Genus_accepted/Species_accepted)</p></li>
+<li><p>Various coordinate systems (UTM, lat/lon, etc.)</p></li>
+</ul></div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Feldpausch, T.R., et al. (2012). <em>Tree height integrated into pantropical forest biomass estimates.</em>
@@ -190,17 +216,22 @@ Biogeosciences, 9, 3381–3403.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6 BSP1 14.36806 74.91944</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">plot_uncertainties</span> <span class="op">&lt;-</span> <span class="fu">sd_tree</span><span class="op">(</span><span class="va">plotsTree</span>, <span class="va">xyTree</span>, region <span class="op">=</span> <span class="st">"India"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Using useCache=TRUE is recommended to reduce online search time for the next query</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   |                                                                              |                                                                      |   0%  |                                                                              |======================================================================| 100%</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Source iplant_tnrs:27712</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Corrections FALSE:27092, TRUE:599, TaxaNotFound:19, SpNotFound:2</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>DRYAD data only stored 289 wood density values in your region of interest. You could provide additional wood densities (parameter addWoodDensityData) or widen your region (region="World")</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> The reference dataset contains 289 wood density values</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Your taxonomic table contains 340 taxa</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> No tree height data found in original plot data. Calculating height using BIOMASS height-diameter model.</span>
 <span class="r-in"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">plot_uncertainties</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   PLOT_ID  POINT_X  POINT_Y SIZE_HA AVG_YEAR  AGB_T_HA    sdTree</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1    BSP1 74.91944 14.36806       1     1996 158.06834  9.807798</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1    BSP1 74.91944 14.36806       1     1996 159.03206  9.900772</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2   BSP10 74.69861 14.94722       1     1996 417.99472 22.585124</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3  BSP100 75.82000 13.54722       1     1996  41.25254  3.934893</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  BSP101 75.43444 13.72639       1     1996 348.63751 38.003134</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  BSP102 74.88833 13.92361       1     1996 516.82368 39.705160</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  BSP101 75.43444 13.72639       1     1996 349.38941 38.024094</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  BSP102 74.88833 13.92361       1     1996 516.87190 39.705064</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6  BSP104 74.90917 13.87000       1     1996 700.53039 74.854013</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
