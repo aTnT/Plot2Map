@@ -34,30 +34,39 @@
 # - Implemented plot-specific Feldpausch region mapping using BIOMASS::computeFeldRegion()
 # - Added multi-region dataset support with coordinate-to-Feldpausch region detection
 # - Enhanced error handling with informative user messages
+# 27/09/2025:
+# Improved robustness of taxonomic correction in sd_tree function:
+# - Added retry mechanism for BIOMASS::correctTaxo() API calls with max_retries, retry_delay parameters
+# - Fallback to original names if API remains unavailable after all retries
+# - Fixed vector length mismatch issue when taxonomic correction fails
 
 
 #' Calculate AGB and standard deviations from tree-level data
 #'
 #' This function calculates plot-level Above Ground Biomass (AGB) and Standard Deviation using tree-level data and plot locations.
-#' It uses the BIOMASS package for AGB calculation and standard deviation estimation.
+#' It uses the BIOMASS package for AGB calculation and standard deviation estimation. The function automatically detects
+#' common column name variations and applies taxonomic correction using BIOMASS::correctTaxo.
 #'
-#' @param plot A data frame containing tree-level data. Must include the following columns:
+#' @param plot A data frame containing tree-level data. The function automatically detects column names with flexible patterns:
 #'   \describe{
-#'     \item{id}{Unique identifier for each tree or plot (character or numeric).}
-#'     \item{diameter}{Diameter at breast height (DBH) of trees in centimeters (numeric).}
-#'     \item{genus}{Genus of the tree species (character).}
-#'     \item{species}{Species of the tree (character).}
-#'     \item{height}{Tree height in meters (optional, numeric).}
+#'     \item{ID column}{Detects: id, ID, code, CODE, plot, PLOT, plot_id, PLOT_ID, plotId, PlotId}
+#'     \item{Diameter column}{Detects: diameter, dbh, DBH, D_idtree, d_idtree, dbh_allo, DBH_allo, diam, d, D}
+#'     \item{Genus column}{Detects: Genus_accepted, genus_accepted (preferred), genus, Genus, GENUS}
+#'     \item{Species column}{Detects: Species_accepted, species_accepted (preferred), species, Species, SPECIES, sp, SP}
+#'     \item{Height column (optional)}{Detects: height, HEIGHT, H, h, h95, H95, HC, hc, tree_height, TREE_HEIGHT}
 #'   }
 #'
-#' @param xy A data frame containing plot location data. Must include the following columns:
+#' @param xy A data frame containing plot location data. The function automatically detects column names:
 #'   \describe{
-#'     \item{id}{Unique identifier for each plot (character or numeric).}
-#'     \item{x}{X-coordinate of the plot location (numeric).}
-#'     \item{y}{Y-coordinate of the plot location (numeric).}
+#'     \item{ID column}{Detects: id, ID, code, CODE, plot, PLOT, plot_id, PLOT_ID, plotId, PlotId}
+#'     \item{X coordinate}{Detects: x, X, xutmr, XUTMR, utm_x, UTM_X, longitude, LONGITUDE, long, lon}
+#'     \item{Y coordinate}{Detects: y, Y, yutmr, YUTMR, utm_y, UTM_Y, latitude, LATITUDE, lat}
 #'     \item{size}{Plot size in square meters (numeric).}
 #'     \item{year}{Year of measurement or survey (numeric).}
 #'   }
+#'
+#' @param max_retries Maximum number of retry attempts for taxonomic correction API calls (default: 3).
+#' @param retry_delay Initial delay in seconds between retry attempts, with exponential backoff (default: 1).
 #'
 #' @inheritParams BIOMASS::getWoodDensity
 #'
@@ -74,14 +83,29 @@
 #'
 #' @details
 #' The function performs the following steps:
-#' 1. Filters trees with diameter >= 10cm.
-#' 2. Corrects taxonomy and retrieves wood density data.
-#' 3. Computes or uses provided tree height data. When height data is missing and the brms
+#' 1. Flexible column dDetection: automatically detects and maps column name variations to standard names.
+#'    The function provides information about which columns are being used.
+#' 2. Taxonomic correction: applies BIOMASS::correctTaxo() to standardize genus and species names,
+#'    with preference for accepted taxonomic names (e.g., Genus_accepted over genus).
+#'    Uses a retry mechanism to handle temporary API failures/delays.
+#' 3. Filters trees with diameter >= 10cm.
+#' 4. Retrieves wood density data using corrected taxonomy.
+#' 5. Computes or uses provided tree height data. When height data is missing and the brms
 #'    package is unavailable, automatically detects Feldpausch regions using coordinates
 #'    and BIOMASS::computeFeldRegion() for height-diameter relationships.
-#' 4. Runs Monte Carlo simulation for AGB estimation.
-#' 5. Calculates plot-level AGB and standard deviation.
-#' 6. Scales values per hectare.
+#' 6. Runs Monte Carlo simulation for AGB estimation.
+#' 7. Calculates plot-level AGB and standard deviation.
+#' 8. Scales values per hectare.
+#'
+#' @section Column Name Flexibility:
+#' This function resolves GitHub issue #6 by providing robust column name detection.
+#' It handles common variations found in real-world datasets, including:
+#' \itemize{
+#'   \item Research databases with standardized column names (e.g., D_idtree, xutmr/yutmr)
+#'   \item Field data with simple column names (e.g., dbh, x/y)
+#'   \item Taxonomically corrected data with accepted names (e.g., Genus_accepted/Species_accepted)
+#'   \item Various coordinate systems (UTM, lat/lon, etc.)
+#' }
 #'
 #' @importFrom dplyr filter select group_by summarize mutate inner_join arrange
 #' @importFrom BIOMASS correctTaxo getWoodDensity modelHD retrieveH AGBmonteCarlo computeFeldRegion
@@ -95,13 +119,112 @@
 #'
 #' plot_uncertainties <- sd_tree(plotsTree, xyTree, region = "India")
 #' head(plot_uncertainties)
-#' 
+#'
 #' @references
 #' Feldpausch, T.R., et al. (2012). _Tree height integrated into pantropical forest biomass estimates._
 #' Biogeosciences, 9, 3381–3403.
 #'
 #' @export
-sd_tree <- function(plot, xy, region = "World") {
+sd_tree <- function(plot, xy, region = "World", max_retries = 3, retry_delay = 1) {
+
+  # Helper function to detect column name variations
+  detect_column <- function(data, patterns, required_name, required = TRUE) {
+    col_names <- names(data)
+    for (pattern in patterns) {
+      matches <- grep(pattern, col_names, ignore.case = TRUE, value = TRUE)
+      if (length(matches) > 0) {
+        if (length(matches) > 1) {
+          message("Multiple columns found matching '", pattern, "': ", paste(matches, collapse = ", "),
+                 ". Using first match: '", matches[1], "'")
+        }
+        return(matches[1])
+      }
+    }
+    if (required) {
+      stop("Required column '", required_name, "' not found. Expected patterns: ",
+           paste(patterns, collapse = ", "), "\nAvailable columns: ", paste(col_names, collapse = ", "))
+    } else {
+      return(NULL)
+    }
+  }
+
+  # 1. Detect diameter column variations
+  diameter_patterns <- c("^diameter$", "^dbh$", "^DBH$", "^D_idtree$", "^d_idtree$",
+                        "^dbh_allo$", "^DBH_allo$", "^diam$", "^d$", "^D$")
+  diameter_col <- detect_column(plot, diameter_patterns, "diameter")
+  if (diameter_col != "diameter") {
+    message("Using '", diameter_col, "' as diameter column")
+    names(plot)[names(plot) == diameter_col] <- "diameter"
+  }
+
+  # 2. Detect taxonomy columns with priority for accepted names
+  # Try accepted names first, then original names
+  genus_patterns <- c("^Genus_accepted$", "^genus_accepted$", "^GENUS_ACCEPTED$",
+                     "^genus$", "^Genus$", "^GENUS$")
+  species_patterns <- c("^Species_accepted$", "^species_accepted$", "^SPECIES_ACCEPTED$",
+                       "^species$", "^Species$", "^SPECIES$", "^sp$", "^SP$")
+
+  genus_col <- detect_column(plot, genus_patterns, "genus")
+  if (genus_col != "genus") {
+    message("Using '", genus_col, "' as genus column")
+    names(plot)[names(plot) == genus_col] <- "genus"
+  }
+
+  species_col <- detect_column(plot, species_patterns, "species")
+  if (species_col != "species") {
+    message("Using '", species_col, "' as species column")
+    names(plot)[names(plot) == species_col] <- "species"
+  }
+
+  # 3. Detect ID column variations
+  id_patterns <- c("^id$", "^ID$", "^code$", "^CODE$", "^plot$", "^PLOT$",
+                  "^plot_id$", "^PLOT_ID$", "^plotId$", "^PlotId$")
+  id_col <- detect_column(plot, id_patterns, "id")
+  if (id_col != "id") {
+    message("Using '", id_col, "' as plot ID column")
+    names(plot)[names(plot) == id_col] <- "id"
+  }
+
+  # 4. Detect height column variations (optional)
+  if (!"height" %in% names(plot)) {
+    height_patterns <- c("^height$", "^HEIGHT$", "^H$", "^h$", "^h95$", "^H95$",
+                        "^HC$", "^hc$", "^tree_height$", "^TREE_HEIGHT$")
+    height_col <- detect_column(plot, height_patterns, "height", required = FALSE)
+    if (!is.null(height_col)) {
+      message("Using '", height_col, "' as height column")
+      names(plot)[names(plot) == height_col] <- "height"
+    }
+  }
+
+  # Apply similar logic to xy coordinates
+  if (!is.null(xy)) {
+    # 5. Detect coordinate column variations
+    x_patterns <- c("^x$", "^X$", "^xutmr$", "^XUTMR$", "^utm_x$", "^UTM_X$",
+                   "^longitude$", "^LONGITUDE$", "^long$", "^LONG$", "^lon$", "^LON$")
+    y_patterns <- c("^y$", "^Y$", "^yutmr$", "^YUTMR$", "^utm_y$", "^UTM_Y$",
+                   "^latitude$", "^LATITUDE$", "^lat$", "^LAT$")
+
+    x_col <- detect_column(xy, x_patterns, "x coordinate")
+    if (x_col != "x") {
+      message("Using '", x_col, "' as x coordinate column")
+      names(xy)[names(xy) == x_col] <- "x"
+    }
+
+    y_col <- detect_column(xy, y_patterns, "y coordinate")
+    if (y_col != "y") {
+      message("Using '", y_col, "' as y coordinate column")
+      names(xy)[names(xy) == y_col] <- "y"
+    }
+
+    # 6. Detect ID column in xy data to match with plot data
+    xy_id_patterns <- c("^id$", "^ID$", "^code$", "^CODE$", "^plot$", "^PLOT$",
+                       "^plot_id$", "^PLOT_ID$", "^plotId$", "^PlotId$")
+    xy_id_col <- detect_column(xy, xy_id_patterns, "id in coordinates")
+    if (xy_id_col != "id") {
+      message("Using '", xy_id_col, "' as plot ID column in coordinates")
+      names(xy)[names(xy) == xy_id_col] <- "id"
+    }
+  }
 
   plot <- subset(plot, diameter>=10) #filter those above 10cm in diameter
 
@@ -110,10 +233,47 @@ sd_tree <- function(plot, xy, region = "World") {
   #  blowup <- plot[1,5] / 10000
   # print(paste('plot size is', blowup, 'ha'))
 
-  #taxonomy correction
-  #tax <- correctTaxo(genus = plot$genus, species = plot$species)
-  #plot$genus <- tax$genusCorrected
-  #plot$species <- tax$speciesCorrected
+  #taxonomy correction with retry mechanism
+  tax <- NULL
+  initial_delay <- retry_delay
+
+  for (attempt in 1:max_retries) {
+    tryCatch({
+      tax <- BIOMASS::correctTaxo(genus = plot$genus, species = plot$species)
+
+      # Check if we got valid results with correct lengths
+      if (length(tax$genusCorrected) == length(plot$genus) &&
+          length(tax$speciesCorrected) == length(plot$species) &&
+          length(tax$genusCorrected) > 0) {
+        message(if (attempt > 1) paste("Taxonomic correction succeeded on attempt", attempt))
+        break  # Success - exit retry loop
+      } else {
+        stop("Invalid taxonomic correction results (empty or length mismatch)")
+      }
+    }, error = function(e) {
+      if (attempt < max_retries) {
+        message(sprintf("Taxonomic correction attempt %d failed: %s. Retrying in %d seconds...",
+                       attempt, e$message, retry_delay))
+        Sys.sleep(retry_delay)
+        retry_delay <- retry_delay * 2  # Exponential backoff
+      } else {
+        message(sprintf("Taxonomic correction failed after %d attempts: %s. Using original taxonomic names.",
+                       max_retries, e$message))
+      }
+    })
+  }
+
+  # Apply results or fall back to original names
+  if (!is.null(tax) &&
+      length(tax$genusCorrected) == length(plot$genus) &&
+      length(tax$speciesCorrected) == length(plot$species) &&
+      length(tax$genusCorrected) > 0) {
+    plot$genus <- tax$genusCorrected
+    plot$species <- tax$speciesCorrected
+  } else {
+    warning("Taxonomic correction failed after all retry attempts. Using original taxonomic names.")
+    # Keep original names (already in plot$genus and plot$species)
+  }
 
   #get wood density
   wd <- BIOMASS::getWoodDensity(genus = plot$genus,
@@ -244,6 +404,7 @@ sd_tree <- function(plot, xy, region = "World") {
   agb <- unlist(sapply(mc, "[", "meanAGB"))
   sd <- unlist(sapply(mc, "[", "sdAGB"))
 
+
   #add XY
   #plot.fin <- left_join(plot, xy, by = c('id' = 'id')) #needs full to avoid gaps
   plot.fin <- dplyr::left_join(plot, unique(xy), by = dplyr::join_by(id))
@@ -258,6 +419,7 @@ sd_tree <- function(plot, xy, region = "World") {
   plot.fin <- plot.fin |>
     dplyr::group_by(id) |>
     dplyr::summarise_all(mean)
+
 
   #scale values per ha
   agb <- agb / (plot.fin$size/10000)

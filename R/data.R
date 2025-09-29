@@ -49,11 +49,7 @@
 #' @note This should be considered a version 0 and will immediately updated with a more
 #' comprehensive version alongside peer review process of the data descriptor paper.
 #'
-#' @source \url{https://zenodo.org/records/15495069}
-#'
-#' @examples
-#' data(AGBref)
-#' head(AGBref)
+#' @source \url{https://doi.org/10.5281/zenodo.15495069}
 "AGBref"
 
 

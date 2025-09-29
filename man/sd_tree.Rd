@@ -4,23 +4,23 @@
 \alias{sd_tree}
 \title{Calculate AGB and standard deviations from tree-level data}
 \usage{
-sd_tree(plot, xy, region = "World")
+sd_tree(plot, xy, region = "World", max_retries = 3, retry_delay = 1)
 }
 \arguments{
-\item{plot}{A data frame containing tree-level data. Must include the following columns:
+\item{plot}{A data frame containing tree-level data. The function automatically detects column names with flexible patterns:
 \describe{
-\item{id}{Unique identifier for each tree or plot (character or numeric).}
-\item{diameter}{Diameter at breast height (DBH) of trees in centimeters (numeric).}
-\item{genus}{Genus of the tree species (character).}
-\item{species}{Species of the tree (character).}
-\item{height}{Tree height in meters (optional, numeric).}
+\item{ID column}{Detects: id, ID, code, CODE, plot, PLOT, plot_id, PLOT_ID, plotId, PlotId}
+\item{Diameter column}{Detects: diameter, dbh, DBH, D_idtree, d_idtree, dbh_allo, DBH_allo, diam, d, D}
+\item{Genus column}{Detects: Genus_accepted, genus_accepted (preferred), genus, Genus, GENUS}
+\item{Species column}{Detects: Species_accepted, species_accepted (preferred), species, Species, SPECIES, sp, SP}
+\item{Height column (optional)}{Detects: height, HEIGHT, H, h, h95, H95, HC, hc, tree_height, TREE_HEIGHT}
 }}
 
-\item{xy}{A data frame containing plot location data. Must include the following columns:
+\item{xy}{A data frame containing plot location data. The function automatically detects column names:
 \describe{
-\item{id}{Unique identifier for each plot (character or numeric).}
-\item{x}{X-coordinate of the plot location (numeric).}
-\item{y}{Y-coordinate of the plot location (numeric).}
+\item{ID column}{Detects: id, ID, code, CODE, plot, PLOT, plot_id, PLOT_ID, plotId, PlotId}
+\item{X coordinate}{Detects: x, X, xutmr, XUTMR, utm_x, UTM_X, longitude, LONGITUDE, long, lon}
+\item{Y coordinate}{Detects: y, Y, yutmr, YUTMR, utm_y, UTM_Y, latitude, LATITUDE, lat}
 \item{size}{Plot size in square meters (numeric).}
 \item{year}{Year of measurement or survey (numeric).}
 }}
@@ -46,6 +46,10 @@ set to 'World', but you can restrict the WD estimates to a single region :
 \item \code{SouthAmericaTrop}: South America (tropical)
 \item \code{World}: World
 }}
+
+\item{max_retries}{Maximum number of retry attempts for taxonomic correction API calls (default: 3).}
+
+\item{retry_delay}{Initial delay in seconds between retry attempts, with exponential backoff (default: 1).}
 }
 \value{
 A data frame with plot-level AGB estimates and standard deviations, including columns:
@@ -61,13 +65,19 @@ A data frame with plot-level AGB estimates and standard deviations, including co
 }
 \description{
 This function calculates plot-level Above Ground Biomass (AGB) and Standard Deviation using tree-level data and plot locations.
-It uses the BIOMASS package for AGB calculation and standard deviation estimation.
+It uses the BIOMASS package for AGB calculation and standard deviation estimation. The function automatically detects
+common column name variations and applies taxonomic correction using BIOMASS::correctTaxo.
 }
 \details{
 The function performs the following steps:
 \enumerate{
+\item Flexible column dDetection: automatically detects and maps column name variations to standard names.
+The function provides information about which columns are being used.
+\item Taxonomic correction: applies BIOMASS::correctTaxo() to standardize genus and species names,
+with preference for accepted taxonomic names (e.g., Genus_accepted over genus).
+Uses a retry mechanism to handle temporary API failures/delays.
 \item Filters trees with diameter >= 10cm.
-\item Corrects taxonomy and retrieves wood density data.
+\item Retrieves wood density data using corrected taxonomy.
 \item Computes or uses provided tree height data. When height data is missing and the brms
 package is unavailable, automatically detects Feldpausch regions using coordinates
 and BIOMASS::computeFeldRegion() for height-diameter relationships.
@@ -76,6 +86,18 @@ and BIOMASS::computeFeldRegion() for height-diameter relationships.
 \item Scales values per hectare.
 }
 }
+\section{Column Name Flexibility}{
+
+This function resolves GitHub issue #6 by providing robust column name detection.
+It handles common variations found in real-world datasets, including:
+\itemize{
+\item Research databases with standardized column names (e.g., D_idtree, xutmr/yutmr)
+\item Field data with simple column names (e.g., dbh, x/y)
+\item Taxonomically corrected data with accepted names (e.g., Genus_accepted/Species_accepted)
+\item Various coordinate systems (UTM, lat/lon, etc.)
+}
+}
+
 \examples{
 plotsTree <- utils::read.csv(sample_file("SampleTree.csv"))
 head(plotsTree)
