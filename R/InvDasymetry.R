@@ -60,7 +60,9 @@
 #'        For aggregated mode (when aggr is not NULL), the "varPlot" column is also required, but will
 #'        be automatically calculated if missing.
 #' @param clmn character, Column name for plot selection (e.g., "ZONE", "CONTINENT").
+#'        Set to NULL to process all plots without filtering (default: "ZONE").
 #' @param value character, Value to select in the specified column (e.g., "Europe", "Africa").
+#'        Ignored if clmn is NULL (default: "Europe").
 #' @param aggr numeric, Aggregation factor in degrees (e.g., 0.1 for 0.1-degree cells). Set to NULL for no aggregation.
 #'        When aggregated, plots falling within the same grid cell are combined using inverse variance weighting.
 #' @param minPlots integer, Minimum number of plots per aggregated cell. Cells with fewer plots will be excluded.
@@ -161,6 +163,14 @@
 #'   threshold = 10,
 #'   dataset = "esacci",
 #'   esacci_biomass_year = "latest"
+#' )
+#'
+#' # Example 3: Process all plots without filtering (no zone selection)
+#' result_all_plots <- invDasymetry(
+#'   plot_data = plot_data,
+#'   clmn = NULL,  # No filtering - process all plots
+#'   threshold = 10,
+#'   dataset = "esacci"
 #' )
 #'
 #' # Compare plot AGB with map AGB
@@ -317,12 +327,17 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
   agb_raster <- if (!is.null(agb_raster_path)) terra::rast(agb_raster_path) else NULL
   forest_mask <- if (!is.null(forest_mask_path)) terra::rast(forest_mask_path) else NULL
 
-  # Select plots fulfilling selection criterion
-  clm <- which(names(plot_data) == clmn)
-  if (length(clm) == 0) stop(paste("Attribute", clmn, "not found"))
-  ndx <- which(plot_data[, clm] == value)
-  if (length(ndx) == 0) stop("No records satisfy the selection criterion.")
-  plot_data <- plot_data[ndx, ]
+  # Select plots fulfilling selection criterion (skip if clmn is NULL)
+  if (!is.null(clmn)) {
+    clm <- which(names(plot_data) == clmn)
+    if (length(clm) == 0) stop(paste("Attribute", clmn, "not found"))
+    ndx <- which(plot_data[, clm] == value)
+    if (length(ndx) == 0) stop("No records satisfy the selection criterion.")
+    plot_data <- plot_data[ndx, ]
+    message("Filtered ", length(ndx), " plots where ", clmn, " == '", value, "'")
+  } else {
+    message("No filtering applied - processing all ", nrow(plot_data), " plots")
+  }
 
 
   #

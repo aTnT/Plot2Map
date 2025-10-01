@@ -41,9 +41,11 @@ required columns are "POINT_X", "POINT_Y", "AGB_T_HA_ORIG", "AGB_T_HA", and "SIZ
 For aggregated mode (when aggr is not NULL), the "varPlot" column is also required, but will
 be automatically calculated if missing.}
 
-\item{clmn}{character, Column name for plot selection (e.g., "ZONE", "CONTINENT").}
+\item{clmn}{character, Column name for plot selection (e.g., "ZONE", "CONTINENT").
+Set to NULL to process all plots without filtering (default: "ZONE").}
 
-\item{value}{character, Value to select in the specified column (e.g., "Europe", "Africa").}
+\item{value}{character, Value to select in the specified column (e.g., "Europe", "Africa").
+Ignored if clmn is NULL (default: "Europe").}
 
 \item{aggr}{numeric, Aggregation factor in degrees (e.g., 0.1 for 0.1-degree cells). Set to NULL for no aggregation.
 When aggregated, plots falling within the same grid cell are combined using inverse variance weighting.}
@@ -196,6 +198,14 @@ result_aggregated <- invDasymetry(
   threshold = 10,
   dataset = "esacci",
   esacci_biomass_year = "latest"
+)
+
+# Example 3: Process all plots without filtering (no zone selection)
+result_all_plots <- invDasymetry(
+  plot_data = plot_data,
+  clmn = NULL,  # No filtering - process all plots
+  threshold = 10,
+  dataset = "esacci"
 )
 
 # Compare plot AGB with map AGB
