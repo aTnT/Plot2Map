@@ -109,11 +109,13 @@ be automatically calculated if missing.</p></dd>
 
 
 <dt id="arg-clmn">clmn<a class="anchor" aria-label="anchor" href="#arg-clmn"></a></dt>
-<dd><p>character, Column name for plot selection (e.g., "ZONE", "CONTINENT").</p></dd>
+<dd><p>character, Column name for plot selection (e.g., "ZONE", "CONTINENT").
+Set to NULL to process all plots without filtering (default: "ZONE").</p></dd>
 
 
 <dt id="arg-value">value<a class="anchor" aria-label="anchor" href="#arg-value"></a></dt>
-<dd><p>character, Value to select in the specified column (e.g., "Europe", "Africa").</p></dd>
+<dd><p>character, Value to select in the specified column (e.g., "Europe", "Africa").
+Ignored if clmn is NULL (default: "Europe").</p></dd>
 
 
 <dt id="arg-aggr">aggr<a class="anchor" aria-label="anchor" href="#arg-aggr"></a></dt>
@@ -317,6 +319,14 @@ reference map at each plot or cell location.</p></dd>
 <span class="r-in"><span>  threshold <span class="op">=</span> <span class="fl">10</span>,</span></span>
 <span class="r-in"><span>  dataset <span class="op">=</span> <span class="st">"esacci"</span>,</span></span>
 <span class="r-in"><span>  esacci_biomass_year <span class="op">=</span> <span class="st">"latest"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example 3: Process all plots without filtering (no zone selection)</span></span></span>
+<span class="r-in"><span><span class="va">result_all_plots</span> <span class="op">&lt;-</span> <span class="fu">invDasymetry</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  plot_data <span class="op">=</span> <span class="va">plot_data</span>,</span></span>
+<span class="r-in"><span>  clmn <span class="op">=</span> <span class="cn">NULL</span>,  <span class="co"># No filtering - process all plots</span></span></span>
+<span class="r-in"><span>  threshold <span class="op">=</span> <span class="fl">10</span>,</span></span>
+<span class="r-in"><span>  dataset <span class="op">=</span> <span class="st">"esacci"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Compare plot AGB with map AGB</span></span></span>
