@@ -26,7 +26,7 @@ Suggests:
     covr,
     rcmdcheck
 VignetteBuilder: knitr
-Imports: 
+Imports:
     BIOMASS,
     doParallel,
     dplyr,
@@ -48,6 +48,5 @@ Imports:
     tidyr,
     units,
     utils,
-    devtools,
     ranger,
     RCurl

@@ -32,25 +32,12 @@ required_packages <- c("sf", "terra", "dplyr")
 missing_packages <- required_packages[!sapply(required_packages, requireNamespace, quietly = TRUE)]
 
 if (length(missing_packages) > 0) {
-  message("The following required packages are not installed: ", paste(missing_packages, collapse = ", "))
-  message("Would you like to install them now from CRAN? (y/n)")
-  answer <- readline(prompt = "")
-  if (tolower(answer) == "y") {
-    message("Installing required packages from CRAN...")
-    utils::install.packages(missing_packages)
-    
-    # Check if installation was successful
-    still_missing <- missing_packages[!sapply(missing_packages, requireNamespace, quietly = TRUE)]
-    if (length(still_missing) > 0) {
-      stop("Failed to install the following packages: ", paste(still_missing, collapse = ", "), 
-           ". Please install them manually with: install.packages(c('", 
-           paste(still_missing, collapse = "', '"), "'))", call. = FALSE)
-    }
-    message("All required packages successfully installed.")
-  } else {
-    stop("The following packages are required for this function to work: ", 
-         paste(missing_packages, collapse = ", "), ". Installation was declined.", call. = FALSE)
-  }
+  stop(
+    "Missing required package(s): ", paste(missing_packages, collapse = ", "), "\n",
+    "Please install them with:\n",
+    "  install.packages(c('", paste(missing_packages, collapse = "', '"), "'))",
+    call. = FALSE
+  )
 }
 
 
