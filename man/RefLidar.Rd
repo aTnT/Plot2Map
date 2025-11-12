@@ -2,36 +2,80 @@
 % Please edit documentation in R/RefLidar.R
 \name{RefLidar}
 \alias{RefLidar}
-\title{Process LiDAR-based Reference Data}
+\title{Process LiDAR-based Reference Data (Enhanced Version)}
 \usage{
-RefLidar(lidar.dir)
+RefLidar(
+  lidar.dir,
+  auto_detect = TRUE,
+  pattern_config = NULL,
+  raster_type = NULL,
+  allow_interactive = TRUE
+)
 }
 \arguments{
-\item{lidar.dir}{Character string specifying the directory containing LiDAR raster files.}
+\item{lidar.dir}{Directory containing ALS raster files}
+
+\item{auto_detect}{Enable automatic pattern detection for PLOT_ID and YEAR (default: TRUE)}
+
+\item{pattern_config}{Optional manual pattern configuration (overrides auto-detection)}
+
+\item{raster_type}{Optional raster type specification ("AGB", "CV", or "SD"). If NULL, auto-detects from filename or prompts user.}
+
+\item{allow_interactive}{Allow interactive prompts if auto-detection fails (default: TRUE). Set to FALSE for automated pipelines.}
 }
 \value{
 A data frame containing processed point data with columns varying based on the raster type:
-\item{PLOT_ID}{Unique identifier for each plot}
-\item{POINT_X}{Longitude coordinate}
-\item{POINT_Y}{Latitude coordinate}
+\item{PLOT_ID}{Unique identifier for each plot (auto-extracted or user-specified)}
+\item{POINT_X}{Longitude coordinate (WGS84)}
+\item{POINT_Y}{Latitude coordinate (WGS84)}
 \item{AGB/CV/SD}{Above Ground Biomass, Coefficient of Variation, or Standard Deviation (depending on raster type)}
-\item{AVG_YEAR}{Year of data collection}
+\item{AVG_YEAR}{Year of data collection (standardized to 4-digit format)}
 }
 \description{
-This function processes LiDAR-based reference data from raster files, converting them to a standardized point data format.
+This enhanced function processes LiDAR-based reference data from raster files, converting them to a standardized point data format.
+It includes intelligent multi-band raster handling, automatic pattern detection, and CRS validation.
 }
 \details{
-The function performs the following steps:
+The enhanced function performs the following steps:
 \enumerate{
-\item Loads raster files from the specified directory
-\item Reprojects rasters to WGS84 if necessary
-\item Converts raster data to points
-\item Prompts user for information to extract PLOT_ID and AVG_YEAR from file names
-\item Formats output based on the specified raster type (AGB, CV, or SD)
+\item \strong{File Discovery}: Loads raster files and filters out auxiliary files (.aux.xml, .ovr, etc.)
+\item \strong{CRS Validation}: Validates and reports coordinate reference systems across all files
+\item \strong{Multi-band Processing}: Intelligently detects and extracts AGB layers from multi-band rasters
+\item \strong{CRS Transformation}: Reprojects rasters to WGS84 (EPSG:4326) if necessary
+\item \strong{Pattern Detection}: Automatically detects filename patterns for PLOT_ID and YEAR extraction
+\item \strong{Data Extraction}: Converts raster data to points with proper metadata
+\item \strong{Quality Validation}: Validates extracted years and provides processing summary
 }
 }
+\section{Enhancements}{
+
+\strong{Enhancement 1 - Multi-band Support}: Automatically detects and extracts AGB layers from multi-band rasters
+(e.g., meanAGB, sdAGB, meanHbin layers). Supports rasters with uncertainty estimates.
+
+\strong{Enhancement 2 - Intelligent Pattern Detection}: Machine learning-based filename pattern recognition
+supports multiple formats including Brazil (ANA_A01_2017_AGB_100m.tif), Central Africa (06_Nachtigal_AGB40.tif),
+Australia (GWW_2012_AGB_100m.tif), Czech Republic (BK17a_AGB_mean.tif), and Bulgaria (bul_agb2016_utm.tif).
+
+\strong{Enhancement 3 - CRS Validation}: Comprehensive coordinate reference system validation and transformation
+with detailed reporting of CRS compatibility and automatic reprojection to WGS84.
+
+\strong{Enhancement 4 - Non-interactive Mode}: Optional \code{raster_type} parameter enables fully non-interactive processing.
+When provided, skips interactive prompt. When NULL, attempts auto-detection from filename patterns.
+}
+
 \examples{
 \dontrun{
+# Fully non-interactive usage (recommended for automated pipelines)
+lidar_data <- RefLidar(lidar.dir = "data/SustainableLandscapeBrazil_v04/SLB_AGBmaps",
+                       raster_type = "AGB")
+
+# Basic usage with automatic detection (may prompt for raster type if detection fails)
 lidar_data <- RefLidar(lidar.dir = "data/SustainableLandscapeBrazil_v04/SLB_AGBmaps")
+
+# Disable automatic pattern detection for manual control
+lidar_data <- RefLidar(lidar.dir = "path/to/rasters", auto_detect = FALSE, raster_type = "CV")
+
+# Multi-band raster processing (automatically handled)
+central_africa_data <- RefLidar("data/LiDAR-based_biomass_maps_Central_Africa/", raster_type = "AGB")
 }
 }
