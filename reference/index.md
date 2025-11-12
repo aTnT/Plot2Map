@@ -34,7 +34,7 @@
 - [`RawPlotsTree()`](https://atnt.github.io/Plot2Map/reference/RawPlotsTree.md)
   : Format Tree-Level Plot Data
 - [`RefLidar()`](https://atnt.github.io/Plot2Map/reference/RefLidar.md)
-  : Process LiDAR-based Reference Data (Enhanced Version)
+  : Process LiDAR-based Reference Data
 - [`SDtileNames()`](https://atnt.github.io/Plot2Map/reference/SDtileNames.md)
   : Generate AGB SD tile names
 - [`Scatter()`](https://atnt.github.io/Plot2Map/reference/Scatter.md) :
