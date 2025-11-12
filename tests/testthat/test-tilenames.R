@@ -69,6 +69,11 @@ test_that("AGBtileNames function behaves consistently", {
   pol <- st_polygon(list(rbind(c(0,0), c(1,0), c(1,1), c(0,1), c(0,0))))
   pol_sf <- st_sfc(pol, crs = 4326)
 
+  # Skip test if data directory doesn't exist (e.g., in CI environments)
+  if (!dir.exists("data/ESACCI-BIOMASS-L4-AGB-MERGED-100m-2020-fv5.0")) {
+    skip("ESACCI-BIOMASS data directory not available")
+  }
+
   result <- AGBtileNames(pol_sf)
   expect_true(all(grepl("ESACCI-BIOMASS-L4-AGB-MERGED-100m-2020", result)))
   expect_false(any(grepl("1000m|AGB_SD|aux", result)))
@@ -77,6 +82,11 @@ test_that("AGBtileNames function behaves consistently", {
 test_that("SDtileNames function behaves consistently", {
   pol <- st_polygon(list(rbind(c(0,0), c(1,0), c(1,1), c(0,1), c(0,0))))
   pol_sf <- st_sfc(pol, crs = 4326)
+
+  # Skip test if data directory doesn't exist (e.g., in CI environments)
+  if (!dir.exists("data/ESACCI-BIOMASS-L4-AGB-MERGED-100m-2020-fv5.0")) {
+    skip("ESACCI-BIOMASS data directory not available")
+  }
 
   result <- SDtileNames(pol_sf)
   expect_true(all(grepl("ESACCI-BIOMASS-L4-AGB_SD-MERGED-100m-2020", result)))

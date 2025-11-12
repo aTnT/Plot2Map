@@ -229,28 +229,15 @@ validate_crs <- function(raster_files, target_crs = "EPSG:4326") {
 #'   \item{AVG_YEAR}{Year of data collection (standardized to 4-digit format)}
 #'
 #' @details
-#' The enhanced function performs the following steps:
+#' The function performs the following steps:
 #' 1. **File Discovery**: Loads raster files and filters out auxiliary files (.aux.xml, .ovr, etc.)
-#' 2. **CRS Validation**: Validates and reports coordinate reference systems across all files
-#' 3. **Multi-band Processing**: Intelligently detects and extracts AGB layers from multi-band rasters
-#' 4. **CRS Transformation**: Reprojects rasters to WGS84 (EPSG:4326) if necessary
-#' 5. **Pattern Detection**: Automatically detects filename patterns for PLOT_ID and YEAR extraction
-#' 6. **Data Extraction**: Converts raster data to points with proper metadata
-#' 7. **Quality Validation**: Validates extracted years and provides processing summary
+#' 2. **CRS Validation**: Validates coordinate reference systems and reprojects to WGS84 (EPSG:4326) if necessary
+#' 3. **Multi-band Processing**: Intelligently detects and extracts AGB layers from multi-band rasters (e.g., meanAGB, sdAGB, meanHbin layers)
+#' 4. **Pattern Detection**: Automatically detects filename patterns for PLOT_ID and YEAR extraction. Supports multiple formats including Brazil (ANA_A01_2017_AGB_100m.tif), Central Africa (06_Nachtigal_AGB40.tif), Australia (GWW_2012_AGB_100m.tif), Czech Republic (BK17a_AGB_mean.tif), and Bulgaria (bul_agb2016_utm.tif)
+#' 5. **Data Extraction**: Converts raster data to points with proper metadata
+#' 6. **Quality Validation**: Validates extracted years and provides processing summary
 #'
-#' @section Enhancements:
-#' **Enhancement 1 - Multi-band Support**: Automatically detects and extracts AGB layers from multi-band rasters
-#' (e.g., meanAGB, sdAGB, meanHbin layers). Supports rasters with uncertainty estimates.
-#'
-#' **Enhancement 2 - Intelligent Pattern Detection**: Machine learning-based filename pattern recognition
-#' supports multiple formats including Brazil (ANA_A01_2017_AGB_100m.tif), Central Africa (06_Nachtigal_AGB40.tif),
-#' Australia (GWW_2012_AGB_100m.tif), Czech Republic (BK17a_AGB_mean.tif), and Bulgaria (bul_agb2016_utm.tif).
-#'
-#' **Enhancement 3 - CRS Validation**: Comprehensive coordinate reference system validation and transformation
-#' with detailed reporting of CRS compatibility and automatic reprojection to WGS84.
-#'
-#' **Enhancement 4 - Non-interactive Mode**: Optional `raster_type` parameter enables fully non-interactive processing.
-#' When provided, skips interactive prompt. When NULL, attempts auto-detection from filename patterns.
+#' The `raster_type` parameter enables fully non-interactive processing for automated pipelines. When NULL, attempts auto-detection from filename patterns or prompts user if `allow_interactive = TRUE`.
 #'
 #' @param lidar.dir Directory containing ALS raster files
 #' @param auto_detect Enable automatic pattern detection for PLOT_ID and YEAR (default: TRUE)
@@ -260,18 +247,79 @@ validate_crs <- function(raster_files, target_crs = "EPSG:4326") {
 #'
 #' @examples
 #' \dontrun{
-#' # Fully non-interactive usage (recommended for automated pipelines)
-#' lidar_data <- RefLidar(lidar.dir = "data/SustainableLandscapeBrazil_v04/SLB_AGBmaps",
-#'                        raster_type = "AGB")
-#'
-#' # Basic usage with automatic detection (may prompt for raster type if detection fails)
+#' # Basic usage with automatic detection
 #' lidar_data <- RefLidar(lidar.dir = "data/SustainableLandscapeBrazil_v04/SLB_AGBmaps")
 #'
-#' # Disable automatic pattern detection for manual control
-#' lidar_data <- RefLidar(lidar.dir = "path/to/rasters", auto_detect = FALSE, raster_type = "CV")
+#' # Non-interactive mode for automated pipelines
+#' lidar_data <- RefLidar(
+#'   lidar.dir = "data/SustainableLandscapeBrazil_v04/SLB_AGBmaps",
+#'   raster_type = "AGB",
+#'   allow_interactive = FALSE
+#' )
 #'
-#' # Multi-band raster processing (automatically handled)
-#' central_africa_data <- RefLidar("data/LiDAR-based_biomass_maps_Central_Africa/", raster_type = "AGB")
+#' # Process Coefficient of Variation rasters
+#' cv_data <- RefLidar(
+#'   lidar.dir = "data/uncertainty_maps/",
+#'   raster_type = "CV",
+#'   allow_interactive = FALSE
+#' )
+#'
+#' # Disable auto-detection for custom naming
+#' lidar_data <- RefLidar(
+#'   lidar.dir = "data/custom_naming/",
+#'   auto_detect = FALSE,
+#'   raster_type = "AGB"
+#' )
+#'
+#' # Manual pattern_config for custom filename formats
+#' custom_pattern <- list(
+#'   type = "custom",
+#'   plot_start = 1,
+#'   plot_end = 15,
+#'   year_start = 22,
+#'   year_end = 25,
+#'   confidence = "high"
+#' )
+#' lidar_data <- RefLidar(
+#'   lidar.dir = "data/custom_format/",
+#'   pattern_config = custom_pattern,
+#'   raster_type = "AGB"
+#' )
+#'
+#' # Pattern config for Brazil format (ANA_A01_2017_AGB_100m.tif)
+#' brazil_pattern <- list(
+#'   type = "site_code_year_type",
+#'   plot_start = 1,
+#'   plot_end = 3,
+#'   year_start = 9,
+#'   year_end = 12,
+#'   confidence = "high"
+#' )
+#' brazil_data <- RefLidar(
+#'   lidar.dir = "data/brazil_slb/",
+#'   pattern_config = brazil_pattern,
+#'   raster_type = "AGB"
+#' )
+#'
+#' # Multi-band raster processing
+#' multiband_data <- RefLidar(
+#'   lidar.dir = "data/LiDAR-based_biomass_maps_Central_Africa/",
+#'   raster_type = "AGB"
+#' )
+#'
+#' # Processing multiple raster types from same directory
+#' agb_data <- RefLidar(
+#'   lidar.dir = "data/complete_dataset/",
+#'   raster_type = "AGB",
+#'   allow_interactive = FALSE
+#' )
+#' cv_data <- RefLidar(
+#'   lidar.dir = "data/complete_dataset/",
+#'   raster_type = "CV",
+#'   allow_interactive = FALSE
+#' )
+#' combined_data <- merge(agb_data, cv_data,
+#'                        by = c("PLOT_ID", "POINT_X", "POINT_Y", "AVG_YEAR"))
 #' }
 #' @importFrom terra rast crop ext extract ncell project vect values xmax xmin ymax ymin
 #' @importFrom utils menu

@@ -97,7 +97,13 @@ AGBtileNames <- function(pol, agbTilesDir="data/ESACCI-BIOMASS-L4-AGB-MERGED-100
 
     # Extract the fixed component of the filename
     agbfiles <- list.files(agbTilesDir)
+    if (length(agbfiles) == 0) {
+      stop("The agbTilesDir folder is empty or does not exist: ", agbTilesDir)
+    }
     fixed_component <- str_extract(agbfiles[1], "_.*(?=$)")
+    if (is.na(fixed_component)) {
+      stop("Could not extract filename pattern from: ", agbfiles[1])
+    }
     # Verify that this component is present in all files
     all_match <- all(str_detect(agbfiles, fixed_component))
     if (!all_match) {
