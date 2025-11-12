@@ -196,12 +196,12 @@ invDasymetry(
 
 A data frame with the following columns:
 
-- plotAGB_threshold:
+- plotAGB_X:
 
-  AGB values for the given forest threshold (e.g., plotAGB_10 if
-  threshold=10). When aggregated, these values are derived from weighted
-  means using inverse variance weighting. Units are in tonnes per
-  hectare (t/ha).
+  AGB values for the given forest threshold, where X is the threshold
+  value (e.g., plotAGB_10 if threshold=10). When aggregated, these
+  values are derived from weighted means using inverse variance
+  weighting. Units are in tonnes per hectare (t/ha).
 
 - tfPlotAGB:
 
