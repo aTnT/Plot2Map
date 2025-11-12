@@ -39,6 +39,8 @@
 <url><loc>https://atnt.github.io/Plot2Map/reference/check_and_convert_plt.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/compute_treecover.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/create_gfc_tiles_grid.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/reference/detect_agb_layer.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/reference/detect_patterns_ml.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/determineDataType.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/download_esacci_biomass.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/download_gedi_l4b.html</loc></url>
@@ -59,6 +61,8 @@
 <url><loc>https://atnt.github.io/Plot2Map/reference/sd_tree.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/sf_to_df_with_coords.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/sf_to_sf_with_coords.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/reference/standardize_year.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/reference/validate_crs.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/validate_esacci_biomass_args.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/verify_download.html</loc></url>
 </urlset>

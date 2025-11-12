@@ -253,10 +253,11 @@ and their ratio.</p></li>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> Failed to perform HTTP request.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Taxonomic correction attempt 2 failed: Invalid taxonomic correction results (empty or length mismatch). Retrying in 1 seconds...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Using useCache=TRUE is recommended to reduce online search time for the next query</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |                                                                              |                                                                      |   0%  |                                                                              |======================================================================| 100%</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Source iplant_tnrs:27712</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Corrections FALSE:27092, TRUE:599, TaxaNotFound:19, SpNotFound:2</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Taxonomic correction succeeded on attempt 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   |                                                                              |                                                                      |   0%</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>There seem to be a problem reaching the TNRS API!</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Failed to perform HTTP request.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Taxonomic correction failed after 3 attempts: Invalid taxonomic correction results (empty or length mismatch). Using original taxonomic names.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Taxonomic correction failed after all retry attempts. Using original taxonomic names.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> The reference dataset contains 16467 wood density values</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Your taxonomic table contains 340 taxa</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> No tree height data found in original plot data. Calculating height using BIOMASS height-diameter model.</span>
@@ -323,7 +324,7 @@ and their ratio.</p></li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

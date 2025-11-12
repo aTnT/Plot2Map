@@ -1,0 +1,111 @@
+# Global Reference Dataset for Above-Ground Biomass (AGBref)
+
+This dataset is part of the AGBref initiative, a global reference
+dataset for above-ground biomass (AGB) validation derived from national
+forest inventories (NFIs), permanent research plots, and local airborne
+LiDAR-based maps. It contains harmonized AGB estimates across multiple
+spatial resolutions and epochs, together with associated uncertainties
+and ecological metadata. It is primarily intended to support the
+validation of satellite-derived global biomass maps and national carbon
+accounting.
+
+## Usage
+
+``` r
+AGBref
+```
+
+## Format
+
+### `AGBref`
+
+A data frame containing global reference AGB measurements:
+
+- POINT_X:
+
+  Longitude of the grid cell centroid.
+
+- POINT_Y:
+
+  Latitude of the grid cell centroid.
+
+- TC_PLT_SD:
+
+  Standard deviation of tree cover (%) at the plot locations within the
+  grid cell, based on remote sensing, is used to assess variability in
+  plot representativeness.
+
+- TC_PLT_MEAN:
+
+  Mean tree cover (%) at the plot locations within the grid cell.
+
+- TC_GRID_SD:
+
+  Standard deviation of tree cover (%) at the entire grid cell (not just
+  at plot locations).
+
+- TC_GRID_MEAN:
+
+  Mean tree cover (%) at the grid cell level, derived from satellite
+  data (e.g., Global Forest Change dataset).
+
+- n:
+
+  Number of plots used within the grid cell to compute biomass
+  estimates.
+
+- AGB_T_HA:
+
+  Harmonized above-ground biomass (in tons per hectare, T/ha) at the
+  grid cell level. Adjusted for forest area definition, temporal
+  mismatch, and other preprocessing steps.
+
+- SIZE_HA:
+
+  Total plot area within the grid cell in hectares.
+
+- OPEN:
+
+  Indicator for openness of data.
+
+- VER:
+
+  Denotes versioning or verification status. To be updated when new
+  versions are released.
+
+- varTot:
+
+  Total variance of AGB within the grid cell. Accounts for the
+  spatial-scale mismatch considering the target grid cell and associated
+  measurement-related (tree measurement, allometric model use)
+  uncertainties.
+
+- AVG_YEAR:
+
+  Average year of plot measurement for plots within the grid cell.
+  Useful for matching map epochs (e.g., 2005, 2010, etc.).
+
+- BIO:
+
+  Biome category of the grid cell, e.g., "Tropical rainforest",
+  "Temperate broadleaf and mixed forests". Derived from ecological zone
+  datasets.
+
+- CODE:
+
+  Source code of the dataset provider. Example: AUS1 for Australia-based
+  NFI. Refer to supplementary table in the manuscript.
+
+- INVENTORY:
+
+  Type or scale of data source, e.g., regional, national, or local.
+
+## Source
+
+<https://doi.org/10.5281/zenodo.15495069>
+
+## Note
+
+This should be considered a version 0 and will immediately updated with
+a more comprehensive version alongside peer review process of the data
+descriptor paper.

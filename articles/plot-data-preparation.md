@@ -1,0 +1,688 @@
+# Plot data preparation
+
+## Introduction
+
+In this page we showcase the different user data formats of plot
+estimates of AGB, here refereed as plot data, possible to be used in the
+Plot2Map workflow.
+
+## Plot data formats
+
+### Point data formatted dataframe
+
+In this case there is already an AGB estimate from the user. This format
+is exemplified with the sample plots dataframe available with the
+package accessible with:
+
+``` r
+head(plots) 
+```
+
+This format correspond to a dataframe containing sample plots with an
+unique plot ID, longitude and latitude point data, an estimated Above
+Ground Biomass in t/ha, average year of inventory, and plot size in ha.
+
+### Point data unformatted dataframe
+
+In this case there is also a dataframe in a similar format to the
+previous case, but with unformatted data over which the user will be
+asked about the specific column index of required plot variables such as
+unique plot ID, longitude, latitude, AGB of the plot, plot size,
+inventory year. This can be exemplified below:
+
+``` r
+
+unformatted_plots <- utils::read.csv(sample_file("SampleUnformattedPlots.csv"))
+head(unformatted_plots)
+#      Provincia                          Estrato.Florestal id_parcela Ycoordinate Xcoordinate Vt..m.3.ha.
+# 1 Cabo Delgado Floresta (semi-) decidua, incluindo Miombo  CD0772003   -10.60656    40.53664       39.90
+# 2 Cabo Delgado Floresta (semi-) decidua, incluindo Miombo  CD0772002   -10.60657    40.53572       24.65
+# 3 Cabo Delgado Floresta (semi-) decidua, incluindo Miombo  CD0770543   -10.60666    40.52744        4.09
+# 4 Cabo Delgado Floresta (semi-) decidua, incluindo Miombo  CD0770542   -10.60667    40.52652       20.06
+# 5 Cabo Delgado Floresta (semi-) decidua, incluindo Miombo  CD0772004   -10.60747    40.53664        0.00
+# 6 Cabo Delgado Floresta (semi-) decidua, incluindo Miombo  CD0772001   -10.60747    40.53573       64.15
+#   Vc..m.3.ha. AGB..ton.ha. BGB..ton.ha. year size
+# 1        2.53        32.61        21.73 2016  0.1
+# 2        0.77        21.44        13.32 2016  0.1
+# 3        0.00         4.41         2.96 2016  0.1
+# 4        2.38        17.77        10.56 2016  0.1
+# 5        0.00         0.00         0.00 2016  0.1
+# 6        0.97        77.74        27.38 2016  0.1
+```
+
+The following step will request the user to select the requested
+columns:
+
+``` r
+
+formatted_plots <- RawPlots(unformatted_plots)
+# Which column is your unique Plot ID? 
+# 
+#  1: Manual entry        2: Provincia           3: Estrato.Florestal
+#  4: id_parcela          5: Ycoordinate         6: Xcoordinate      
+#  7: Vt..m.3.ha.         8: Vc..m.3.ha.         9: AGB..ton.ha.     
+# 10: BGB..ton.ha.       11: year               12: size             
+# 
+# 
+# Selection: 4
+# Which column is your plot AGB? 
+# 
+#  1: Manual entry        2: Provincia           3: Estrato.Florestal
+#  4: id_parcela          5: Ycoordinate         6: Xcoordinate      
+#  7: Vt..m.3.ha.         8: Vc..m.3.ha.         9: AGB..ton.ha.     
+# 10: BGB..ton.ha.       11: year               12: size             
+# 
+# 
+# Selection: 9
+# Select longitude column 
+# 
+#  1: Manual entry        2: Provincia           3: Estrato.Florestal
+#  4: id_parcela          5: Ycoordinate         6: Xcoordinate      
+#  7: Vt..m.3.ha.         8: Vc..m.3.ha.         9: AGB..ton.ha.     
+# 10: BGB..ton.ha.       11: year               12: size             
+# 
+# 
+# Selection: 6
+# Which column is your latitude? 
+# 
+#  1: Manual entry        2: Provincia           3: Estrato.Florestal
+#  4: id_parcela          5: Ycoordinate         6: Xcoordinate      
+#  7: Vt..m.3.ha.         8: Vc..m.3.ha.         9: AGB..ton.ha.     
+# 10: BGB..ton.ha.       11: year               12: size             
+# 
+# 
+# Selection: 5
+# Select plot size column 
+# 
+#  1: Manual entry        2: Provincia           3: Estrato.Florestal
+#  4: id_parcela          5: Ycoordinate         6: Xcoordinate      
+#  7: Vt..m.3.ha.         8: Vc..m.3.ha.         9: AGB..ton.ha.     
+# 10: BGB..ton.ha.       11: year               12: size             
+# 
+# 
+# Selection: 12
+# Select year column 
+# 
+#  1: Manual entry        2: Provincia           3: Estrato.Florestal
+#  4: id_parcela          5: Ycoordinate         6: Xcoordinate      
+#  7: Vt..m.3.ha.         8: Vc..m.3.ha.         9: AGB..ton.ha.     
+# 10: BGB..ton.ha.       11: year               12: size             
+# 
+# 
+# Selection: 11
+```
+
+Note how after user input we get a similar data format to the previous
+section:
+
+``` r
+
+tail(formatted_plots)
+#      PLOT_ID  POINT_X   POINT_Y AGB_T_HA SIZE_HA FEZ GEZ AVG_YEAR
+# 3267      21 32.35752 -26.54318    54.13     0.1  NA  NA     2016
+# 3268      24 32.35853 -26.54318    13.90     0.1  NA  NA     2016
+# 3269      12 32.75884 -26.65187    92.66     0.1  NA  NA     2016
+# 3270      13 32.75984 -26.65187   112.87     0.1  NA  NA     2016
+# 3271      11 32.75884 -26.65277    56.08     0.1  NA  NA     2016
+# 3272      14 32.75984 -26.65277    65.59     0.1  NA  NA     2016
+```
+
+This format correspond to a dataframe containing sample plots with an
+ID, longitude and latitude point data, an estimated Above Ground Biomass
+in t/ha, average year of plot survey, and plot size in ha.
+
+### Plot corner coordinates
+
+This is the plot data format found in [Labriere et
+al. 2018](https://doi.org/10.1109/JSTARS.2018.2851606) sample data. It
+contains the corner coordinates of a bounding box defining each plot:
+
+``` r
+
+plots_corners <- utils::read.csv(sample_file("PolyTropiSAR.csv")) # Labriere et al. 2018 plots sample data
+head(plots_corners)
+#     id  POINT_X  POINT_Y  X
+# 1 NOU01 312514.3 449724.3 NA
+# 2 NOU01 312517.6 449824.2 NA
+# 3 NOU02 313704.3 451320.5 NA
+# 4 NOU02 313752.2 451408.3 NA
+# 5 NOU02 313800.0 451496.1 NA
+# 6 NOU02 313847.9 451583.9 NA
+
+plots_AGB <-  utils::read.csv(sample_file("PolyTropiAGB.csv")) # plot-level AGB
+head(plots_AGB)
+#   PLOT_ID AVG_YEAR AGB_T_HA
+# 1   NOU01     2010   431.90
+# 2   NOU02     2010   368.41
+# 3   NOU03     2010   525.65
+# 4   NOU04     2010   429.87
+# 5   NOU05     2010   234.60
+# 6   NOU06     2010   288.10
+
+SRS <- 32622 # plot data source spatial reference system
+
+plots_corners_AGB <- Polygonize(plots_corners, SRS)
+# Converting coordinates from source SRS (32622) to EPSG:4326 / WGS84
+plots_corners_AGB$AGB_T_HA <- plots_AGB$AGB_T_HA
+plots_corners_AGB$AVG_YEAR <- plots_AGB$AVG_YEAR
+ 
+head(plots_corners_AGB)
+#       ID PLOT_ID         SIZE_HA   POINT_X  POINT_Y AGB_T_HA AVG_YEAR
+# NOU01  1   NOU01  2.0000014 [ha] -52.68839 4.067844   431.90     2010
+# NOU02  1   NOU02 10.0000058 [ha] -52.67643 4.085602   368.41     2010
+# NOU03  1   NOU03  6.0000008 [ha] -52.68235 4.039235   525.65     2010
+# NOU04  1   NOU04 12.0000037 [ha] -52.68352 4.082891   429.87     2010
+# NOU05  1   NOU05  0.2499999 [ha] -52.67710 4.041068   234.60     2010
+# NOU06  1   NOU06  0.2499998 [ha] -52.67789 4.039038   288.10     2010
+```
+
+### Plot data contains tree-level measurements
+
+This format of plot data contains tree-level allometric measurements
+that will be used to estimate mean AGB and standard deviation by plot
+ID, using [BIOMASS](https://umr-amap.github.io/BIOMASS/) package’s
+height-diameter model:
+
+``` r
+
+# Formatted data example
+plotsTree <- utils::read.csv(sample_file("SampleTree.csv"))
+head(plotsTree)
+#     id      genus    species  diameter  size                 fez      gez year
+# 1 BSP1 Terminalia  bellirica  3.501409 10000 tropical rainforest tropical 1996
+# 2 BSP1   Ziziphus   oenoplia  3.819719 10000 tropical rainforest tropical 1996
+# 3 BSP1    Aporosa lindleyana 16.870424 10000 tropical rainforest tropical 1996
+# 4 BSP1      Ixora  brachiata  4.138029 10000 tropical rainforest tropical 1996
+# 5 BSP1   Wrightia    arborea  5.411268 10000 tropical rainforest tropical 1996
+# 6 BSP1      Ixora  brachiata  3.183099 10000 tropical rainforest tropical 1996
+
+xyTree <- utils::read.csv(sample_file("SampleTreeXY.csv"))
+head(xyTree)
+#     id        y        x
+# 1 BSP1 14.36806 74.91944
+# 2 BSP1 14.36806 74.91944
+# 3 BSP1 14.36806 74.91944
+# 4 BSP1 14.36806 74.91944
+# 5 BSP1 14.36806 74.91944
+# 6 BSP1 14.36806 74.91944
+
+# Unformatted data example
+TreeRaw <- utils::read.csv(sample_file("KarnatakaForest.csv"))
+head(TreeRaw)
+#   plotId     treeId     family       genus        species     d_cm      lat     long size_m2 year
+# 1   BSP1   BSP1_248 Clusiaceae    Garcinia         indica 3.183099 14.36806 74.91944   10000 1998
+# 2   BSP1   BSP1_269  Rubiaceae       Ixora      brachiata 3.183099 14.36806 74.91944   10000 1998
+# 3   BSP1 BSP1_303_B  Rubiaceae       Meyna      laxiflora 3.183099 14.36806 74.91944   10000 1998
+# 4   BSP1    BSP1_29  Lauraceae Alseodaphne semecarpifolia 3.501409 14.36806 74.91944   10000 1998
+# 5   BSP1    BSP1_30  Lauraceae Alseodaphne semecarpifolia 3.501409 14.36806 74.91944   10000 1998
+# 6   BSP1    BSP1_31  Lauraceae Alseodaphne semecarpifolia 3.501409 14.36806 74.91944   10000 1998
+
+rawTree <- RawPlotsTree(TreeRaw) # User is be asked to select the requested columns
+
+plotTree <- rawTree[[1]]
+head(plotTree)
+#   id       genus        species diameter  size fez gez year
+# 1 11    Garcinia         indica 3.183099 10000  NA  NA 1998
+# 2 11       Ixora      brachiata 3.183099 10000  NA  NA 1998
+# 3 11       Meyna      laxiflora 3.183099 10000  NA  NA 1998
+# 4 11 Alseodaphne semecarpifolia 3.501409 10000  NA  NA 1998
+# 5 11 Alseodaphne semecarpifolia 3.501409 10000  NA  NA 1998
+# 6 11 Alseodaphne semecarpifolia 3.501409 10000  NA  NA 1998
+
+xyTree <- rawTree[[2]]
+head(xyTree)
+#   id        x        y
+# 1 11 74.91944 14.36806
+# 2 11 74.91944 14.36806
+# 3 11 74.91944 14.36806
+# 4 11 74.91944 14.36806
+# 5 11 74.91944 14.36806
+# 6 11 74.91944 14.36806
+
+# Calculate mean AGB and SD by PLOT_ID using BIOMASS package's height-diameter model
+plots_trees_agb_sd <- sd_tree(plotTree, xyTree, "India")
+# The reference dataset contains 289 wood density values
+# Your taxonomic table contains 122 taxa
+# No tree height data found in original plot data. Calculating height using BIOMASS height-diameter model.
+# Warning message:
+# In BIOMASS::getWoodDensity(genus = plot$genus, species = plot$species,  :
+#   DRYAD data only stored 289 wood density values in your region of interest. You could provide additional wood densities (parameter addWoodDensityData) or widen your region (region="World")
+
+print(plots_trees_agb_sd)
+#    PLOT_ID  POINT_X  POINT_Y SIZE_HA AVG_YEAR   AGB_T_HA    sdTree
+# 1        1 74.91944 14.36806       1     1998 185.527727 12.248335
+# 2        2 74.62778 15.16667       1     1998 301.968606 19.298196
+# 3        3 74.63667 14.24944       1     1998 160.733560 17.332449
+# 4        4 74.66806 14.24528       1     1998 351.992736 20.154294
+# 5        5 75.11806 14.28333       1     1998 305.638906 20.040947
+# 6        6 75.13583 14.28389       1     1998 425.775593 38.229345
+# 7        7 74.87222 14.42500       1     1998 234.641786 13.436895
+# 8        8 75.30806 14.44583       1     1998   5.398583  1.654017
+# 9        9 75.17222 14.34861       1     1998  81.813532  9.714730
+# 10      10 75.28639 14.08750       1     1998  73.081759  6.591937
+```
+
+### Plot data contains tree-level measurements and nested plots (sub-plots)
+
+This format of plot data is similar to the previous one but contains
+nested plot (sub-plots) data. Let’s exemplify it by using the following
+sample shapefile:
+
+``` r
+
+cent <- sf::st_read(sample_file("SampleCentroid.shp")) # Sub-plot centroids
+
+print(cent)
+# Simple feature collection with 5 features and 23 fields
+# Geometry type: POINT
+# Dimension:     XY
+# Bounding box:  xmin: 272004.1 ymin: 350052.3 xmax: 272092.6 ymax: 350087.1
+# Projected CRS: OSGB36 / British National Grid
+#                               POINT_GUID     GRID_REF POINT_NUMB VISIT_STAT REASON_FOR PEG_LEFT
+# 1 {89B25687-EDA0-4704-B00D-93EDDA162779} sh7202950089          1          3          1        1
+# 2 {22E69595-D9BE-4BB1-8660-E2E7457E2068} sh7201850062          1          3          1        1
+# 3 {B4980FC2-4DA9-4897-93E2-07D03233D2F4} sh7209250061          1          3          1        1
+# 4 {224FD85B-6B64-4075-B51F-BA2D390AB4EF} sh7208750054          1          3          1        1
+# 5 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} sh7200750088          1          3          1        1
+#   PEG_NOT_LE                                  PEG_DESCRI                              PLOT_GUID OBJECTID
+# 1          0                   NW of v. slight open area {ABC3BE55-35CC-430B-A9C2-5BA9437286B6}        1
+# 2          0                   5m N of edge of mossy gap {E76DFF7B-39B4-45A5-85B8-F7BC38A429D5}        2
+# 3          0      W of large SS in shallow plough furrow {6EFDF9E3-F49D-4ED1-8BEB-F53D2A896BBA}        3
+# 4          0 in plough ditch with slight gap in row to E {47011DCB-7ADF-4C3D-B621-74AA98265CA4}        4
+# 5          0                      N from small mossy gap {EE0EF576-D6FF-4603-864F-23DC93C6A74D}        5
+#   INACCESSIB ACCESS_STA GENERATE_N HEIGHT TREE_COUNT ESTIMATED_ TREE_COU_1 RECORD_STA FIELDS_STA
+# 1          0          1          0      0          0          0          0        new       <NA>
+# 2          0          1          0      0          0          0          0        new       <NA>
+# 3          0          1          0      0          0          0          0        new       <NA>
+# 4          0          1          0      0          0          0          0        new       <NA>
+# 5          0          1          0      0          0          0          0        new       <NA>
+#   RESURVEY_P FROZEN POINT_STUM ACCESS_COM                  geometry
+# 1          0      0         21       <NA> POINT (272028.2 350085.6)
+# 2          0      0         49       <NA> POINT (272013.6 350060.7)
+# 3          0      0          8       <NA> POINT (272092.6 350063.9)
+# 4          0      0         10       <NA>   POINT (272086 350052.3)
+# 5          0      0         22       <NA> POINT (272004.1 350087.1)
+
+tree <- read.csv(sample_file("SampleTreeNested.csv")) # Tree data per sub-plot
+str(tree)
+# 'data.frame': 153 obs. of  50 variables:
+#  $ TREE_GUID..              : chr  "{90106646-EC43-4E04-B3DB-F4DBE0F37FD3}" "{3B18375F-B224-420E-92D0-0D7A0AC51B4A}" "{BCADC7ED-3C2B-41E1-9118-D3A74AAE8353}" "{DE39854B-074C-4CAE-B32C-42AC66063D68}" ...
+#  $ TREE_TYPE                : chr  "1" "1" "1" "1" ...
+#  $ SPIS                     : chr  "SS" "SS" "SS" "SS" ...
+#  $ STRY                     : chr  "4" "4" "4" "4" ...
+#  $ TREE_ALIVE               : chr  "1" "1" "1" "1" ...
+#  $ DEAD_TREE_CAUSE          : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ GROUP_TYPE               : chr  "1" "1" "1" "1" ...
+#  $ CONIFER_STEM_STRAIGHTNESS: chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ LOWEST_DEAD_BRANCH_HEIGHT: chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ POINT_GUID..             : chr  "{197A519B-7AF1-4374-BDD8-81FA03CCC54F}" "{197A519B-7AF1-4374-BDD8-81FA03CCC54F}" "{197A519B-7AF1-4374-BDD8-81FA03CCC54F}" "{197A519B-7AF1-4374-BDD8-81FA03CCC54F}" ...
+#  $ TREE_OR_STUMP            : int  1 1 1 1 1 1 1 1 1 1 ...
+#  $ DECAY_CLASS              : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ STUMP_DECAY_CLASS        : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ COPPICE_STOOL            : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ LINKED_TREE_GUID..       : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ TREE_LOCATION            : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ OBJECTID..               : int  34 24 25 26 27 28 29 30 31 23 ...
+#  $ OUTSIDE_PLOT             : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ HEIGHT                   : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ TREE_HEIGHT              : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ UC_HEIGHT                : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ LC_HEIGHT                : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ SHAPE..                  : chr  "Point" "Point" "Point" "Point" ...
+#  $ DBH                      : chr  "11" "11" "10" "12" ...
+#  $ DIAMETER_ONE             : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ DIAMETER_TWO             : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ SPECIES_GROUP            : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ EXCESSIVE_LEAN           : chr  "0" "0" "0" "0" ...
+#  $ WINDSNAPPED              : chr  "0" "0" "0" "0" ...
+#  $ COPPICE_STOOL_GUID..     : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ CROWN_DIAMETER_ONE       : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ CROWN_DIAMETER_TWO       : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ RECORD_STATUS            : chr  "new" "new" "new" "new" ...
+#  $ FIELDS_STATUS            : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ TIMBER_HEIGHT            : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ TREE_RESURVEY            : int  1 1 1 1 1 1 1 1 1 1 ...
+#  $ GOOD_FELLING_PRACTICE    : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ COPPICE_STOOL_DIAMETER   : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ RANGE_DBH                : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ RANGE_HEIGHT             : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ RANGE_CROWN_DIAMETER_1   : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ RANGE_CROWN_DIAMETER_2   : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ RANGE_DIAMETER_ONE       : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ RANGE_STUMP_HEIGHT       : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ STUMP_TYPE               : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ RANGE_DIAMETER_TWO       : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ SIZE_RANK                : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ PERCENTAGE_HEIGHT_REM    : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ STUMP_AGE                : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+#  $ IS_STUMP_AGE             : chr  "<Null>" "<Null>" "<Null>" "<Null>" ...
+
+TreeData <- Nested(cent, tree)
+# which column is your unique Plot ID? 
+# 
+#  1: TREE_GUID..                 2: TREE_TYPE                   3: SPIS                     
+#  4: STRY                        5: TREE_ALIVE                  6: DEAD_TREE_CAUSE          
+#  7: GROUP_TYPE                  8: CONIFER_STEM_STRAIGHTNESS   9: LOWEST_DEAD_BRANCH_HEIGHT
+# 10: POINT_GUID..               11: TREE_OR_STUMP              12: DECAY_CLASS              
+# 13: STUMP_DECAY_CLASS          14: COPPICE_STOOL              15: LINKED_TREE_GUID..       
+# 16: TREE_LOCATION              17: OBJECTID..                 18: OUTSIDE_PLOT             
+# 19: HEIGHT                     20: TREE_HEIGHT                21: UC_HEIGHT                
+# 22: LC_HEIGHT                  23: SHAPE..                    24: DBH                      
+# 25: DIAMETER_ONE               26: DIAMETER_TWO               27: SPECIES_GROUP            
+# 28: EXCESSIVE_LEAN             29: WINDSNAPPED                30: COPPICE_STOOL_GUID..     
+# 31: CROWN_DIAMETER_ONE         32: CROWN_DIAMETER_TWO         33: RECORD_STATUS            
+# 34: FIELDS_STATUS              35: TIMBER_HEIGHT              36: TREE_RESURVEY            
+# 37: GOOD_FELLING_PRACTICE      38: COPPICE_STOOL_DIAMETER     39: RANGE_DBH                
+# 40: RANGE_HEIGHT               41: RANGE_CROWN_DIAMETER_1     42: RANGE_CROWN_DIAMETER_2   
+# 43: RANGE_DIAMETER_ONE         44: RANGE_STUMP_HEIGHT         45: STUMP_TYPE               
+# 46: RANGE_DIAMETER_TWO         47: SIZE_RANK                  48: PERCENTAGE_HEIGHT_REM    
+# 49: STUMP_AGE                  50: IS_STUMP_AGE               
+# 
+# Selection: 10
+# which column is your unique  DBH (cm)? 
+# 
+#  1: TREE_GUID..                 2: TREE_TYPE                   3: SPIS                     
+#  4: STRY                        5: TREE_ALIVE                  6: DEAD_TREE_CAUSE          
+#  7: GROUP_TYPE                  8: CONIFER_STEM_STRAIGHTNESS   9: LOWEST_DEAD_BRANCH_HEIGHT
+# 10: POINT_GUID..               11: TREE_OR_STUMP   plots <- MeasurementErr(plotTree, xyTree, 'Europe')           12: DECAY_CLASS              
+# 13: STUMP_DECAY_CLASS          14: COPPICE_STOOL              15: LINKED_TREE_GUID..       
+# 16: TREE_LOCATION              17: OBJECTID..                 18: OUTSIDE_PLOT             
+# 19: HEIGHT                     20: TREE_HEIGHT                21: UC_HEIGHT                
+# 22: LC_HEIGHT                  23: SHAPE..                    24: DBH                      
+# 25: DIAMETER_ONE               26: DIAMETER_TWO               27: SPECIES_GROUP            
+# 28: EXCESSIVE_LEAN             29: WINDSNAPPED                30: COPPICE_STOOL_GUID..     
+# 31: CROWN_DIAMETER_ONE         32: CROWN_DIAMETER_TWO         33: RECORD_STATUS            
+# 34: FIELDS_STATUS              35: TIMBER_HEIGHT              36: TREE_RESURVEY            
+# 37: GOOD_FELLING_PRACTICE      38: COPPICE_STOOL_DIAMETER     39: RANGE_DBH                
+# 40: RANGE_HEIGHT               41: RANGE_CROWN_DIAMETER_1     42: RANGE_CROWN_DIAMETER_2   
+# 43: RANGE_DIAMETER_ONE         44: RANGE_STUMP_HEIGHT         45: STUMP_TYPE               
+# 46: RANGE_DIAMETER_TWO         47: SIZE_RANK                  48: PERCENTAGE_HEIGHT_REM    
+# 49: STUMP_AGE                  50: IS_STUMP_AGE               
+# 
+# Selection: 24
+# which column is your unique Tree Height (m)? 
+# 
+#  1: TREE_GUID..                 2: TREE_TYPE                   3: SPIS                     
+#  4: STRY                        5: TREE_ALIVE                  6: DEAD_TREE_CAUSE          
+#  7: GROUP_TYPE                  8: CONIFER_STEM_STRAIGHTNESS   9: LOWEST_DEAD_BRANCH_HEIGHT
+# 10: POINT_GUID..               11: TREE_OR_STUMP              12: DECAY_CLASS              
+# 13: STUMP_DECAY_CLASS          14: COPPICE_STOOL              15: LINKED_TREE_GUID..       
+# 16: TREE_LOCATION              17: OBJECTID..                 18: OUTSIDE_PLOT             
+# 19: HEIGHT                     20: TREE_HEIGHT                21: UC_HEIGHT                
+# 22: LC_HEIGHT                  23: SHAPE..                    24: DBH                      
+# 25: DIAMETER_ONE               26: DIAMETER_TWO               27: SPECIES_GROUP            
+# 28: EXCESSIVE_LEAN             29: WINDSNAPPED                30: COPPICE_STOOL_GUID..     
+# 31: CROWN_DIAMETER_ONE         32: CROWN_DIAMETER_TWO         33: RECORD_STATUS            
+# 34: FIELDS_STATUS              35: TIMBER_HEIGHT              36: TREE_RESURVEY            
+# 37: GOOD_FELLING_PRACTICE      38: COPPICE_STOOL_DIAMETER     39: RANGE_DBH                
+# 40: RANGE_HEIGHT               41: RANGE_CROWN_DIAMETER_1     42: RANGE_CROWN_DIAMETER_2   
+# 43: RANGE_DIAMETER_ONE         44: RANGE_STUMP_HEIGHT         45: STUMP_TYPE               
+# 46: RANGE_DIAMETER_TWO         47: SIZE_RANK                  48: PERCENTAGE_HEIGHT_REM    
+# 49: STUMP_AGE                  50: IS_STUMP_AGE               
+# 
+# Selection: 20
+# Warning: NAs introduced by coercion
+# Enter tree genus: Picea
+# Enter tree species: sitchensis
+# Enter plot size in m2: 100
+
+plotTree <- TreeData[[1]]
+head(plotTree)
+#                                       id genus    species diameter size fez gez year   height
+# 1 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} Picea sitchensis       11  100  NA  NA 2010 11.96667
+# 2 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} Picea sitchensis       11  100  NA  NA 2010 11.96667
+# 3 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} Picea sitchensis       10  100  NA  NA 2010 11.96667
+# 4 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} Picea sitchensis       12  100  NA  NA 2010 11.96667
+# 5 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} Picea sitchensis       10  100  NA  NA 2010 11.96667
+# 6 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} Picea sitchensis       13  100  NA  NA 2010 11.96667
+
+xyTree <- TreeData[[2]]
+head(xyTree)
+#                                       id       y         x
+# 1 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} 53.0327 -3.910179
+# 2 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} 53.0327 -3.910179
+# 3 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} 53.0327 -3.910179
+# 4 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} 53.0327 -3.910179
+# 5 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} 53.0327 -3.910179
+# 6 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} 53.0327 -3.910179
+
+plots_trees_nested_agb_sd <- sd_tree(plotTree, xyTree, 'Europe')
+# The reference dataset contains 77 wood density values
+# Your taxonomic table contains 1 taxa
+# Using actual tree height from the provided plot data.
+# Warning message:
+# In BIOMASS::getWoodDensity(genus = plot$genus, species = plot$species,  :
+#   DRYAD data only stored 77 wood density values in your region of interest. You could provide additional wood densities (parameter addWoodDensityData) or widen your region (region="World")
+
+print(plots_trees_nested_agb_sd)
+#                                  PLOT_ID   POINT_X  POINT_Y SIZE_HA AVG_YEAR AGB_T_HA   sdTree
+# 1 {197A519B-7AF1-4374-BDD8-81FA03CCC54F} -3.910179 53.03270    0.01     2010 191.1393 27.52151
+# 2 {224FD85B-6B64-4075-B51F-BA2D390AB4EF} -3.908944 53.03241    0.01     2010 243.5213 68.40316
+# 3 {22E69595-D9BE-4BB1-8660-E2E7457E2068} -3.910026 53.03247    0.01     2010 302.0629 42.43342
+# 4 {89B25687-EDA0-4704-B00D-93EDDA162779} -3.909820 53.03270    0.01     2010 287.5870 47.53895
+# 5 {B4980FC2-4DA9-4897-93E2-07D03233D2F4} -3.908851 53.03252    0.01     2010 427.2943 90.30131
+```
+
+### Lidar reference data
+
+Let’s see an example where lidar data is used as plot data reference. In
+the example below we use sample lidar data provided with the package:
+
+``` r
+
+# Sample lidar data folder location:
+slb.agb.dir <- sample_lidar_folder("SustainableLandscapeBrazil_v04/SLB_AGBmaps")
+slb.cv.dir <- sample_lidar_folder("SustainableLandscapeBrazil_v04/SLB_CVmaps")
+
+# Obtaining the Coeficient of Variation for each cell in the dataset:
+slb.cv <- RefLidar(slb.cv.dir)
+# Enter raster type (AGB, CV, or SD): cv
+# User input needed to extract PLOT_ID from filename(s)...
+# File(s) used to extract data: BON_A01_2018_CV_100m.tif
+# Enter numeric index of the first letter of PLOT_ID: 1
+# Enter numeric index of the last letter of PLOT_ID: 7
+# User input needed to extract YEAR from filename(s)...
+# File(s) used to extract data: BON_A01_2018_CV_100m.tif
+# Enter numeric index of the first letter of YEAR: 9
+# Enter numeric index of the last letter of YEAR: 12
+
+tail(slb.cv)
+#      PLOT_ID   POINT_X   POINT_Y        CV AVG_YEAR
+# 1135 BON_A01 -67.28973 -9.889289 0.3526200     2018
+# 1136 BON_A01 -67.28882 -9.889289 0.3432670     2018
+# 1137 BON_A01 -67.28791 -9.889289 0.3390796     2018
+# 1138 BON_A01 -67.28700 -9.889289 0.3368152     2018
+# 1170 BON_A01 -67.28882 -9.890197 0.3561200     2018
+# 1171 BON_A01 -67.28791 -9.890197 0.3443113     2018
+
+# Obtaining the Above Ground Biomass for each cell in the dataset:
+plots_lidar <- RefLidar(slb.agb.dir)
+# Enter raster type (AGB, CV, or SD): agb
+# User input needed to extract PLOT_ID from filename(s)...
+# File(s) used to extract data: BON_A01_2018_AGB_100m.tif
+# Enter numeric index of the first letter of PLOT_ID: 1
+# Enter numeric index of the last letter of PLOT_ID: 7
+# User input needed to extract YEAR from filename(s)...
+# File(s) used to extract data: BON_A01_2018_AGB_100m.tif
+# Enter numeric index of the first letter of YEAR: 9
+# Enter numeric index of the last letter of YEAR: 12
+
+tail(plots_lidar)
+#      PLOT_ID   POINT_X   POINT_Y      AGB AVG_YEAR
+# 1135 BON_A01 -67.28973 -9.889289 214.9921     2018
+# 1136 BON_A01 -67.28882 -9.889289 227.4593     2018
+# 1137 BON_A01 -67.28791 -9.889289 233.1332     2018
+# 1138 BON_A01 -67.28700 -9.889289 236.3842     2018
+# 1170 BON_A01 -67.28882 -9.890197 210.6665     2018
+# 1171 BON_A01 -67.28791 -9.890197 226.1070     2018
+
+# Calculating the Standard Deviation (SD = CV * AGB) and adding it to the final plot data:
+plots_lidar$sdTree <- slb.cv$CV * plots_lidar$AGB
+tail(plots_lidar)
+#      PLOT_ID   POINT_X   POINT_Y      AGB AVG_YEAR   sdTree
+# 1135 BON_A01 -67.28973 -9.889289 214.9921     2018 75.81052
+# 1136 BON_A01 -67.28882 -9.889289 227.4593     2018 78.07928
+# 1137 BON_A01 -67.28791 -9.889289 233.1332     2018 79.05070
+# 1138 BON_A01 -67.28700 -9.889289 236.3842     2018 79.61778
+# 1170 BON_A01 -67.28882 -9.890197 210.6665     2018 75.02255
+# 1171 BON_A01 -67.28791 -9.890197 226.1070     2018 77.85120
+
+# Add biome information
+plots_lidar <- BiomePair(plots_lidar)
+
+# Add SIZE_HA column (required for calculateTotalUncertainty)
+plots_lidar$SIZE_HA <- 1  # For 100m resolution (100m x 100m = 1 ha)
+
+# Rename AGB column to AGB_T_HA to match what calculateTotalUncertainty expects
+names(plots_lidar)[names(plots_lidar) == "AGB"] <- "AGB_T_HA"
+
+# Calculate total uncertainty (measurement, sampling, and growth)
+plots_lidar_unc <- calculateTotalUncertainty(plots_lidar, map_year = 2018, map_resolution = 100)
+# Using existing sdTree values for tree_level data
+# Calculating sampling uncertainty using Rejou-Mechain approach
+# Loading sampling error data from package file
+# Calculating growth uncertainty by biome
+# Total uncertainty calculated for plot data of type: tree_level
+
+head(plots_lidar_unc$data)
+#     PLOT_ID AGB_T_HA AVG_YEAR   sdTree      ZONE         FAO.ecozone      GEZ SIZE_HA   POINT_X   POINT_Y
+# 1 BON_A01 210.6665     2018 75.02255 S.America Tropical rainforest Tropical       1 -67.28882 -9.890197
+# 2 BON_A01 226.1070     2018 77.85120 S.America Tropical rainforest Tropical       1 -67.28791 -9.890197
+# 3 BON_A01 227.4593     2018 78.07928 S.America Tropical rainforest Tropical       1 -67.28882 -9.889289
+# 4 BON_A01 233.1332     2018 79.05070 S.America Tropical rainforest Tropical       1 -67.28791 -9.889289
+# 5 BON_A01 214.9921     2018 75.81052 S.America Tropical rainforest Tropical       1 -67.28973 -9.889289
+# 6 BON_A01 195.5950     2018 72.22207 S.America Tropical rainforest Tropical       1 -67.29064 -9.888382
+#   RS_HA ratio     sdSE sdGrowth  varPlot  sdTotal
+# 1     1     1 16.34357        0 5895.496 76.78213
+# 2     1     1 16.34357        0 6327.922 79.54824
+# 3     1     1 16.34357        0 6363.486 79.77146
+# 4     1     1 16.34357        0 6516.126 80.72252
+# 5     1     1 16.34357        0 6014.347 77.55222
+# 6     1     1 16.34357        0 5483.140 74.04823
+
+# See the relative contribution of different uncertainty components
+plots_lidar_unc$uncertainty_components
+# measurement    sampling      growth 
+#  0.91475934  0.08524066  0.00000000 
+```
+
+### Plot data is a GIS file
+
+Let’s see an example where the plot data is a GIS file. Users should
+know plot ID, plot size, inventory year beforehand for manual entry if
+ever missing in the GIS files’ attributes. In the example below we use a
+sample shapefile provided with the package:
+
+``` r
+
+plots_sf <- sf::st_read(sample_file("samp_shp.shp"))
+
+print(plots_sf)
+# Simple feature collection with 170 features and 3 fields
+# Geometry type: POINT
+# Dimension:     XY
+# Bounding box:  xmin: 137.3756 ymin: 35.16216 xmax: 137.4079 ymax: 35.19799
+# Geodetic CRS:  WGS 84
+# First 10 features:
+#    MEAN_Heigh        V       AGB                  geometry
+# 1    20.99811 263.2125 127.70163 POINT (137.3777 35.16275)
+# 2    20.92308 330.6375 177.22711 POINT (137.3774 35.16304)
+# 3    18.03867 223.0688 123.08946  POINT (137.381 35.16245)
+# 4    17.39841 172.4500  95.24402 POINT (137.3799 35.16216)
+# 5    20.43833 249.2562 138.22925 POINT (137.3806 35.16245)
+# 6    20.04576 235.3688 130.56611 POINT (137.3806 35.16363)
+# 7    20.01860 266.9125 143.88520  POINT (137.377 35.16275)
+# 8    21.07500 273.0625 151.47596 POINT (137.3803 35.16363)
+# 9    19.81884 270.2000 148.59707 POINT (137.3785 35.16363)
+# 10   22.15147 333.8500 182.89619 POINT (137.3788 35.16392)
+```
+
+The sample shapefile’s SRS / CRS is already in EPSG:4326 / WGS84 so
+there is no need to transform it. In case it isn’t we would precede the
+following step with `plots_sf <- st_transform(plots_sf, crs = 4326)`.
+
+``` r
+
+plots_sf$longitude <- sf::st_coordinates(sf::st_centroid(plots_sf))[, 1]
+plots_sf$latitude <- sf::st_coordinates(sf::st_centroid(plots_sf))[, 2]
+
+shapefile_plots <- RawPlots(as.data.frame(plots_sf)) 
+# Which column is your unique Plot ID? 
+# 
+# 1: Manual entry
+# 2: MEAN_Heigh
+# 3: V
+# 4: AGB
+# 5: geometry
+# 6: longitude
+# 7: latitude
+# 
+# Selection: 1
+# Enter the numeric value for manual entry: 1
+# Which column is your plot AGB? 
+# 
+# 1: Manual entry
+# 2: MEAN_Heigh
+# 3: V
+# 4: AGB
+# 5: geometry
+# 6: longitude
+# 7: latitude
+# 
+# Selection: 4
+# Select longitude column 
+# 
+# 1: Manual entry
+# 2: MEAN_Heigh
+# 3: V
+# 4: AGB
+# 5: geometry
+# 6: longitude
+# 7: latitude
+# 
+# Selection: 6
+# Which column is your latitude? 
+# 
+# 1: Manual entry
+# 2: MEAN_Heigh
+# 3: V
+# 4: AGB
+# 5: geometry
+# 6: longitude
+# 7: latitude
+# 
+# Selection: 7
+# Select plot size column 
+# 
+# 1: Manual entry
+# 2: MEAN_Heigh
+# 3: V
+# 4: AGB
+# 5: geometry
+# 6: longitude
+# 7: latitude
+# 
+# Selection: 1
+# Enter the numeric value for manual entry: 100
+# Select year column 
+# 
+# 1: Manual entry
+# 2: MEAN_Heigh
+# 3: V
+# 4: AGB
+# 5: geometry
+# 6: longitude
+# 7: latitude
+# 
+# Selection: 1
+# Enter the numeric value for manual entry: 2022
+
+head(shapefile_plots)
+#   PLOT_ID  POINT_X  POINT_Y  AGB_T_HA SIZE_HA FEZ GEZ AVG_YEAR
+# 1       1 137.3777 35.16275 127.70163    0.01  NA  NA     2022
+# 2       1 137.3774 35.16304 177.22711    0.01  NA  NA     2022
+# 3       1 137.3810 35.16245 123.08946    0.01  NA  NA     2022
+# 4       1 137.3799 35.16216  95.24402    0.01  NA  NA     2022
+# 5       1 137.3806 35.16245 138.22925    0.01  NA  NA     2022
+# 6       1 137.3806 35.16363 130.56611    0.01  NA  NA     2022
+```

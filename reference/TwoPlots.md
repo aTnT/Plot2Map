@@ -1,0 +1,76 @@
+# Create a comparison plot of two AGB datasets
+
+This function creates a plot comparing two sets of AGB measurements,
+useful for comparing different processing methods or datasets. Both sets
+are shown as binned data with error bars and different colors.
+
+## Usage
+
+``` r
+TwoPlots(
+  x,
+  y,
+  x1,
+  y1,
+  caption = "",
+  fname = "",
+  title = "",
+  outDir = "results"
+)
+```
+
+## Arguments
+
+- x:
+
+  Numeric vector of first reference AGB values.
+
+- y:
+
+  Numeric vector of first mapped AGB values (same length as x).
+
+- x1:
+
+  Numeric vector of second reference AGB values.
+
+- y1:
+
+  Numeric vector of second mapped AGB values (same length as x1).
+
+- caption:
+
+  Character string for the plot title/caption.
+
+- fname:
+
+  Character string specifying the output file name for saving the plot.
+  If empty, the plot will be displayed but not saved.
+
+- title:
+
+  Character string specifying the comparison type: 'harmo' for
+  harmonized data comparison, or any other value for weighted comparison
+  (default: "").
+
+- outDir:
+
+  Character string specifying the output directory for saving the plot
+  (default: "results").
+
+## Value
+
+Invisibly returns NULL. The function creates a plot as a side effect.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+data("plots")
+set.seed(42)
+ref_data <- plots$AGB_T_HA[1:100]
+map_data1 <- ref_data + rnorm(100, 0, 20)
+map_data2 <- ref_data + rnorm(100, 5, 15)
+TwoPlots(ref_data, map_data1, ref_data, map_data2, 
+         "Comparison of Methods", "comparison_plot.png", "harmo")
+} # }
+```

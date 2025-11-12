@@ -1,0 +1,91 @@
+# Introduction
+
+## AGB
+
+Above-ground biomass (AGB) is the total mass of material stored in the
+living stems, branches and leaves of vegetation, and is often described
+as a biomass density, with units of mass per unit area such as t/ha.
+
+There have been major efforts to map forest AGB using Earth Observation
+(EO) data, and further maps are anticipated in the near-future because
+of new missions dedicated to measuring AGB.
+
+Current AGB maps were derived using different methods and data sources,
+leading to significant disagreements between them that reduce their
+value in specific applications such as in estimating global and national
+carbon stocks. In addition, the maps have specific individual error
+properties, rendering them unreliable for biomass change analysis,
+despite representing different epochs.
+
+## Plot Data
+
+Assessment of the accuracy of an AGB map has to take into account random
+and bias errors in the map itself and in the reference data used to
+validate it. Reference data are commonly used in situ plot measurements
+(plot data), whose uncertainty can be quantified using specific AGB
+validation protocols. While plot accuracy and uncertainty at local and
+regional scales have been addressed, at continental and global scale AGB
+maps are hampered by the lack of a global reference dataset.
+
+## Plot Uncertainty
+
+The consequent lack of a consistently sampled reference AGB dataset has
+consequences for statistical inference, which is only possible under
+certain assumptions and requires the data to be accompanied by
+uncertainty estimates. Using a collection of plot datasets with
+uncertainty estimates across the globe offers several opportunities such
+as: revealing regional patterns that may be explainable by environmental
+and/or ecological variables; investigate bias and develop bias reduction
+methods; and finally in evaluating of the extent to which plot-map
+differences can be attributed to map error.
+
+## Map Bias
+
+A key principle for climate monitoring is that random errors and
+time-dependent biases in satellite EO and derived products should be
+identified. More generally map users prefer AGB maps to be unbiased and
+to have spatially explicit uncertainty information, including its
+spatial autocorrelation.
+
+## The Plot2Map Package
+
+To address these issues, a comprehensive framework for assessing and
+harmonizing global AGB maps has been developed with this package. This
+framework, incorporated with this package, aims to quantify and reduce
+biases in AGB maps while providing spatially explicit uncertainty
+information.
+
+The `Plot2Map` framework incorporates three key components:
+
+1.  Plot data preparation: A global collection of plot data is carefully
+    selected and pre-processed to minimize temporal and spatial
+    mismatches with AGB maps.
+
+2.  Uncertainty quantification: The framework assesses various sources
+    of uncertainty in plot-level AGB estimates, including measurement
+    errors, allometric model errors, and sampling errors.
+
+3.  Map bias assessment and correction: Using the prepared plot data,
+    the framework quantifies biases in global AGB maps and models these
+    biases using spatial covariates.
+
+### Installation
+
+You can install Plot2Map from GitHub:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("aTnT/Plot2Map")
+
+library(Plot2Map)
+```
+
+### Vignettes
+
+In the following vignettes, each of the `Plot2Map` framework components
+will be addressed by showcasing practical examples of a typical
+workflow:
+
+1.  Plot data preparation.
+2.  Uncertainty quantification.
+3.  Map bias assessment and correction.
