@@ -2,7 +2,7 @@
 title: "Plot data preparation"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{plot-data-preparation}
+  %\VignetteIndexEntry{Plot data preparation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -10,15 +10,13 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  eval = FALSE  # Prevent large file downloads during package checks
 )
 ```
 
 ```{r setup, include = FALSE}
-# Setting eval=FALSE for all chunks to prevent large file downloads during package checks
-knitr::opts_chunk$set(eval = FALSE)
-#library(Plot2Map)
-devtools::load_all()
+library(Plot2Map)
 ```
 
 
