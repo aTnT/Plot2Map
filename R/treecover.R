@@ -529,9 +529,16 @@ calculate_gfc_tiles <- function(aoi, recreate_grid = FALSE) {
         aoi <- st_transform(aoi, 4326)
     }
 
-    # Instead of using st_convex_hull which can increase the AOI's extent,
-    # directly find tiles that intersect with the AOI geometry
-    intersects <- st_intersects(gfc_tiles_grid, aoi)
+    # Temporarily disable s2 for tile intersection calculation
+    # S2 spherical geometry can miss tiles at boundaries (e.g., ROI at lat=40.0
+    # might not intersect with the 50N tile that starts at lat=40)
+    # Using planar geometry (GEOS) handles these edge cases correctly
+    old_s2 <- sf::sf_use_s2()
+    on.exit(sf::sf_use_s2(old_s2), add = TRUE)
+    sf::sf_use_s2(FALSE)
+
+    # Find tiles that intersect with the AOI geometry
+    intersects <- suppressMessages(st_intersects(gfc_tiles_grid, aoi))
 
     # Find tiles that intersect with the AOI
     intersecting_idx <- which(lengths(intersects) > 0)

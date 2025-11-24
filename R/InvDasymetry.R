@@ -709,6 +709,12 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
         # Skip loading if package not installed - this is expected during development
       })
 
+      # Clear any cached GFC tiles grid to ensure fresh calculation
+      # This is important because tile intersection logic may have been updated
+      if (exists("gfc_tiles_grid", envir = .GlobalEnv)) {
+        rm("gfc_tiles_grid", envir = .GlobalEnv)
+      }
+
       # Set up worker environment
       options(warn = 1)  # Show warnings immediately
 

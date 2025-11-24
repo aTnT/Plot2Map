@@ -415,6 +415,14 @@ sampleTreeCover <- function(
     }
   }
 
+  # If no forest cover values were calculated, return NA for each threshold
+  # This can happen when tile extraction fails (e.g., memory errors) or when
+  # the ROI doesn't properly intersect with any tiles
+  if (length(forest_cover) == 0) {
+    warning("No tree cover data could be extracted for the ROI. Returning NA.")
+    return(rep(NA_real_, length(thresholds)))
+  }
+
   return(forest_cover)
 }
 
