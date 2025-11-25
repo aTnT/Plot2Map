@@ -29,6 +29,22 @@ template:
     ignore:
     - reference/data
     - '**/ESACCI-BIOMASS'
+articles:
+- title: Getting Started
+  navbar: ~
+  contents:
+  - introduction
+  - plot-data-preparation
+- title: Core Workflows
+  navbar: ~
+  contents:
+  - inverse-dasymetric-mapping
+  - bias-modeling
+- title: Advanced Topics
+  navbar: ~
+  contents:
+  - advanced-uncertainty
+
 development:
   mode: auto
 destination: docs

@@ -95,9 +95,11 @@
 #'   \item{mapAGB}{AGB from map sampling, representing the biomass values extracted from the
 #'     reference map at each plot or cell location.}
 #'   \item{SIZE_HA}{Plot size in hectares. For aggregated cells, this is the mean plot size within the cell.}
+#'   \item{varPlot}{Plot measurement variance (only when aggr is specified and varPlot exists in input data).
+#'     Aggregated using inverse variance weighting: 1 / sum(1/varPlot). Units are in (t/ha)².}
+#'   \item{n}{Number of plots aggregated per cell (only when aggr is specified).}
 #'   \item{x}{X-coordinate of plot or cell center (longitude).}
 #'   \item{y}{Y-coordinate of plot or cell center (latitude).}
-#'   \item{n}{Number of plots within each aggregated cell (only included when aggr is not NULL).}
 #'
 #' @details
 #' The function performs inverse dasymetric mapping through these key steps:
@@ -899,8 +901,8 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
                               timeout = timeout)
         }
         res <- c(treeCovers * plot_data$AGB_T_HA[i], plot_data$AGB_T_HA_ORIG[i],
-                 agb_value, plot_data$SIZE_HA[i], plot_data$n[i],
-                 plot_data$POINT_X[i], plot_data$POINT_Y[i])
+                 agb_value, plot_data$SIZE_HA[i], plot_data$varPlot[i],
+                 plot_data$n[i], plot_data$POINT_X[i], plot_data$POINT_Y[i])
         res
       } else {
         # Non-aggregated mode
@@ -953,7 +955,7 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
   FFAGB <- as.data.frame(FFAGB)
 
   if (!is.null(aggr)) {
-    names(FFAGB) <- c(paste0("plotAGB_", threshold), "orgPlotAGB", "mapAGB", "SIZE_HA", "n", "x", "y")
+    names(FFAGB) <- c(paste0("plotAGB_", threshold), "orgPlotAGB", "mapAGB", "SIZE_HA", "varPlot", "n", "x", "y")
   } else {
     names(FFAGB) <- c(paste0("plotAGB_", threshold), "tfPlotAGB", "orgPlotAGB", "mapAGB", "SIZE_HA", "x", "y")
   }

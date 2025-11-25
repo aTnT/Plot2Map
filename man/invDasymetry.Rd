@@ -115,9 +115,11 @@ the AGB_T_HA values from the input data.}
 \item{mapAGB}{AGB from map sampling, representing the biomass values extracted from the
 reference map at each plot or cell location.}
 \item{SIZE_HA}{Plot size in hectares. For aggregated cells, this is the mean plot size within the cell.}
+\item{varPlot}{Plot measurement variance (only when aggr is specified and varPlot exists in input data).
+Aggregated using inverse variance weighting: 1 / sum(1/varPlot). Units are in (t/ha)².}
+\item{n}{Number of plots aggregated per cell (only when aggr is specified).}
 \item{x}{X-coordinate of plot or cell center (longitude).}
 \item{y}{Y-coordinate of plot or cell center (latitude).}
-\item{n}{Number of plots within each aggregated cell (only included when aggr is not NULL).}
 }
 \description{
 This function performs inverse dasymetric mapping on plot data. It selects plots

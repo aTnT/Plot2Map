@@ -152,27 +152,28 @@ sampleAGBmap <- function(
       }
 
       # Try to extract values from the raster
-      tryCatch({
+      extracted_vals <- tryCatch({
         message("Loading raster")
         raster_obj <- terra::rast(file.path(esacci_folder, f))
 
         message("Extracting values for ROI...")
-        extracted_vals <- terra::extract(raster_obj, sf::st_as_sf(roi), weights = weighted_mean, normalizeWeights = FALSE)
-        colnames(extracted_vals)[2] <- "agb"
+        vals <- terra::extract(raster_obj, sf::st_as_sf(roi), weights = weighted_mean, normalizeWeights = FALSE)
+        colnames(vals)[2] <- "agb"
 
         message("Extraction complete")
+        vals
       }, error = function(e) {
         message("Error extracting values from ", f, ": ", e$message)
-        extracted_vals <- NULL
+        NULL
       })
 
       # Extract AGB and, if applicable, the weights
-      if (!weighted_mean & (length(extracted_vals) == 2) & length(extracted_vals[, 2]) > 0) {
+      if (!is.null(extracted_vals) && !weighted_mean && (length(extracted_vals) == 2) && length(extracted_vals[, 2]) > 0) {
         # No weighted mean case
         agb_vls <- extracted_vals[, 2]
         message("AGB values extracted (weighted mean = FALSE): ", length(agb_vls), " values")
 
-      } else if (weighted_mean & (length(extracted_vals) == 3) & length(extracted_vals[, 2]) > 0) {
+      } else if (!is.null(extracted_vals) && weighted_mean && (length(extracted_vals) == 3) && length(extracted_vals[, 2]) > 0) {
         # Weighted mean case
         agb_vls <- extracted_vals[, 2:3]
         message("AGB values extracted (weighted mean = TRUE): ", nrow(agb_vls), " values")
