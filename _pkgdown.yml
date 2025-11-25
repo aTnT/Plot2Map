@@ -38,7 +38,6 @@ articles:
 - title: Core Workflows
   navbar: ~
   contents:
-  - inverse-dasymetric-mapping
   - bias-modeling
 - title: Advanced Topics
   navbar: ~
