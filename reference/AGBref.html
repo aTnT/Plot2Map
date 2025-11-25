@@ -142,6 +142,187 @@ national carbon accounting.</p>
 comprehensive version alongside peer review process of the data descriptor paper.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Load the AGBref dataset</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"AGBref"</span>, package <span class="op">=</span> <span class="st">"Plot2Map"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Explore the dataset</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">AGBref</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          POINT_X POINT_Y TC_PLT_SD TC_PLT_MEAN TC_GRID_SD TC_GRID_MEAN  n</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> result.1  146.85  -43.55  6.350853    86.33333  10.733498     86.24031  3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> result.2  146.85  -43.45  0.000000    90.00000   7.256462     87.37189  4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> result.3  146.85  -43.35  3.326275    88.30769   8.816047     87.74057 13</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> result.4  146.95  -43.35  0.000000    90.00000  11.923481     85.43528 21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> result.5  147.05  -43.35  3.502380    88.60000  14.653529     82.91692 10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> result.6  147.25  -43.35 45.000000    67.50000  15.142176     82.58522  4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>          AGB_T_HA    SIZE_HA OPEN VER    varTot AVG_YEAR</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> result.1 940.1520 0.04523893    0   1 20448.331     2011</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> result.2 432.0948 0.04523893    0   1 11875.633     2012</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> result.3 668.1510 0.04523893    0   1  3099.880     2013</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> result.4 216.0863 0.04523893    0   1  1528.960     2013</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> result.5 144.2624 0.04523893    0   1  4298.584     2013</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> result.6 333.9161 0.04523893    0   1  9841.693     2010</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                            BIO CODE INVENTORY  TIER</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> result.1 Temperate broadleaf and mixed forests AUS1  regional tier1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> result.2 Temperate broadleaf and mixed forests AUS1  regional tier1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> result.3 Temperate broadleaf and mixed forests AUS1  regional tier1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> result.4 Temperate broadleaf and mixed forests AUS1  regional tier1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> result.5 Temperate broadleaf and mixed forests AUS1  regional tier1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> result.6 Temperate broadleaf and mixed forests AUS1  regional tier1</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">AGBref</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     POINT_X           POINT_Y         TC_PLT_SD       TC_PLT_MEAN    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Min.   :-166.45   Min.   :-43.55   Min.   : 0.000   Min.   :  0.00  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  1st Qu.: -46.65   1st Qu.: -7.15   1st Qu.: 3.361   1st Qu.: 15.60  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Median :   8.95   Median : 33.85   Median :11.369   Median : 63.75  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Mean   :  11.24   Mean   : 22.04   Mean   :15.827   Mean   : 53.40  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  3rd Qu.:  22.65   3rd Qu.: 44.75   3rd Qu.:26.795   3rd Qu.: 85.00  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Max.   : 162.25   Max.   : 78.75   Max.   :70.711   Max.   :100.00  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                     NA's   :14576                    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    TC_GRID_SD     TC_GRID_MEAN         n              AGB_T_HA       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Min.   : 0.00   Min.   :10.00   Min.   :   1.00   Min.   :   0.000  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  1st Qu.:14.46   1st Qu.:50.96   1st Qu.:   1.00   1st Qu.:   6.547  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Median :18.56   Median :68.17   Median :   2.00   Median :  28.044  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Mean   :17.76   Mean   :64.44   Mean   :  14.73   Mean   :  61.110  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  3rd Qu.:21.98   3rd Qu.:78.84   3rd Qu.:   6.00   3rd Qu.:  72.745  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Max.   :35.49   Max.   :99.99   Max.   :7847.00   Max.   :2631.873  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  NA's   :851     NA's   :837                       NA's   :606       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     SIZE_HA               OPEN             VER            varTot         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Min.   :  0.01009   Min.   :0.0000   Min.   :1.000   Min.   :6.100e-02  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  1st Qu.:  0.06400   1st Qu.:0.0000   1st Qu.:1.000   1st Qu.:3.436e+02  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Median :  0.12566   Median :0.0000   Median :3.000   Median :5.479e+02  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Mean   :  2.79386   Mean   :0.1431   Mean   :3.493   Mean   :2.393e+03  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  3rd Qu.:  0.50000   3rd Qu.:0.0000   3rd Qu.:6.000   3rd Qu.:1.459e+03  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Max.   :100.00000   Max.   :1.0000   Max.   :6.000   Max.   :1.364e+05  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     AVG_YEAR   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Min.   :1900  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  1st Qu.:2006  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Median :2013  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Mean   :2012  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  3rd Qu.:2017  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Max.   :2024  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                            BIO      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Temperate broadleaf and mixed forests                       :8645  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Tropical and subtropical moist broadleaf forest             :6602  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Mediterranean forests, woodland and scrub                   :5726  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Tropical and subtropical grasslands, savannas and shrublands:4612  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Boreal forests                                              :3140  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Tropical and subtropical dry broadleaf forest               :2401  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  (Other)                                                     :3912  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       CODE          INVENTORY        TIER      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  SAM_BRA: 7933   LIDAR   :  220        :16607  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  EU2    : 3966   local   : 5859   tier0:  897  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  ASI_JAP: 2956   national:15194   tier1:17363  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  EU_SWE : 2619   regional:13765   tier2:  169  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  EU1    : 2340                    tier3:    2  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  EU_ITAL: 2186                                 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  (Other):13038                                 </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Check available regions</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">AGBref</span><span class="op">$</span><span class="va">CODE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  AFR_COF  AFR_FOS  AFR_GHA  AFR_KEN  AFR_LDR     AFR1    AFR10    AFR11 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      897       20        5       11       27       99        4      156 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    AFR12    AFR13    AFR14    AFR15     AFR2     AFR4     AFR5     AFR6 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        5        2        6      100       16       26        6       18 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     AFR7     AFR8     AFR9      ARC  ASI_FOS  ASI_ind  ASI_JAP  ASI_LDR </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        6       75      674      164        2      217     2956       25 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  ASI_nep ASI_neps  ASI_pak   ASI_PH     ASI1    ASI10    ASI11     ASI2 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      417      266      224      139       55      186      782       19 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     ASI3     ASI4     ASI9  AUS_FOS AUS_tern     AUS1     CAM1   EU_BEL </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       15       18        2        1       55     2078     1680      128 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   EU_CZH   EU_CZR   EU_FOS   EU_IRE  EU_ITAL   EU_POL   EU_SWE      EU1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      481        4       52      662     2186        8     2619     2340 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      EU2      EU3      EU4   FOS_23 NAM_juni NAM_NEON NAM_tund     NAM1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     3966      413      640        6      109      233       17      132 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     NAM2     NAM3     NAM4 SAM_BAJO  SAM_BRA  SAM_FOS  SAM_guy  SAM_KEL </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       27       67      685        5     7933       35      110      565 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   SAM_RF SAM_TAPA     SAM2     SAM3     SAM4     SAM5 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      110        8       28       10        2        3 </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Check data quality tiers</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">AGBref</span><span class="op">$</span><span class="va">TIER</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       tier0 tier1 tier2 tier3 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16607   897 17363   169     2 </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Filter to Spain (EU2) - tier1 quality</span></span></span>
+<span class="r-in"><span><span class="va">spain_ref</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">AGBref</span>, <span class="va">CODE</span> <span class="op">==</span> <span class="st">"EU2"</span> <span class="op">&amp;</span> <span class="va">TIER</span> <span class="op">==</span> <span class="st">"tier1"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Spain: %d reference cells\\n"</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">spain_ref</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Spain: 3966 reference cells\n</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Average plots per cell: %.1f\\n"</span>, <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">spain_ref</span><span class="op">$</span><span class="va">n</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Average plots per cell: 14.3\n</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"AGB range: %.1f - %.1f Mg/ha\\n"</span>,</span></span>
+<span class="r-in"><span>            <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">spain_ref</span><span class="op">$</span><span class="va">AGB_T_HA</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>            <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">spain_ref</span><span class="op">$</span><span class="va">AGB_T_HA</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> AGB range: 0.0 - 169.9 Mg/ha\n</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># AGBref is already preprocessed with:</span></span></span>
+<span class="r-in"><span><span class="co"># - Aggregation to 0.1 degree resolution</span></span></span>
+<span class="r-in"><span><span class="co"># - Total uncertainty (varTot column)</span></span></span>
+<span class="r-in"><span><span class="co"># - Multiple plots per cell (n column)</span></span></span>
+<span class="r-in"><span><span class="co"># - Quality tiers (TIER column)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># Example: Map validation workflow</span></span></span>
+<span class="r-in"><span><span class="co"># AGBref provides plot reference data, you need to add map values</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># 1. Prepare data for validation</span></span></span>
+<span class="r-in"><span><span class="va">validation_data</span> <span class="op">&lt;-</span> <span class="va">spain_ref</span></span></span>
+<span class="r-in"><span><span class="va">validation_data</span><span class="op">$</span><span class="va">x</span> <span class="op">&lt;-</span> <span class="va">validation_data</span><span class="op">$</span><span class="va">POINT_X</span></span></span>
+<span class="r-in"><span><span class="va">validation_data</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="va">validation_data</span><span class="op">$</span><span class="va">POINT_Y</span></span></span>
+<span class="r-in"><span><span class="va">validation_data</span><span class="op">$</span><span class="va">plotAGB_10</span> <span class="op">&lt;-</span> <span class="va">validation_data</span><span class="op">$</span><span class="va">AGB_T_HA</span></span></span>
+<span class="r-in"><span><span class="va">validation_data</span><span class="op">$</span><span class="va">varPlot</span> <span class="op">&lt;-</span> <span class="va">validation_data</span><span class="op">$</span><span class="va">varTot</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># 2. Extract map AGB values at reference locations</span></span></span>
+<span class="r-in"><span><span class="co"># (assuming you have loaded an AGB map as 'agb_map')</span></span></span>
+<span class="r-in"><span><span class="co"># validation_data$mapAGB &lt;- terra::extract(agb_map,</span></span></span>
+<span class="r-in"><span><span class="co">#                                          validation_data[, c("x", "y")])[,2]</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># 3. Visualize validation results</span></span></span>
+<span class="r-in"><span><span class="co"># Binned(validation_data$plotAGB_10, validation_data$mapAGB,</span></span></span>
+<span class="r-in"><span><span class="co">#        "Spain AGB Validation")</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># 4. Calculate accuracy metrics</span></span></span>
+<span class="r-in"><span><span class="co"># Accuracy(validation_data, intervals = 6)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># 5. Use with bias modeling functions (see ?trainBiasModel)</span></span></span>
+<span class="r-in"><span><span class="co"># bias_data &lt;- extractBiasCovariates(</span></span></span>
+<span class="r-in"><span><span class="co">#   plot_data = validation_data,</span></span></span>
+<span class="r-in"><span><span class="co">#   map_agb = agb_map,</span></span></span>
+<span class="r-in"><span><span class="co">#   map_sd = sd_map,</span></span></span>
+<span class="r-in"><span><span class="co">#   covariates = list(height = height_raster, treecover = tc_raster)</span></span></span>
+<span class="r-in"><span><span class="co"># )</span></span></span>
+<span class="r-in"><span><span class="co"># bias_model &lt;- trainBiasModel(bias_data, predictors = c("map", "sd", "height"))</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># 6. Use with advanced uncertainty functions (see ?fitResidualVariogram)</span></span></span>
+<span class="r-in"><span><span class="co"># vgm_fit &lt;- fitResidualVariogram(</span></span></span>
+<span class="r-in"><span><span class="co">#   bias_data = bias_data,</span></span></span>
+<span class="r-in"><span><span class="co">#   map_sd_raster = sd_map,</span></span></span>
+<span class="r-in"><span><span class="co">#   cutoff = 200</span></span></span>
+<span class="r-in"><span><span class="co"># )</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example: Compare different regions</span></span></span>
+<span class="r-in"><span><span class="va">brazil</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">AGBref</span>, <span class="va">CODE</span> <span class="op">==</span> <span class="st">"SAM_BRA"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">japan</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">AGBref</span>, <span class="va">CODE</span> <span class="op">==</span> <span class="st">"ASI_JAP"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">sweden</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">AGBref</span>, <span class="va">CODE</span> <span class="op">==</span> <span class="st">"EU_SWE"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"\\nRegional coverage:\\n"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> \nRegional coverage:\n</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Brazil: %d cells, mean AGB = %.1f Mg/ha\\n"</span>,</span></span>
+<span class="r-in"><span>            <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">brazil</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">brazil</span><span class="op">$</span><span class="va">AGB_T_HA</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Brazil: 7933 cells, mean AGB = 34.2 Mg/ha\n</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Japan: %d cells, mean AGB = %.1f Mg/ha\\n"</span>,</span></span>
+<span class="r-in"><span>            <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">japan</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">japan</span><span class="op">$</span><span class="va">AGB_T_HA</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Japan: 2956 cells, mean AGB = 21.6 Mg/ha\n</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"Sweden: %d cells, mean AGB = %.1f Mg/ha\\n"</span>,</span></span>
+<span class="r-in"><span>            <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">sweden</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">sweden</span><span class="op">$</span><span class="va">AGB_T_HA</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Sweden: 2619 cells, mean AGB = 56.0 Mg/ha\n</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
