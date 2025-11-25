@@ -50,6 +50,87 @@
 #' comprehensive version alongside peer review process of the data descriptor paper.
 #'
 #' @source \url{https://doi.org/10.5281/zenodo.15495069}
+#'
+#' @examples
+#' # Load the AGBref dataset
+#' data("AGBref", package = "Plot2Map")
+#'
+#' # Explore the dataset
+#' head(AGBref)
+#' summary(AGBref)
+#'
+#' # Check available regions
+#' table(AGBref$CODE)
+#'
+#' # Check data quality tiers
+#' table(AGBref$TIER)
+#'
+#' # Filter to Spain (EU2) - tier1 quality
+#' spain_ref <- subset(AGBref, CODE == "EU2" & TIER == "tier1")
+#' cat(sprintf("Spain: %d reference cells\\n", nrow(spain_ref)))
+#' cat(sprintf("Average plots per cell: %.1f\\n", mean(spain_ref$n)))
+#' cat(sprintf("AGB range: %.1f - %.1f Mg/ha\\n",
+#'             min(spain_ref$AGB_T_HA, na.rm = TRUE),
+#'             max(spain_ref$AGB_T_HA, na.rm = TRUE)))
+#'
+#' # AGBref is already preprocessed with:
+#' # - Aggregation to 0.1 degree resolution
+#' # - Total uncertainty (varTot column)
+#' # - Multiple plots per cell (n column)
+#' # - Quality tiers (TIER column)
+#'
+#' \dontrun{
+#' # Example: Map validation workflow
+#' # AGBref provides plot reference data, you need to add map values
+#'
+#' # 1. Prepare data for validation
+#' validation_data <- spain_ref
+#' validation_data$x <- validation_data$POINT_X
+#' validation_data$y <- validation_data$POINT_Y
+#' validation_data$plotAGB_10 <- validation_data$AGB_T_HA
+#' validation_data$varPlot <- validation_data$varTot
+#'
+#' # 2. Extract map AGB values at reference locations
+#' # (assuming you have loaded an AGB map as 'agb_map')
+#' # validation_data$mapAGB <- terra::extract(agb_map,
+#' #                                          validation_data[, c("x", "y")])[,2]
+#'
+#' # 3. Visualize validation results
+#' # Binned(validation_data$plotAGB_10, validation_data$mapAGB,
+#' #        "Spain AGB Validation")
+#'
+#' # 4. Calculate accuracy metrics
+#' # Accuracy(validation_data, intervals = 6)
+#'
+#' # 5. Use with bias modeling functions (see ?trainBiasModel)
+#' # bias_data <- extractBiasCovariates(
+#' #   plot_data = validation_data,
+#' #   map_agb = agb_map,
+#' #   map_sd = sd_map,
+#' #   covariates = list(height = height_raster, treecover = tc_raster)
+#' # )
+#' # bias_model <- trainBiasModel(bias_data, predictors = c("map", "sd", "height"))
+#'
+#' # 6. Use with advanced uncertainty functions (see ?fitResidualVariogram)
+#' # vgm_fit <- fitResidualVariogram(
+#' #   bias_data = bias_data,
+#' #   map_sd_raster = sd_map,
+#' #   cutoff = 200
+#' # )
+#' }
+#'
+#' # Example: Compare different regions
+#' brazil <- subset(AGBref, CODE == "SAM_BRA")
+#' japan <- subset(AGBref, CODE == "ASI_JAP")
+#' sweden <- subset(AGBref, CODE == "EU_SWE")
+#'
+#' cat(sprintf("\\nRegional coverage:\\n"))
+#' cat(sprintf("Brazil: %d cells, mean AGB = %.1f Mg/ha\\n",
+#'             nrow(brazil), mean(brazil$AGB_T_HA, na.rm = TRUE)))
+#' cat(sprintf("Japan: %d cells, mean AGB = %.1f Mg/ha\\n",
+#'             nrow(japan), mean(japan$AGB_T_HA, na.rm = TRUE)))
+#' cat(sprintf("Sweden: %d cells, mean AGB = %.1f Mg/ha\\n",
+#'             nrow(sweden), mean(sweden$AGB_T_HA, na.rm = TRUE)))
 "AGBref"
 
 
