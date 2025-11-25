@@ -222,6 +222,16 @@ A data frame with the following columns:
   Plot size in hectares. For aggregated cells, this is the mean plot
   size within the cell.
 
+- varPlot:
+
+  Plot measurement variance (only when aggr is specified and varPlot
+  exists in input data). Aggregated using inverse variance weighting: 1
+  / sum(1/varPlot). Units are in (t/ha)².
+
+- n:
+
+  Number of plots aggregated per cell (only when aggr is specified).
+
 - x:
 
   X-coordinate of plot or cell center (longitude).
@@ -229,11 +239,6 @@ A data frame with the following columns:
 - y:
 
   Y-coordinate of plot or cell center (latitude).
-
-- n:
-
-  Number of plots within each aggregated cell (only included when aggr
-  is not NULL).
 
 ## Details
 

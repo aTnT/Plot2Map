@@ -26,6 +26,8 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/introduction.html">Introduction</a></li>
     <li><a class="dropdown-item" href="../articles/plot-data-preparation.html">Plot data preparation</a></li>
+    <li><a class="dropdown-item" href="../articles/bias-modeling.html">Bias Modeling and Correction for AGB Maps</a></li>
+    <li><a class="dropdown-item" href="../articles/advanced-uncertainty.html">Advanced Uncertainty Quantification with Spatial Correlation</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -239,10 +241,31 @@
 
         <dt>
 
+          <code><a href="adjustMapBias.html">adjustMapBias()</a></code>
+
+        </dt>
+        <dd>Adjust AGB map by removing predicted bias</dd>
+
+        <dt>
+
+          <code><a href="aggregateUncertainty.html">aggregateUncertainty()</a></code>
+
+        </dt>
+        <dd>Aggregate Uncertainty Accounting for Spatial Correlation</dd>
+
+        <dt>
+
           <code><a href="assign_strata_weights.html">assign_strata_weights()</a></code>
 
         </dt>
         <dd>Assign strata weights to circular plots</dd>
+
+        <dt>
+
+          <code><a href="biasAdjustedTotal.html">biasAdjustedTotal()</a></code>
+
+        </dt>
+        <dd>Calculate Bias-Adjusted Regional Totals with Uncertainty</dd>
 
         <dt>
 
@@ -295,6 +318,13 @@
 
         <dt>
 
+          <code><a href="discountVariogram.html">discountVariogram()</a></code>
+
+        </dt>
+        <dd>Discount Variogram Nugget for Plot Measurement Error</dd>
+
+        <dt>
+
           <code><a href="download_esacci_biomass.html">download_esacci_biomass()</a></code>
 
         </dt>
@@ -323,6 +353,20 @@
 
         <dt>
 
+          <code><a href="extractBiasCovariates.html">extractBiasCovariates()</a></code>
+
+        </dt>
+        <dd>Extract bias and covariate values at plot locations</dd>
+
+        <dt>
+
+          <code><a href="fitResidualVariogram.html">fitResidualVariogram()</a></code>
+
+        </dt>
+        <dd>Fit Variogram to Residuals After Bias Modeling</dd>
+
+        <dt>
+
           <code><a href="invDasymetry.html">invDasymetry()</a></code>
 
         </dt>
@@ -334,6 +378,13 @@
 
         </dt>
         <dd>Sample plots data (dataframe points)</dd>
+
+        <dt>
+
+          <code><a href="predictBiasMap.html">predictBiasMap()</a></code>
+
+        </dt>
+        <dd>Predict bias wall-to-wall across study region</dd>
 
         <dt>
 
@@ -404,6 +455,13 @@
 
         </dt>
         <dd>Standardize year format (handle 2-digit years)</dd>
+
+        <dt>
+
+          <code><a href="trainBiasModel.html">trainBiasModel()</a></code>
+
+        </dt>
+        <dd>Train Random Forest model to predict AGB map bias</dd>
 
         <dt>
 

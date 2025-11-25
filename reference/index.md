@@ -56,8 +56,14 @@
   : Integrate Plot Dataset to the WUR Plot Database
 - [`TwoPlots()`](https://atnt.github.io/Plot2Map/reference/TwoPlots.md)
   : Create a comparison plot of two AGB datasets
+- [`adjustMapBias()`](https://atnt.github.io/Plot2Map/reference/adjustMapBias.md)
+  : Adjust AGB map by removing predicted bias
+- [`aggregateUncertainty()`](https://atnt.github.io/Plot2Map/reference/aggregateUncertainty.md)
+  : Aggregate Uncertainty Accounting for Spatial Correlation
 - [`assign_strata_weights()`](https://atnt.github.io/Plot2Map/reference/assign_strata_weights.md)
   : Assign strata weights to circular plots
+- [`biasAdjustedTotal()`](https://atnt.github.io/Plot2Map/reference/biasAdjustedTotal.md)
+  : Calculate Bias-Adjusted Regional Totals with Uncertainty
 - [`blockCorr()`](https://atnt.github.io/Plot2Map/reference/blockCorr.md)
   : Compute block covariance matrix
 - [`calculateTotalUncertainty()`](https://atnt.github.io/Plot2Map/reference/calculateTotalUncertainty.md)
@@ -72,6 +78,8 @@
   : Detect and extract AGB layer from multi-band rasters
 - [`detect_patterns_ml()`](https://atnt.github.io/Plot2Map/reference/detect_patterns_ml.md)
   : Detect filename patterns using machine learning approach
+- [`discountVariogram()`](https://atnt.github.io/Plot2Map/reference/discountVariogram.md)
+  : Discount Variogram Nugget for Plot Measurement Error
 - [`download_esacci_biomass()`](https://atnt.github.io/Plot2Map/reference/download_esacci_biomass.md)
   : Download ESA CCI biomass GeoTIFF data
 - [`download_gedi_l4b()`](https://atnt.github.io/Plot2Map/reference/download_gedi_l4b.md)
@@ -80,10 +88,16 @@
   : Download Global Forest Change (GFC) product tiles
 - [`download_glad_tcc_2010()`](https://atnt.github.io/Plot2Map/reference/download_glad_tcc_2010.md)
   : Download Global 2010 Tree Cover 30m data
+- [`extractBiasCovariates()`](https://atnt.github.io/Plot2Map/reference/extractBiasCovariates.md)
+  : Extract bias and covariate values at plot locations
+- [`fitResidualVariogram()`](https://atnt.github.io/Plot2Map/reference/fitResidualVariogram.md)
+  : Fit Variogram to Residuals After Bias Modeling
 - [`invDasymetry()`](https://atnt.github.io/Plot2Map/reference/invDasymetry.md)
   : Inverse dasymetric mapping
 - [`plots`](https://atnt.github.io/Plot2Map/reference/plots.md) : Sample
   plots data (dataframe points)
+- [`predictBiasMap()`](https://atnt.github.io/Plot2Map/reference/predictBiasMap.md)
+  : Predict bias wall-to-wall across study region
 - [`process_pair()`](https://atnt.github.io/Plot2Map/reference/process_pair.md)
   : Process a single pair of tree cover and forest loss files
 - [`rf1`](https://atnt.github.io/Plot2Map/reference/rf1.md) : Random
@@ -104,6 +118,8 @@
   : Add longitude and latitude columns to an sf object
 - [`standardize_year()`](https://atnt.github.io/Plot2Map/reference/standardize_year.md)
   : Standardize year format (handle 2-digit years)
+- [`trainBiasModel()`](https://atnt.github.io/Plot2Map/reference/trainBiasModel.md)
+  : Train Random Forest model to predict AGB map bias
 - [`validate_crs()`](https://atnt.github.io/Plot2Map/reference/validate_crs.md)
   : Validate and standardize CRS across raster files
 - [`validate_esacci_biomass_args()`](https://atnt.github.io/Plot2Map/reference/validate_esacci_biomass_args.md)

@@ -1,6 +1,8 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://atnt.github.io/Plot2Map/404.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/LICENSE-text.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/articles/advanced-uncertainty.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/articles/bias-modeling.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/articles/index.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/articles/introduction.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/articles/plot-data-preparation.html</loc></url>
@@ -32,7 +34,10 @@
 <url><loc>https://atnt.github.io/Plot2Map/reference/TempVar.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/ToDatabase.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/TwoPlots.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/reference/adjustMapBias.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/reference/aggregateUncertainty.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/assign_strata_weights.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/reference/biasAdjustedTotal.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/blockCorr.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/calculateTotalUncertainty.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/calculate_gfc_tiles.html</loc></url>
@@ -42,16 +47,21 @@
 <url><loc>https://atnt.github.io/Plot2Map/reference/detect_agb_layer.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/detect_patterns_ml.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/determineDataType.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/reference/discountVariogram.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/download_esacci_biomass.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/download_gedi_l4b.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/download_gfc_tiles.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/download_glad_tcc_2010.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/download_tile.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/reference/extractBiasCovariates.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/reference/fitResidualVariogram.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/index.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/invDasymetry.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/reference/performCrossValidation.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/plots.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/polyCirc.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/polyIrreg.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/reference/predictBiasMap.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/process_pair.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/rf1.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/sampleAGBmap.html</loc></url>
@@ -62,6 +72,7 @@
 <url><loc>https://atnt.github.io/Plot2Map/reference/sf_to_df_with_coords.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/sf_to_sf_with_coords.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/standardize_year.html</loc></url>
+<url><loc>https://atnt.github.io/Plot2Map/reference/trainBiasModel.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/validate_crs.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/validate_esacci_biomass_args.html</loc></url>
 <url><loc>https://atnt.github.io/Plot2Map/reference/verify_download.html</loc></url>

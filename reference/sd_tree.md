@@ -249,7 +249,7 @@ plot_uncertainties <- sd_tree(plotsTree, xyTree, region = "India")
 #> No tree height data found in original plot data. Calculating height using BIOMASS height-diameter model.
 head(plot_uncertainties)
 #>   PLOT_ID  POINT_X  POINT_Y SIZE_HA AVG_YEAR  AGB_T_HA    sdTree
-#> 1    BSP1 74.91944 14.36806       1     1996 158.06834  9.807798
+#> 1    BSP1 74.91944 14.36806       1     1996 158.03745  9.839335
 #> 2   BSP10 74.69861 14.94722       1     1996 417.99472 22.585124
 #> 3  BSP100 75.82000 13.54722       1     1996  41.25254  3.934893
 #> 4  BSP101 75.43444 13.72639       1     1996 348.63751 38.003134
