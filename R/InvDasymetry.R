@@ -281,22 +281,26 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
           forest_mask <- terra::rast(forest_mask_path)
           map_resolution <- terra::res(forest_mask)[1]
         } else if (dataset == "esacci") {
-          # Try to get from an ESA CCI file
+          # Try to get from an ESA CCI file, or use default
           esacci_files <- list.files(esacci_folder, pattern = "*.tif", full.names = TRUE)
           if (length(esacci_files) > 0) {
             esacci_raster <- terra::rast(esacci_files[1])
             map_resolution <- terra::res(esacci_raster)[1]
           } else {
-            stop("Could not determine map_resolution. No ESA CCI files found and map_resolution not provided.")
+            # Use default ESA-CCI resolution (0.001 degrees = ~100m at equator)
+            map_resolution <- 0.001
+            message("Using default ESA-CCI resolution: ", map_resolution, " degrees (~100m)")
           }
         } else if (dataset == "gedi") {
-          # Try to get from a GEDI file
+          # Try to get from a GEDI file, or use default
           gedi_files <- list.files(gedi_l4b_folder, pattern = "*.tif", full.names = TRUE)
           if (length(gedi_files) > 0) {
             gedi_raster <- terra::rast(gedi_files[1])
             map_resolution <- terra::res(gedi_raster)[1]
           } else {
-            stop("Could not determine map_resolution. No GEDI files found and map_resolution not provided.")
+            # Use default GEDI resolution
+            map_resolution <- gedi_l4b_resolution
+            message("Using default GEDI resolution: ", map_resolution, " degrees")
           }
         } else {
           stop("Could not determine map_resolution from data sources. Please provide map_resolution explicitly.")
@@ -545,11 +549,31 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
     rsl <- terra::res(agb_raster)[1]
   } else if (dataset != "custom") {
     if (dataset == "esacci") {
-      fname <- list.files(esacci_folder, "*.tif")[1]
-      rsl <- terra::res(terra::rast(file.path(esacci_folder, fname)))[1]
+      # Check if ESA-CCI tiles exist, otherwise use default resolution
+      esacci_files <- list.files(esacci_folder, pattern = "*.tif", full.names = FALSE)
+      if (length(esacci_files) > 0) {
+        fname <- esacci_files[1]
+        rsl <- terra::res(terra::rast(file.path(esacci_folder, fname)))[1]
+      } else {
+        # Use default ESA-CCI resolution (0.001 degrees = ~100m at equator)
+        rsl <- 0.001
+        message("No ESA-CCI tiles found in ", esacci_folder,
+                ". Using default resolution: ", rsl, " degrees (~100m).",
+                "\nTiles will be downloaded automatically as needed.")
+      }
     } else if (dataset == "gedi") {
-      fname <- list.files(gedi_l4b_folder, "*.tif")[1]
-      rsl <- terra::res(terra::rast(file.path(gedi_l4b_folder, fname)))[1]
+      # Check if GEDI tiles exist, otherwise use default resolution
+      gedi_files <- list.files(gedi_l4b_folder, pattern = "*.tif", full.names = FALSE)
+      if (length(gedi_files) > 0) {
+        fname <- gedi_files[1]
+        rsl <- terra::res(terra::rast(file.path(gedi_l4b_folder, fname)))[1]
+      } else {
+        # Use default GEDI resolution (0.001 degrees)
+        rsl <- gedi_l4b_resolution
+        message("No GEDI tiles found in ", gedi_l4b_folder,
+                ". Using default resolution: ", rsl, " degrees.",
+                "\nTiles will be downloaded automatically as needed.")
+      }
     }
   }
 
