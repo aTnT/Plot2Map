@@ -36,10 +36,10 @@ invDasymetry(
 )
 }
 \arguments{
-\item{plot_data}{data.frame, Plot dataset containing required columns. For non-aggregated mode, the
-required columns are "POINT_X", "POINT_Y", "AGB_T_HA_ORIG", "AGB_T_HA", and "SIZE_HA".
-For aggregated mode (when aggr is not NULL), the "varPlot" column is also required, but will
-be automatically calculated if missing.}
+\item{plot_data}{data.frame, Plot dataset containing required columns: "POINT_X", "POINT_Y",
+"AGB_T_HA_ORIG", "AGB_T_HA", "SIZE_HA", and "varPlot". The "varPlot" column (plot measurement
+variance) will be automatically calculated using calculateTotalUncertainty() if missing.
+This applies to both aggregated and non-aggregated modes.}
 
 \item{clmn}{character, Column name for plot selection (e.g., "ZONE", "CONTINENT").
 Set to NULL to process all plots without filtering (default: "ZONE").}
@@ -66,9 +66,9 @@ approximate fraction of each cell that is covered by the roi (default is FALSE).
 \item{threshold}{numeric, Threshold (0-100) for tree cover calculation and forest masking (e.g. 0 or 10).
 Only pixels with tree cover percentage above this threshold will contribute to biomass estimates.}
 
-\item{map_year}{numeric, The year of the map data. If not provided, it will be detected automatically from the available data sources.}
+\item{map_year}{numeric, The year of the map data. If not provided, it will be detected automatically from the available data sources. Used for uncertainty calculation.}
 
-\item{map_resolution}{numeric, The resolution of the map data in degrees. If not provided, it will be detected automatically from the available data sources. Used for variance calculation when aggregating.}
+\item{map_resolution}{numeric, The resolution of the map data in degrees. If not provided, it will be detected automatically from the available data sources. Used for uncertainty calculation (sampling error component).}
 
 \item{esacci_biomass_year}{The ESA CCI BIOMASS AGB tiles year to use. Use either 2010, 2015, 2016, 2017, 2018, 2019,
 2020, 2021, 2022 or "latest" (default).}
@@ -115,8 +115,9 @@ the AGB_T_HA values from the input data.}
 \item{mapAGB}{AGB from map sampling, representing the biomass values extracted from the
 reference map at each plot or cell location.}
 \item{SIZE_HA}{Plot size in hectares. For aggregated cells, this is the mean plot size within the cell.}
-\item{varPlot}{Plot measurement variance (only when aggr is specified and varPlot exists in input data).
-Aggregated using inverse variance weighting: 1 / sum(1/varPlot). Units are in (t/ha)².}
+\item{varPlot}{Plot measurement variance in (t/ha)². Includes measurement error, sampling error,
+and growth uncertainty components. In non-aggregated mode, this is the individual plot variance.
+In aggregated mode, combined using inverse variance weighting: 1 / sum(1/varPlot).}
 \item{n}{Number of plots aggregated per cell (only when aggr is specified).}
 \item{x}{X-coordinate of plot or cell center (longitude).}
 \item{y}{Y-coordinate of plot or cell center (latitude).}
@@ -163,7 +164,7 @@ The function performs inverse dasymetric mapping through these key steps:
 \item Ensure all required columns are present in the input plot data.
 \item For parallel processing, adjust \code{n_cores} based on your system's capabilities.
 \item Large datasets may require significant processing time and memory.
-\item When using aggregation, the function automatically calculates \code{varPlot} if missing.
+\item The function automatically calculates \code{varPlot} using \code{calculateTotalUncertainty()} if missing.
 }
 }
 \examples{

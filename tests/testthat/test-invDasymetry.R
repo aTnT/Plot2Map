@@ -1104,3 +1104,104 @@ test_that("Bug demonstration: list.files()[1] returns NA on empty folder", {
   
   expect_null(fname_fixed)  # Not NA, just NULL
 })
+
+# Test varPlot column in non-aggregated mode
+test_that("invDasymetry includes varPlot in non-aggregated mode", {
+  skip_if_not_installed("terra")
+
+  # Create temporary directory
+  temp_dir <- tempdir()
+
+  # Create test data with varPlot column
+  plot_data <- data.frame(
+    PLOT_ID = paste0("P", 1:4),
+    POINT_X = c(0.2, 0.4, 0.6, 0.8),
+    POINT_Y = rep(0.5, 4),
+    AGB_T_HA = c(100, 200, 300, 400),
+    AGB_T_HA_ORIG = c(100, 200, 300, 400),
+    SIZE_HA = rep(1.0, 4),
+    ZONE = rep("ZoneA", 4),
+    varPlot = c(50, 100, 150, 200)  # Different variance values
+  )
+
+  # Create rasters
+  raster_paths <- create_test_rasters(temp_dir)
+
+  # Run invDasymetry in non-aggregated mode
+  result <- invDasymetry(
+    plot_data = plot_data,
+    clmn = "ZONE",
+    value = "ZoneA",
+    aggr = NULL,  # Non-aggregated
+    threshold = 10,
+    dataset = "custom",
+    agb_raster_path = raster_paths$agb_path,
+    forest_mask_path = raster_paths$forest_path
+  )
+
+  # Verify varPlot column exists in output
+  expect_true("varPlot" %in% names(result))
+
+  # Verify varPlot values are passed through (not aggregated)
+  # Should match input values
+  expect_equal(nrow(result), 4)
+
+  # Verify varPlot values are in output (order might differ due to processing)
+  expect_true(all(result$varPlot %in% c(50, 100, 150, 200)))
+
+  # Verify no weighted averaging occurred (each plot is independent)
+  expect_false(any(duplicated(paste(result$x, result$y))))
+})
+
+# Test that varPlot is automatically calculated when missing
+test_that("invDasymetry attempts to calculate varPlot when missing in non-aggregated mode", {
+  skip_if_not_installed("terra")
+  skip_if_not_installed("ranger")
+
+  # Create temporary directory
+  temp_dir <- tempdir()
+
+  # Create test data WITHOUT varPlot column but with required columns
+  plot_data <- data.frame(
+    PLOT_ID = paste0("P", 1:4),
+    POINT_X = c(0.2, 0.4, 0.6, 0.8),
+    POINT_Y = rep(0.5, 4),
+    AGB_T_HA = c(100, 200, 300, 400),
+    AGB_T_HA_ORIG = c(100, 200, 300, 400),
+    SIZE_HA = rep(1.0, 4),
+    AVG_YEAR = rep(2015, 4),
+    GEZ = rep("Tropical", 4),
+    FAO.ecozone = rep("TAr", 4),
+    ZONE = rep("ZoneA", 4)
+    # Note: No varPlot column
+  )
+
+  # Create rasters
+  raster_paths <- create_test_rasters(temp_dir)
+
+  # Should warn that varPlot will be calculated
+  expect_warning(
+    result <- invDasymetry(
+      plot_data = plot_data,
+      clmn = "ZONE",
+      value = "ZoneA",
+      aggr = NULL,
+      threshold = 10,
+      dataset = "custom",
+      agb_raster_path = raster_paths$agb_path,
+      forest_mask_path = raster_paths$forest_path,
+      map_year = 2020,
+      map_resolution = 0.05
+    ),
+    "varPlot.*will be estimated"
+  )
+
+  # Verify varPlot column was added (even if calculation produces NaN for synthetic data)
+  expect_true("varPlot" %in% names(result))
+
+  # Verify all plots are present
+  expect_equal(nrow(result), 4)
+
+  # Note: We don't test for valid varPlot values here because proper uncertainty
+  # calculation requires realistic biome data, which is beyond the scope of unit tests
+})

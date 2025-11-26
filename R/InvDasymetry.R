@@ -55,10 +55,10 @@
 #' mapping is particularly useful for comparing field inventory plot measurements with remote
 #' sensing biomass maps by accounting for differences in spatial scales and forest cover percentages.
 #'
-#' @param plot_data data.frame, Plot dataset containing required columns. For non-aggregated mode, the
-#'        required columns are "POINT_X", "POINT_Y", "AGB_T_HA_ORIG", "AGB_T_HA", and "SIZE_HA".
-#'        For aggregated mode (when aggr is not NULL), the "varPlot" column is also required, but will
-#'        be automatically calculated if missing.
+#' @param plot_data data.frame, Plot dataset containing required columns: "POINT_X", "POINT_Y",
+#'        "AGB_T_HA_ORIG", "AGB_T_HA", "SIZE_HA", and "varPlot". The "varPlot" column (plot measurement
+#'        variance) will be automatically calculated using calculateTotalUncertainty() if missing.
+#'        This applies to both aggregated and non-aggregated modes.
 #' @param clmn character, Column name for plot selection (e.g., "ZONE", "CONTINENT").
 #'        Set to NULL to process all plots without filtering (default: "ZONE").
 #' @param value character, Value to select in the specified column (e.g., "Europe", "Africa").
@@ -71,8 +71,8 @@
 #' @param forest_mask_path character, File path to the forest mask raster.
 #' @param threshold numeric, Threshold (0-100) for tree cover calculation and forest masking (e.g. 0 or 10).
 #'  Only pixels with tree cover percentage above this threshold will contribute to biomass estimates.
-#' @param map_year numeric, The year of the map data. If not provided, it will be detected automatically from the available data sources.
-#' @param map_resolution numeric, The resolution of the map data in degrees. If not provided, it will be detected automatically from the available data sources. Used for variance calculation when aggregating.
+#' @param map_year numeric, The year of the map data. If not provided, it will be detected automatically from the available data sources. Used for uncertainty calculation.
+#' @param map_resolution numeric, The resolution of the map data in degrees. If not provided, it will be detected automatically from the available data sources. Used for uncertainty calculation (sampling error component).
 #' @param parallel logical, Enable parallel processing for faster computation on multi-core systems. Default is FALSE.
 #' @param n_cores numeric, Number of cores to use for parallel processing.
 #' @param memfrac numeric, Memory fraction (0-1) for Terra to use in the main process. Default is 0.3.
@@ -95,8 +95,9 @@
 #'   \item{mapAGB}{AGB from map sampling, representing the biomass values extracted from the
 #'     reference map at each plot or cell location.}
 #'   \item{SIZE_HA}{Plot size in hectares. For aggregated cells, this is the mean plot size within the cell.}
-#'   \item{varPlot}{Plot measurement variance (only when aggr is specified and varPlot exists in input data).
-#'     Aggregated using inverse variance weighting: 1 / sum(1/varPlot). Units are in (t/ha)².}
+#'   \item{varPlot}{Plot measurement variance in (t/ha)². Includes measurement error, sampling error,
+#'     and growth uncertainty components. In non-aggregated mode, this is the individual plot variance.
+#'     In aggregated mode, combined using inverse variance weighting: 1 / sum(1/varPlot).}
 #'   \item{n}{Number of plots aggregated per cell (only when aggr is specified).}
 #'   \item{x}{X-coordinate of plot or cell center (longitude).}
 #'   \item{y}{Y-coordinate of plot or cell center (latitude).}
@@ -129,7 +130,7 @@
 #' - Ensure all required columns are present in the input plot data.
 #' - For parallel processing, adjust `n_cores` based on your system's capabilities.
 #' - Large datasets may require significant processing time and memory.
-#' - When using aggregation, the function automatically calculates `varPlot` if missing.
+#' - The function automatically calculates `varPlot` using `calculateTotalUncertainty()` if missing.
 #'
 #' @examples
 #' \dontrun{
@@ -217,18 +218,17 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
     stop("dataset must be one of 'custom', 'esacci', or 'gedi'.")
   }
 
-  # Check for required columns when aggr is not NULL
+  # Check for required columns
   required_cols <- c("POINT_X", "POINT_Y", "AGB_T_HA_ORIG", "AGB_T_HA", "SIZE_HA", "varPlot")
-  if (!is.null(aggr)) {
-    missing_cols <- setdiff(required_cols, names(plot_data))
-    if (length(missing_cols) > 0 && length(setdiff(missing_cols, "varPlot")) > 0) {
-      stop(paste("When aggr is not NULL, plot_data must contain:", paste(setdiff(missing_cols, "varPlot"), collapse = ", ")))
-    }
-    if ("varPlot" %in% missing_cols) {
-      warning(paste("\"varPlot\" column was not found in the plot_data dataset, it will be estimated using calculateTotalUncertainty"))
+  missing_cols <- setdiff(required_cols, names(plot_data))
+  if (length(missing_cols) > 0 && length(setdiff(missing_cols, "varPlot")) > 0) {
+    stop(paste("plot_data must contain:", paste(setdiff(missing_cols, "varPlot"), collapse = ", ")))
+  }
+  if ("varPlot" %in% missing_cols) {
+    warning(paste("\"varPlot\" column was not found in the plot_data dataset, it will be estimated using calculateTotalUncertainty"))
 
-      # Try to determine map_year from data sources if not provided
-      if (is.null(map_year)) {
+    # Try to determine map_year from data sources if not provided
+    if (is.null(map_year)) {
         if (dataset == "esacci") {
           # Extract from esacci_biomass_year
           if (is.numeric(esacci_biomass_year)) {
@@ -326,7 +326,6 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
                    "\nPlease provide 'varPlot' column in plot_data."))
       })
     }
-  }
 
 
   # Create SpatRaster objects from file paths
@@ -952,7 +951,8 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
         }
         res <- c(treeCovers * plot_data$AGB_T_HA[i], plot_data$AGB_T_HA[i],
               plot_data$AGB_T_HA_ORIG[i], agb_value,
-              plot_data$SIZE_HA[i], plot_data$POINT_X[i], plot_data$POINT_Y[i])
+              plot_data$SIZE_HA[i], plot_data$varPlot[i],
+              plot_data$POINT_X[i], plot_data$POINT_Y[i])
         res
       }
 
@@ -981,7 +981,7 @@ invDasymetry <- function(plot_data = NULL, clmn = "ZONE", value = "Europe", aggr
   if (!is.null(aggr)) {
     names(FFAGB) <- c(paste0("plotAGB_", threshold), "orgPlotAGB", "mapAGB", "SIZE_HA", "varPlot", "n", "x", "y")
   } else {
-    names(FFAGB) <- c(paste0("plotAGB_", threshold), "tfPlotAGB", "orgPlotAGB", "mapAGB", "SIZE_HA", "x", "y")
+    names(FFAGB) <- c(paste0("plotAGB_", threshold), "tfPlotAGB", "orgPlotAGB", "mapAGB", "SIZE_HA", "varPlot", "x", "y")
   }
 
   cat("Processing complete. Results: \n\n")
