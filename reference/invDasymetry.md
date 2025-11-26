@@ -47,11 +47,11 @@ invDasymetry(
 
 - plot_data:
 
-  data.frame, Plot dataset containing required columns. For
-  non-aggregated mode, the required columns are "POINT_X", "POINT_Y",
-  "AGB_T_HA_ORIG", "AGB_T_HA", and "SIZE_HA". For aggregated mode (when
-  aggr is not NULL), the "varPlot" column is also required, but will be
-  automatically calculated if missing.
+  data.frame, Plot dataset containing required columns: "POINT_X",
+  "POINT_Y", "AGB_T_HA_ORIG", "AGB_T_HA", "SIZE_HA", and "varPlot". The
+  "varPlot" column (plot measurement variance) will be automatically
+  calculated using calculateTotalUncertainty() if missing. This applies
+  to both aggregated and non-aggregated modes.
 
 - clmn:
 
@@ -108,13 +108,14 @@ invDasymetry(
 - map_year:
 
   numeric, The year of the map data. If not provided, it will be
-  detected automatically from the available data sources.
+  detected automatically from the available data sources. Used for
+  uncertainty calculation.
 
 - map_resolution:
 
   numeric, The resolution of the map data in degrees. If not provided,
   it will be detected automatically from the available data sources.
-  Used for variance calculation when aggregating.
+  Used for uncertainty calculation (sampling error component).
 
 - esacci_biomass_year:
 
@@ -224,9 +225,10 @@ A data frame with the following columns:
 
 - varPlot:
 
-  Plot measurement variance (only when aggr is specified and varPlot
-  exists in input data). Aggregated using inverse variance weighting: 1
-  / sum(1/varPlot). Units are in (t/ha)².
+  Plot measurement variance in (t/ha)². Includes measurement error,
+  sampling error, and growth uncertainty components. In non-aggregated
+  mode, this is the individual plot variance. In aggregated mode,
+  combined using inverse variance weighting: 1 / sum(1/varPlot).
 
 - n:
 
@@ -291,8 +293,9 @@ steps:
 
 - Large datasets may require significant processing time and memory.
 
-- When using aggregation, the function automatically calculates
-  `varPlot` if missing.
+- The function automatically calculates `varPlot` using
+  [`calculateTotalUncertainty()`](https://atnt.github.io/Plot2Map/reference/calculateTotalUncertainty.md)
+  if missing.
 
 ## Examples
 

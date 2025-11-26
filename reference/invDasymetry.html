@@ -104,10 +104,10 @@ sensing biomass maps by accounting for differences in spatial scales and forest 
 
 
 <dl><dt id="arg-plot-data">plot_data<a class="anchor" aria-label="anchor" href="#arg-plot-data"></a></dt>
-<dd><p>data.frame, Plot dataset containing required columns. For non-aggregated mode, the
-required columns are "POINT_X", "POINT_Y", "AGB_T_HA_ORIG", "AGB_T_HA", and "SIZE_HA".
-For aggregated mode (when aggr is not NULL), the "varPlot" column is also required, but will
-be automatically calculated if missing.</p></dd>
+<dd><p>data.frame, Plot dataset containing required columns: "POINT_X", "POINT_Y",
+"AGB_T_HA_ORIG", "AGB_T_HA", "SIZE_HA", and "varPlot". The "varPlot" column (plot measurement
+variance) will be automatically calculated using calculateTotalUncertainty() if missing.
+This applies to both aggregated and non-aggregated modes.</p></dd>
 
 
 <dt id="arg-clmn">clmn<a class="anchor" aria-label="anchor" href="#arg-clmn"></a></dt>
@@ -156,11 +156,11 @@ Only pixels with tree cover percentage above this threshold will contribute to b
 
 
 <dt id="arg-map-year">map_year<a class="anchor" aria-label="anchor" href="#arg-map-year"></a></dt>
-<dd><p>numeric, The year of the map data. If not provided, it will be detected automatically from the available data sources.</p></dd>
+<dd><p>numeric, The year of the map data. If not provided, it will be detected automatically from the available data sources. Used for uncertainty calculation.</p></dd>
 
 
 <dt id="arg-map-resolution">map_resolution<a class="anchor" aria-label="anchor" href="#arg-map-resolution"></a></dt>
-<dd><p>numeric, The resolution of the map data in degrees. If not provided, it will be detected automatically from the available data sources. Used for variance calculation when aggregating.</p></dd>
+<dd><p>numeric, The resolution of the map data in degrees. If not provided, it will be detected automatically from the available data sources. Used for uncertainty calculation (sampling error component).</p></dd>
 
 
 <dt id="arg-esacci-biomass-year">esacci_biomass_year<a class="anchor" aria-label="anchor" href="#arg-esacci-biomass-year"></a></dt>
@@ -250,8 +250,9 @@ reference map at each plot or cell location.</p></dd>
 <dd><p>Plot size in hectares. For aggregated cells, this is the mean plot size within the cell.</p></dd>
 
 <dt>varPlot</dt>
-<dd><p>Plot measurement variance (only when aggr is specified and varPlot exists in input data).
-Aggregated using inverse variance weighting: 1 / sum(1/varPlot). Units are in (t/ha)².</p></dd>
+<dd><p>Plot measurement variance in (t/ha)². Includes measurement error, sampling error,
+and growth uncertainty components. In non-aggregated mode, this is the individual plot variance.
+In aggregated mode, combined using inverse variance weighting: 1 / sum(1/varPlot).</p></dd>
 
 <dt>n</dt>
 <dd><p>Number of plots aggregated per cell (only when aggr is specified).</p></dd>
@@ -287,7 +288,7 @@ Aggregated using inverse variance weighting: 1 / sum(1/varPlot). Units are in (t
 <ul><li><p>Ensure all required columns are present in the input plot data.</p></li>
 <li><p>For parallel processing, adjust <code>n_cores</code> based on your system's capabilities.</p></li>
 <li><p>Large datasets may require significant processing time and memory.</p></li>
-<li><p>When using aggregation, the function automatically calculates <code>varPlot</code> if missing.</p></li>
+<li><p>The function automatically calculates <code>varPlot</code> using <code><a href="calculateTotalUncertainty.html">calculateTotalUncertainty()</a></code> if missing.</p></li>
 </ul></div>
 
     <div class="section level2">
