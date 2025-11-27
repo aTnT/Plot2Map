@@ -11,9 +11,9 @@ validation.
 RefLidar(
   lidar.dir,
   auto_detect = TRUE,
-  pattern_config = NULL,
   raster_type = NULL,
-  allow_interactive = TRUE
+  allow_interactive = TRUE,
+  metadata_map = NULL
 )
 ```
 
@@ -28,10 +28,6 @@ RefLidar(
   Enable automatic pattern detection for PLOT_ID and YEAR (default:
   TRUE)
 
-- pattern_config:
-
-  Optional manual pattern configuration (overrides auto-detection)
-
 - raster_type:
 
   Optional raster type specification ("AGB", "CV", or "SD"). If NULL,
@@ -41,6 +37,13 @@ RefLidar(
 
   Allow interactive prompts if auto-detection fails (default: TRUE). Set
   to FALSE for automated pipelines.
+
+- metadata_map:
+
+  Optional data frame with explicit file metadata. Must have columns:
+  filename (basename only), plot_id, year. Bypasses pattern detection.
+  Example:
+  `data.frame(filename = c("file1.tif", "file2.tif"), plot_id = c("P1", "P2"), year = c(2020, 2021))`
 
 ## Value
 
@@ -112,6 +115,18 @@ lidar_data <- RefLidar(
   allow_interactive = FALSE
 )
 
+# Explicit metadata mapping (simplest approach)
+metadata <- data.frame(
+  filename = c("site1.tif", "site2.tif", "site3.tif"),
+  plot_id = c("PlotA", "PlotB", "PlotC"),
+  year = c(2020, 2021, 2022)
+)
+lidar_data <- RefLidar(
+  lidar.dir = "data/custom_rasters/",
+  metadata_map = metadata,
+  raster_type = "AGB"
+)
+
 # Process Coefficient of Variation rasters
 cv_data <- RefLidar(
   lidar.dir = "data/uncertainty_maps/",
@@ -123,36 +138,6 @@ cv_data <- RefLidar(
 lidar_data <- RefLidar(
   lidar.dir = "data/custom_naming/",
   auto_detect = FALSE,
-  raster_type = "AGB"
-)
-
-# Manual pattern_config for custom filename formats
-custom_pattern <- list(
-  type = "custom",
-  plot_start = 1,
-  plot_end = 15,
-  year_start = 22,
-  year_end = 25,
-  confidence = "high"
-)
-lidar_data <- RefLidar(
-  lidar.dir = "data/custom_format/",
-  pattern_config = custom_pattern,
-  raster_type = "AGB"
-)
-
-# Pattern config for Brazil format (ANA_A01_2017_AGB_100m.tif)
-brazil_pattern <- list(
-  type = "site_code_year_type",
-  plot_start = 1,
-  plot_end = 3,
-  year_start = 9,
-  year_end = 12,
-  confidence = "high"
-)
-brazil_data <- RefLidar(
-  lidar.dir = "data/brazil_slb/",
-  pattern_config = brazil_pattern,
   raster_type = "AGB"
 )
 

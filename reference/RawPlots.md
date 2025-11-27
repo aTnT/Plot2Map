@@ -7,7 +7,7 @@ prompt for user input in interactive sessions.
 ## Usage
 
 ``` r
-RawPlots(plots, mapYear = NULL, allow_interactive = TRUE)
+RawPlots(plots, mapYear = NULL, allow_interactive = TRUE, column_map = NULL)
 ```
 
 ## Arguments
@@ -28,6 +28,13 @@ RawPlots(plots, mapYear = NULL, allow_interactive = TRUE)
   TRUE). Set to FALSE for automated pipelines. When FALSE and in
   non-interactive sessions, the function will attempt auto-detection and
   provide helpful error messages if columns cannot be identified.
+
+- column_map:
+
+  Optional named list explicitly specifying column names. Bypasses
+  auto-detection. Use names: id, agb, x, y, size, year. Example:
+  `column_map = list(id = "PlotCode", agb = "Biomass_MgHa", x = "Easting", y = "Northing", size = "Area_ha", year = "MeasYear")`.
+  If id is not provided or NULL, sequential IDs will be generated.
 
 ## Value
 
@@ -57,6 +64,9 @@ TRUE in an interactive session, it prompts the user to select columns
 manually. In non-interactive environments with allow_interactive =
 FALSE, it provides an error listing available columns.
 
+Alternatively, use `column_map` to explicitly specify columns, bypassing
+auto-detection entirely.
+
 ## Examples
 
 ``` r
@@ -66,5 +76,17 @@ formatted_plots <- RawPlots(raw_plots)
 
 # Non-interactive mode (for scripts/pipelines)
 formatted_plots <- RawPlots(raw_plots, allow_interactive = FALSE)
+
+# Explicit column mapping
+formatted_plots <- RawPlots(raw_plots,
+  allow_interactive = FALSE,
+  column_map = list(
+    id = "PlotCode",
+    agb = "Biomass_MgHa",
+    x = "Easting",
+    y = "Northing",
+    size = "Area_ha",
+    year = "MeasYear"
+  ))
 } # }
 ```

@@ -55,7 +55,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RawPlotsTree</span><span class="op">(</span><span class="va">plots</span>, allow_interactive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RawPlotsTree</span><span class="op">(</span><span class="va">plots</span>, allow_interactive <span class="op">=</span> <span class="cn">TRUE</span>, column_map <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -70,6 +70,12 @@
 <dd><p>Logical. Allow interactive prompts if auto-detection fails (default: TRUE).
 Set to FALSE for automated pipelines.</p></dd>
 
+
+<dt id="arg-column-map">column_map<a class="anchor" aria-label="anchor" href="#arg-column-map"></a></dt>
+<dd><p>Optional named list explicitly specifying column names. Bypasses interactive prompts.
+Use names: id, genus, species, diameter, height (optional), x, y, size, year. Example:
+<code>column_map = list(id = "PlotCode", genus = "Genus", species = "Species", diameter = "DBH_cm", height = "Height_m", x = "Longitude", y = "Latitude", size = "PlotArea_ha", year = "MeasYear")</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -81,6 +87,7 @@ Set to FALSE for automated pipelines.</p></dd>
     <p>This function currently requires interactive input or properly named columns.
 For non-interactive use, ensure columns have standard names or use <code>allow_interactive = FALSE</code>
 with appropriate column names.</p>
+<p>Alternatively, use <code>column_map</code> to explicitly specify columns, bypassing interactive prompts entirely.</p>
     </div>
 
     <div class="section level2">
@@ -92,6 +99,21 @@ with appropriate column names.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Non-interactive mode (requires standard column names)</span></span></span>
 <span class="r-in"><span><span class="va">formatted_tree_plots</span> <span class="op">&lt;-</span> <span class="fu">RawPlotsTree</span><span class="op">(</span><span class="va">tree_data</span>, allow_interactive <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Explicit column mapping</span></span></span>
+<span class="r-in"><span><span class="va">formatted_tree_plots</span> <span class="op">&lt;-</span> <span class="fu">RawPlotsTree</span><span class="op">(</span><span class="va">tree_data</span>,</span></span>
+<span class="r-in"><span>  allow_interactive <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
+<span class="r-in"><span>  column_map <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    id <span class="op">=</span> <span class="st">"PlotCode"</span>,</span></span>
+<span class="r-in"><span>    genus <span class="op">=</span> <span class="st">"Genus"</span>,</span></span>
+<span class="r-in"><span>    species <span class="op">=</span> <span class="st">"Species"</span>,</span></span>
+<span class="r-in"><span>    diameter <span class="op">=</span> <span class="st">"DBH_cm"</span>,</span></span>
+<span class="r-in"><span>    height <span class="op">=</span> <span class="st">"Height_m"</span>,</span></span>
+<span class="r-in"><span>    x <span class="op">=</span> <span class="st">"Longitude"</span>,</span></span>
+<span class="r-in"><span>    y <span class="op">=</span> <span class="st">"Latitude"</span>,</span></span>
+<span class="r-in"><span>    size <span class="op">=</span> <span class="st">"PlotArea_ha"</span>,</span></span>
+<span class="r-in"><span>    year <span class="op">=</span> <span class="st">"MeasYear"</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
