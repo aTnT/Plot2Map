@@ -3,37 +3,108 @@
 # Update to reflect commit b9000c1 at https://github.com/arnanaraza/Plot2Map
 # 07/07/25:
 # Fixed bug in RawPlots causing PLOT_ID to become NA when selecting parcel id column
+# 26/01/25:
+# Added auto-detection for common column names
+# Added allow_interactive parameter for non-interactive environments
+# Implemented fallback logic similar to RefLidar()
 
 
 #' Format Plot Data
 #'
 #' This function formats raw plot data into a standardized structure for further processing.
+#' It can automatically detect common column names or prompt for user input in interactive sessions.
 #'
 #' @param plots A data frame containing plot data with Latitude, Longitude coordinates.
 #' @param mapYear Optional. The year of the map being used for comparison (not used in current implementation).
+#' @param allow_interactive Logical. Allow interactive prompts if auto-detection fails (default: TRUE).
+#'   Set to FALSE for automated pipelines. When FALSE and in non-interactive sessions, the function
+#'   will attempt auto-detection and provide helpful error messages if columns cannot be identified.
 #'
 #' @return A data frame with formatted plot data, including columns for PLOT_ID, POINT_X, POINT_Y, AGB_T_HA, SIZE_HA, FEZ, GEZ, and AVG_YEAR.
 #'
 #' @details
-#' The function prompts the user to select or manually enter column indices for key plot attributes.
-#' It then formats the data, converting plot sizes from m^2 to hectares if necessary.
+#' The function attempts to auto-detect columns based on common naming patterns:
+#' \itemize{
+#'   \item Plot ID: PLOT_ID, PlotID, ID, plot_id, plotid, etc. (if not found, generates sequential IDs)
+#'   \item AGB: AGB_T_HA, AGB, agb, biomass, etc. (required)
+#'   \item Longitude: longitude, lon, long, x, POINT_X, etc. (required)
+#'   \item Latitude: latitude, lat, y, POINT_Y, etc. (required)
+#'   \item Size: SIZE_HA, size, area, plot_size, plotsize, etc. (required)
+#'   \item Year: AVG_YEAR, year, YEAR, measurement_year, etc. (required)
+#' }
+#'
+#' If auto-detection fails for required columns and allow_interactive is TRUE in an interactive session,
+#' it prompts the user to select columns manually. In non-interactive environments with
+#' allow_interactive = FALSE, it provides an error listing available columns.
 #'
 #' @examples
 #' \dontrun{
-#' # Assuming 'raw_plots' is your input data frame
+#' # Auto-detection (works in both interactive and non-interactive)
 #' formatted_plots <- RawPlots(raw_plots)
+#'
+#' # Non-interactive mode (for scripts/pipelines)
+#' formatted_plots <- RawPlots(raw_plots, allow_interactive = FALSE)
 #' }
 #' @export
-RawPlots <- function(plots, mapYear = NULL) {
+RawPlots <- function(plots, mapYear = NULL, allow_interactive = TRUE) {
   # Type checking
   if (!is.data.frame(plots)) {
     stop('Input file should be a data frame with XY coordinates')
   }
 
+  # Exclude list columns (e.g., geometry in spatial data)
+  valid_cols <- names(plots)[!sapply(plots, is.list)]
+
+  # Helper function to auto-detect column by common names
+  auto_detect_column <- function(patterns, col_type = "column") {
+    for (pattern in patterns) {
+      matches <- grep(pattern, valid_cols, ignore.case = TRUE, value = TRUE)
+      if (length(matches) > 0) {
+        cat("Auto-detected", col_type, ":", matches[1], "\n")
+        return(matches[1])
+      }
+    }
+    return(NULL)
+  }
+
   # Helper function for column selection or manual entry
-  select_column <- function(prompt) {
-    # Exclude list columns (e.g., geometry in spatial data)
-    valid_cols <- names(plots)[!sapply(plots, is.list)]
+  select_column <- function(prompt, auto_col = NULL, col_type = "column") {
+    # If auto-detection succeeded, use that column
+    if (!is.null(auto_col) && auto_col %in% valid_cols) {
+      col_data <- plots[[auto_col]]
+      # Special handling for Plot ID column
+      if (grepl("Plot ID", prompt)) {
+        return(col_data)
+      }
+      # Convert to numeric if needed
+      if (!is.numeric(col_data)) {
+        col_data <- as.numeric(as.character(col_data))
+      }
+      return(col_data)
+    }
+
+    # Check if we can/should prompt interactively
+    if (!allow_interactive || !interactive()) {
+      # Non-interactive mode - provide comprehensive error
+      error_msg <- paste0(
+        "\n=== Column Detection Summary ===\n"
+      )
+      if (length(detected) > 0) {
+        error_msg <- paste0(error_msg, "✓ Successfully detected: ", paste(detected, collapse = ", "), "\n")
+      }
+      if (length(missing) > 0) {
+        error_msg <- paste0(error_msg, "✗ Could not detect: ", paste(missing, collapse = ", "), "\n")
+      }
+      error_msg <- paste0(
+        error_msg,
+        "\nAvailable columns in your data: ", paste(valid_cols, collapse = ", "), "\n\n",
+        "Please ensure your data has standard column names (SIZE_HA, AVG_YEAR, etc.) ",
+        "or run in interactive mode to manually select columns."
+      )
+      stop(error_msg)
+    }
+
+    # Interactive mode: prompt user
     choice <- menu(c("Manual entry", valid_cols), title = prompt)
     if (choice == 1) {
       manual_entry <- readline("Enter the numeric value for manual entry: ")
@@ -54,12 +125,61 @@ RawPlots <- function(plots, mapYear = NULL) {
     }
   }
 
-  id <- select_column("Which column is your unique Plot ID?")
-  agb <- select_column("Which column is your plot AGB?")
-  x <- select_column("Select longitude column")
-  y <- select_column("Which column is your latitude?")
-  size <- select_column("Select plot size column")
-  year <- select_column("Select year column")
+  # Attempt auto-detection for each column
+  cat("\n=== Auto-detecting columns ===\n")
+  id_col <- auto_detect_column(
+    c("^PLOT_ID$", "^PlotID$", "^ID$", "^plot_id$", "^plotid$", "plot.*id", "^id$"),
+    "Plot ID"
+  )
+  agb_col <- auto_detect_column(
+    c("^AGB_T_HA$", "^AGB$", "^agb$", "biomass", "aboveground"),
+    "AGB"
+  )
+  x_col <- auto_detect_column(
+    c("^longitude$", "^lon$", "^long$", "^x$", "^POINT_X$", "^X$", "point.*x"),
+    "longitude"
+  )
+  y_col <- auto_detect_column(
+    c("^latitude$", "^lat$", "^y$", "^POINT_Y$", "^Y$", "point.*y"),
+    "latitude"
+  )
+  size_col <- auto_detect_column(
+    c("^SIZE_HA$", "^size$", "^area$", "plot.*size", "plotsize", "SIZE"),
+    "plot size"
+  )
+  year_col <- auto_detect_column(
+    c("^AVG_YEAR$", "^year$", "^YEAR$", "measurement.*year", "avg.*year"),
+    "year"
+  )
+
+  # Collect detection results for comprehensive error reporting
+  detected <- c()
+  missing <- c()
+  if (!is.null(id_col)) detected <- c(detected, "Plot ID") else if (!allow_interactive || !interactive()) cat("Plot ID: Will generate sequential IDs\n")
+  if (!is.null(agb_col)) detected <- c(detected, "AGB") else missing <- c(missing, "AGB")
+  if (!is.null(x_col)) detected <- c(detected, "longitude") else missing <- c(missing, "longitude")
+  if (!is.null(y_col)) detected <- c(detected, "latitude") else missing <- c(missing, "latitude")
+  if (!is.null(size_col)) detected <- c(detected, "plot size") else missing <- c(missing, "plot size")
+  if (!is.null(year_col)) detected <- c(detected, "year") else missing <- c(missing, "year")
+  cat("===========================\n\n")
+
+  # Use auto-detected columns or prompt for selection
+  # Plot ID: Generate sequential IDs if not found
+  if (!is.null(id_col)) {
+    id <- select_column("Which column is your unique Plot ID?", id_col, "Plot ID")
+  } else if (!allow_interactive || !interactive()) {
+    cat("Could not auto-detect Plot ID column. Generating sequential IDs: PLOT_1, PLOT_2, ...\n")
+    id <- paste0("PLOT_", seq_len(nrow(plots)))
+  } else {
+    id <- select_column("Which column is your unique Plot ID?", id_col, "Plot ID")
+  }
+
+  # Required columns (AGB, longitude, latitude, size, year)
+  agb <- select_column("Which column is your plot AGB?", agb_col, "AGB")
+  x <- select_column("Select longitude column", x_col, "longitude")
+  y <- select_column("Which column is your latitude?", y_col, "latitude")
+  size <- select_column("Select plot size column", size_col, "plot size")
+  year <- select_column("Select year column", year_col, "year")
 
   # Convert sizes from m² to ha if size > 50 (assuming m² if large)
   size <- ifelse(!is.na(size) & size > 50, size / 10000, size)
@@ -96,27 +216,41 @@ RawPlots <- function(plots, mapYear = NULL) {
 #' This function formats raw tree-level plot data into a standardized structure for further processing.
 #'
 #' @param plots A data frame containing tree-level plot data with Latitude, Longitude coordinates.
+#' @param allow_interactive Logical. Allow interactive prompts if auto-detection fails (default: TRUE).
+#'   Set to FALSE for automated pipelines.
 #'
 #' @return A list containing two data frames:
 #'   1. Tree-level data with columns for id, genus, species, diameter, (height), size, fez, gez, year
 #'   2. Plot-level data with columns for id, x, y
 #'
 #' @details
-#' The function prompts the user to select column indices for key tree and plot attributes.
-#' It handles cases with and without tree height data.
+#' This function currently requires interactive input or properly named columns.
+#' For non-interactive use, ensure columns have standard names or use `allow_interactive = FALSE`
+#' with appropriate column names.
 #'
 #' @examples
 #' \dontrun{
-#' # This function requires interactive input
-#' # Sample code to format tree-level data:
+#' # Interactive mode
 #' tree_data <- read.csv(sample_file("SampleTreeNested.csv"))
 #' formatted_tree_plots <- RawPlotsTree(tree_data)
+#'
+#' # Non-interactive mode (requires standard column names)
+#' formatted_tree_plots <- RawPlotsTree(tree_data, allow_interactive = FALSE)
 #' }
 #'
 #' @export
-RawPlotsTree <- function(plots) {
+RawPlotsTree <- function(plots, allow_interactive = TRUE) {
   if (!is.data.frame(plots)) {
     stop('Input file should be a data frame with XY coordinates')
+  }
+
+  # Check if interactive mode is available
+  if (!allow_interactive && !interactive()) {
+    stop(paste0(
+      "RawPlotsTree requires interactive input or allow_interactive = TRUE.\n",
+      "For tree-level data formatting in non-interactive mode, please pre-format your data ",
+      "or run in an interactive session."
+    ))
   }
 
   # Exclude list columns from selection

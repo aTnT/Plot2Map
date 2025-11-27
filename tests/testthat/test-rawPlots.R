@@ -6,9 +6,167 @@ library(Plot2Map)
 test_that("RawPlots validates input types", {
   # Test non-dataframe input
   expect_error(RawPlots("not_a_dataframe"), "Input file should be a data frame")
-  
-  # Skip tests that require interactive input
-  testthat::skip_if_not(interactive(), "Tests require interactive input")
+})
+
+test_that("RawPlots auto-detects standard column names in non-interactive mode", {
+  # Create test data with standard column names
+  test_data <- data.frame(
+    PLOT_ID = c("P1", "P2", "P3"),
+    AGB_T_HA = c(100, 150, 200),
+    longitude = c(-5.5, -5.6, -5.7),
+    latitude = c(36.5, 36.6, 36.7),
+    SIZE_HA = c(1.0, 0.5, 1.5),
+    AVG_YEAR = c(2015, 2016, 2017)
+  )
+
+  # Test non-interactive mode
+  result <- RawPlots(test_data, allow_interactive = FALSE)
+
+  # Verify output structure
+  expect_s3_class(result, "data.frame")
+  expect_equal(nrow(result), 3)
+  expect_true("PLOT_ID" %in% names(result))
+  expect_true("AGB_T_HA" %in% names(result))
+  expect_true("POINT_X" %in% names(result))
+  expect_true("POINT_Y" %in% names(result))
+  expect_true("SIZE_HA" %in% names(result))
+  expect_true("AVG_YEAR" %in% names(result))
+
+  # Verify values are preserved
+  expect_equal(result$AGB_T_HA, c(100, 150, 200))
+  expect_equal(result$POINT_X, c(-5.5, -5.6, -5.7))
+  expect_equal(result$POINT_Y, c(36.5, 36.6, 36.7))
+})
+
+test_that("RawPlots auto-detects alternative column name patterns", {
+  # Create test data with alternative column names
+  test_data <- data.frame(
+    ID = c("P1", "P2", "P3"),
+    agb = c(100, 150, 200),
+    lon = c(-5.5, -5.6, -5.7),
+    lat = c(36.5, 36.6, 36.7),
+    size = c(1.0, 0.5, 1.5),
+    year = c(2015, 2016, 2017)
+  )
+
+  result <- RawPlots(test_data, allow_interactive = FALSE)
+
+  # Verify successful processing
+  expect_equal(nrow(result), 3)
+  expect_equal(result$AGB_T_HA, c(100, 150, 200))
+})
+
+test_that("RawPlots generates sequential IDs when Plot ID not found", {
+  # Create test data without Plot ID column
+  test_data <- data.frame(
+    AGB_T_HA = c(100, 150, 200),
+    longitude = c(-5.5, -5.6, -5.7),
+    latitude = c(36.5, 36.6, 36.7),
+    SIZE_HA = c(1.0, 0.5, 1.5),
+    AVG_YEAR = c(2015, 2016, 2017)
+  )
+
+  result <- RawPlots(test_data, allow_interactive = FALSE)
+
+  # Verify sequential IDs were generated
+  expect_equal(result$PLOT_ID, c("PLOT_1", "PLOT_2", "PLOT_3"))
+})
+
+test_that("RawPlots errors with informative message when required columns missing", {
+  # Create test data missing size and year columns
+  test_data <- data.frame(
+    PLOT_ID = c("P1", "P2", "P3"),
+    AGB = c(100, 150, 200),
+    longitude = c(-5.5, -5.6, -5.7),
+    latitude = c(36.5, 36.6, 36.7)
+  )
+
+  # Should error with comprehensive detection summary
+  expect_error(
+    RawPlots(test_data, allow_interactive = FALSE),
+    "Column Detection Summary"
+  )
+  expect_error(
+    RawPlots(test_data, allow_interactive = FALSE),
+    "Successfully detected"
+  )
+  expect_error(
+    RawPlots(test_data, allow_interactive = FALSE),
+    "Could not detect"
+  )
+})
+
+test_that("RawPlots handles uppercase column names", {
+  # Create test data with uppercase names
+  test_data <- data.frame(
+    PLOT_ID = c("P1", "P2"),
+    AGB = c(100, 150),
+    LONGITUDE = c(-5.5, -5.6),
+    LATITUDE = c(36.5, 36.6),
+    SIZE = c(1.0, 0.5),
+    YEAR = c(2015, 2016)
+  )
+
+  result <- RawPlots(test_data, allow_interactive = FALSE)
+
+  expect_equal(nrow(result), 2)
+  expect_equal(result$AGB_T_HA, c(100, 150))
+})
+
+test_that("RawPlots converts large sizes from m² to hectares", {
+  # Create test data with sizes in m²
+  test_data <- data.frame(
+    PLOT_ID = c("P1", "P2", "P3"),
+    AGB_T_HA = c(100, 150, 200),
+    longitude = c(-5.5, -5.6, -5.7),
+    latitude = c(36.5, 36.6, 36.7),
+    SIZE_HA = c(10000, 5000, 100),  # Mix of m² and ha
+    AVG_YEAR = c(2015, 2016, 2017)
+  )
+
+  result <- RawPlots(test_data, allow_interactive = FALSE)
+
+  # Verify conversion (values > 50 are assumed to be m²)
+  expect_equal(result$SIZE_HA, c(1.0, 0.5, 0.01))
+})
+
+test_that("RawPlots filters out rows with NA in AGB", {
+  # Create test data with some NA AGB values
+  test_data <- data.frame(
+    PLOT_ID = c("P1", "P2", "P3", "P4"),
+    AGB_T_HA = c(100, NA, 200, NA),
+    longitude = c(-5.5, -5.6, -5.7, -5.8),
+    latitude = c(36.5, 36.6, 36.7, 36.8),
+    SIZE_HA = c(1.0, 0.5, 1.5, 2.0),
+    AVG_YEAR = c(2015, 2016, 2017, 2018)
+  )
+
+  result <- RawPlots(test_data, allow_interactive = FALSE)
+
+  # Should only have 2 rows (P1 and P3)
+  expect_equal(nrow(result), 2)
+  expect_equal(result$PLOT_ID, c("P1", "P3"))
+  expect_equal(result$AGB_T_HA, c(100, 200))
+})
+
+test_that("RawPlots excludes list columns from auto-detection", {
+  # Create test data with a geometry column (list column)
+  test_data <- data.frame(
+    PLOT_ID = c("P1", "P2"),
+    AGB_T_HA = c(100, 150),
+    longitude = c(-5.5, -5.6),
+    latitude = c(36.5, 36.6),
+    SIZE_HA = c(1.0, 0.5),
+    AVG_YEAR = c(2015, 2016)
+  )
+  # Add a list column (simulating sf geometry)
+  test_data$geometry <- list(list(x = 1, y = 2), list(x = 3, y = 4))
+
+  # Should still work, ignoring the geometry column
+  result <- RawPlots(test_data, allow_interactive = FALSE)
+
+  expect_equal(nrow(result), 2)
+  expect_false("geometry" %in% names(result))
 })
 
 test_that("RawPlots handles plot size conversions correctly", {
@@ -33,9 +191,62 @@ test_that("RawPlots handles plot size conversions correctly", {
 test_that("RawPlotsTree validates input types", {
   # Test non-dataframe input
   expect_error(RawPlotsTree("not_a_dataframe"), "Input file should be a data frame")
-  
+
   # Skip tests that require interactive input
   testthat::skip_if_not(interactive(), "Tests require interactive input")
+})
+
+test_that("RawPlotsTree errors in non-interactive mode with allow_interactive = FALSE", {
+  skip("RawPlotsTree tests require interactive session")
+
+  # Create test data
+  test_data <- data.frame(
+    id = c(1, 1, 2),
+    genus = c("Pinus", "Pinus", "Quercus"),
+    species = c("sylvestris", "sylvestris", "robur"),
+    diameter = c(15, 20, 25),
+    height = c(10, 12, 15),
+    size = c(100, 100, 100),
+    year = c(2010, 2010, 2010),
+    x = c(-62.215, -62.215, -62.205),
+    y = c(-3.465, -3.465, -3.455)
+  )
+
+  # Should error with informative message in non-interactive mode
+  expect_error(
+    RawPlotsTree(test_data, allow_interactive = FALSE),
+    "RawPlotsTree requires interactive input"
+  )
+  expect_error(
+    RawPlotsTree(test_data, allow_interactive = FALSE),
+    "pre-format your data"
+  )
+})
+
+test_that("RawPlotsTree respects allow_interactive parameter", {
+  skip("RawPlotsTree tests require interactive session")
+
+  # Create test data
+  test_data <- data.frame(
+    id = c(1, 2),
+    genus = c("Pinus", "Quercus"),
+    species = c("sylvestris", "robur"),
+    diameter = c(15, 25),
+    x = c(-62.215, -62.205),
+    y = c(-3.465, -3.455)
+  )
+
+  # With allow_interactive = FALSE, should error
+  expect_error(
+    RawPlotsTree(test_data, allow_interactive = FALSE),
+    "interactive input"
+  )
+
+  # The error message should be helpful
+  expect_error(
+    RawPlotsTree(test_data, allow_interactive = FALSE),
+    "run in an interactive session"
+  )
 })
 
 # Create a mock function to test RawPlotsTree's logic without interactive input

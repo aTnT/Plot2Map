@@ -71,10 +71,12 @@ vignettes/inverse-dasymetric-mapping.Rmd
 
 /data/ALSdata_AGBmaps_for_AGBref
 plot2map_Mexico_demo
-1
+
 
 /.quarto/
 tests/testthat/Rplots.pdf
 convert_rmd_to_ipynb.py
 Database_unified_ALS_FTH_James_v14_6.csv
 new_TreeLevel.ipynb
+tests/testthat/Rplots.pdf
+tests/testthat/Rplots.pdf
