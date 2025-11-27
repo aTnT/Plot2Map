@@ -5,7 +5,9 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Roboto-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Format Plot Data — RawPlots"><meta name="description" content="This function formats raw plot data into a standardized structure for further processing."><meta property="og:description" content="This function formats raw plot data into a standardized structure for further processing."><meta property="og:image" content="https://atnt.github.io/Plot2Map/logo.png"></head><body>
+</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Roboto-0.4.10/font.css" rel="stylesheet"><link href="../deps/JetBrains_Mono-0.4.10/font.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Format Plot Data — RawPlots"><meta name="description" content="This function formats raw plot data into a standardized structure for further processing.
+It can automatically detect common column names or prompt for user input in interactive sessions."><meta property="og:description" content="This function formats raw plot data into a standardized structure for further processing.
+It can automatically detect common column names or prompt for user input in interactive sessions."><meta property="og:image" content="https://atnt.github.io/Plot2Map/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -50,12 +52,13 @@
     </div>
 
     <div class="ref-description section level2">
-    <p>This function formats raw plot data into a standardized structure for further processing.</p>
+    <p>This function formats raw plot data into a standardized structure for further processing.
+It can automatically detect common column names or prompt for user input in interactive sessions.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RawPlots</span><span class="op">(</span><span class="va">plots</span>, mapYear <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RawPlots</span><span class="op">(</span><span class="va">plots</span>, mapYear <span class="op">=</span> <span class="cn">NULL</span>, allow_interactive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -69,6 +72,12 @@
 <dt id="arg-mapyear">mapYear<a class="anchor" aria-label="anchor" href="#arg-mapyear"></a></dt>
 <dd><p>Optional. The year of the map being used for comparison (not used in current implementation).</p></dd>
 
+
+<dt id="arg-allow-interactive">allow_interactive<a class="anchor" aria-label="anchor" href="#arg-allow-interactive"></a></dt>
+<dd><p>Logical. Allow interactive prompts if auto-detection fails (default: TRUE).
+Set to FALSE for automated pipelines. When FALSE and in non-interactive sessions, the function
+will attempt auto-detection and provide helpful error messages if columns cannot be identified.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -76,15 +85,25 @@
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The function prompts the user to select or manually enter column indices for key plot attributes.
-It then formats the data, converting plot sizes from m^2 to hectares if necessary.</p>
+    <p>The function attempts to auto-detect columns based on common naming patterns:</p><ul><li><p>Plot ID: PLOT_ID, PlotID, ID, plot_id, plotid, etc. (if not found, generates sequential IDs)</p></li>
+<li><p>AGB: AGB_T_HA, AGB, agb, biomass, etc. (required)</p></li>
+<li><p>Longitude: longitude, lon, long, x, POINT_X, etc. (required)</p></li>
+<li><p>Latitude: latitude, lat, y, POINT_Y, etc. (required)</p></li>
+<li><p>Size: SIZE_HA, size, area, plot_size, plotsize, etc. (required)</p></li>
+<li><p>Year: AVG_YEAR, year, YEAR, measurement_year, etc. (required)</p></li>
+</ul><p>If auto-detection fails for required columns and allow_interactive is TRUE in an interactive session,
+it prompts the user to select columns manually. In non-interactive environments with
+allow_interactive = FALSE, it provides an error listing available columns.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Assuming 'raw_plots' is your input data frame</span></span></span>
+<span class="r-in"><span><span class="co"># Auto-detection (works in both interactive and non-interactive)</span></span></span>
 <span class="r-in"><span><span class="va">formatted_plots</span> <span class="op">&lt;-</span> <span class="fu">RawPlots</span><span class="op">(</span><span class="va">raw_plots</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Non-interactive mode (for scripts/pipelines)</span></span></span>
+<span class="r-in"><span><span class="va">formatted_plots</span> <span class="op">&lt;-</span> <span class="fu">RawPlots</span><span class="op">(</span><span class="va">raw_plots</span>, allow_interactive <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

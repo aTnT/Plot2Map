@@ -55,7 +55,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RawPlotsTree</span><span class="op">(</span><span class="va">plots</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RawPlotsTree</span><span class="op">(</span><span class="va">plots</span>, allow_interactive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -65,6 +65,11 @@
 <dl><dt id="arg-plots">plots<a class="anchor" aria-label="anchor" href="#arg-plots"></a></dt>
 <dd><p>A data frame containing tree-level plot data with Latitude, Longitude coordinates.</p></dd>
 
+
+<dt id="arg-allow-interactive">allow_interactive<a class="anchor" aria-label="anchor" href="#arg-allow-interactive"></a></dt>
+<dd><p>Logical. Allow interactive prompts if auto-detection fails (default: TRUE).
+Set to FALSE for automated pipelines.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -73,17 +78,20 @@
 </ol></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The function prompts the user to select column indices for key tree and plot attributes.
-It handles cases with and without tree height data.</p>
+    <p>This function currently requires interactive input or properly named columns.
+For non-interactive use, ensure columns have standard names or use <code>allow_interactive = FALSE</code>
+with appropriate column names.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># This function requires interactive input</span></span></span>
-<span class="r-in"><span><span class="co"># Sample code to format tree-level data:</span></span></span>
+<span class="r-in"><span><span class="co"># Interactive mode</span></span></span>
 <span class="r-in"><span><span class="va">tree_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="sample_file.html">sample_file</a></span><span class="op">(</span><span class="st">"SampleTreeNested.csv"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">formatted_tree_plots</span> <span class="op">&lt;-</span> <span class="fu">RawPlotsTree</span><span class="op">(</span><span class="va">tree_data</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Non-interactive mode (requires standard column names)</span></span></span>
+<span class="r-in"><span><span class="va">formatted_tree_plots</span> <span class="op">&lt;-</span> <span class="fu">RawPlotsTree</span><span class="op">(</span><span class="va">tree_data</span>, allow_interactive <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

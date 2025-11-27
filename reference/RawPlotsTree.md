@@ -6,7 +6,7 @@ structure for further processing.
 ## Usage
 
 ``` r
-RawPlotsTree(plots)
+RawPlotsTree(plots, allow_interactive = TRUE)
 ```
 
 ## Arguments
@@ -15,6 +15,11 @@ RawPlotsTree(plots)
 
   A data frame containing tree-level plot data with Latitude, Longitude
   coordinates.
+
+- allow_interactive:
+
+  Logical. Allow interactive prompts if auto-detection fails (default:
+  TRUE). Set to FALSE for automated pipelines.
 
 ## Value
 
@@ -27,16 +32,19 @@ A list containing two data frames:
 
 ## Details
 
-The function prompts the user to select column indices for key tree and
-plot attributes. It handles cases with and without tree height data.
+This function currently requires interactive input or properly named
+columns. For non-interactive use, ensure columns have standard names or
+use `allow_interactive = FALSE` with appropriate column names.
 
 ## Examples
 
 ``` r
 if (FALSE) { # \dontrun{
-# This function requires interactive input
-# Sample code to format tree-level data:
+# Interactive mode
 tree_data <- read.csv(sample_file("SampleTreeNested.csv"))
 formatted_tree_plots <- RawPlotsTree(tree_data)
+
+# Non-interactive mode (requires standard column names)
+formatted_tree_plots <- RawPlotsTree(tree_data, allow_interactive = FALSE)
 } # }
 ```
