@@ -131,18 +131,40 @@ covariates_stack <- getBiasCovariates(
 **Alternative: Manual approach using SDtileNames()**:
 
 ``` r
-library(Plot2Map)
-library(raster)
-library(plyr)
+# library(Plot2Map)
+# library(terra)
 
-# Obtain SD raster from AGB product using SDtileNames()
-pt <- rasterToPoints(sampleRandom(agb_map, ncell(agb_map) * 0.005,
-                                   asRaster = TRUE), spatial = TRUE)
-pol <- lapply(1:nrow(pt), function(x) {
-  MakeBlockPolygon(pt@coords[, 1][[x]], pt@coords[, 2][[x]], 0.1)
-})
-SD.tiles <- unique(ldply(lapply(pol, function(x) SDtileNames(x)), data.frame))[[1]][-2]
-sd_map <- mask(do.call(merge, lapply(SD.tiles, function(x) raster(x))), study_region)
+# # Obtain SD raster from AGB product using SDtileNames()
+# # Sample random cells from AGB map (0.5% of cells)
+# sampled <- terra::spatSample(agb_map, size = ncell(agb_map) * 0.005,
+#                              method = "random", as.points = TRUE, na.rm = TRUE)
+# pt_coords <- terra::crds(sampled)
+
+# pol <- lapply(1:nrow(pt_coords), function(x) {
+#   MakeBlockPolygon(pt_coords[x, 1], pt_coords[x, 2], 0.1)
+# })
+
+# # Get unique SD tile names
+# SD.tiles_list <- lapply(pol, SDtileNames)
+# SD.tiles <- unique(do.call(c, lapply(SD.tiles_list, function(x) as.character(x[[1]]))))
+# SD.tiles <- SD.tiles[SD.tiles != "" & !is.na(SD.tiles)]
+
+# # Load and merge SD tiles (requires tiles to be downloaded first)
+# sd_rasters <- lapply(SD.tiles, function(x) {
+#   if (file.exists(x)) {
+#     terra::rast(x)
+#   } else {
+#     warning("SD tile not found: ", x, "\nDownload ESA-CCI SD tiles first.")
+#     NULL
+#   }
+# })
+# sd_rasters <- sd_rasters[!sapply(sd_rasters, is.null)]
+
+# if (length(sd_rasters) > 0) {
+#   sd_map <- terra::mask(terra::merge(terra::sprc(sd_rasters)), study_region)
+# } else {
+#   stop("No SD tiles found. Please download ESA-CCI SD tiles first.")
+# }
 
 # Manually load other covariates (height, treecover, slope, etc.)
 # ... (user provides their own covariate rasters)

@@ -240,18 +240,40 @@ package:</p>
 <p><strong>Alternative: Manual approach using
 SDtileNames()</strong>:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://aTnT.github.io/Plot2Map/" class="external-link">Plot2Map</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rspatial.org/raster" class="external-link">raster</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://had.co.nz/plyr" class="external-link">plyr</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># library(Plot2Map)</span></span>
+<span><span class="co"># library(terra)</span></span>
 <span></span>
-<span><span class="co"># Obtain SD raster from AGB product using SDtileNames()</span></span>
-<span><span class="va">pt</span> <span class="op">&lt;-</span> <span class="fu">rasterToPoints</span><span class="op">(</span><span class="fu">sampleRandom</span><span class="op">(</span><span class="va">agb_map</span>, <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">ncell</a></span><span class="op">(</span><span class="va">agb_map</span><span class="op">)</span> <span class="op">*</span> <span class="fl">0.005</span>,</span>
-<span>                                   asRaster <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, spatial <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">pol</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">pt</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="../reference/MakeBlockPolygon.html">MakeBlockPolygon</a></span><span class="op">(</span><span class="va">pt</span><span class="op">@</span><span class="va">coords</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span><span class="op">[[</span><span class="va">x</span><span class="op">]</span><span class="op">]</span>, <span class="va">pt</span><span class="op">@</span><span class="va">coords</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span><span class="op">[[</span><span class="va">x</span><span class="op">]</span><span class="op">]</span>, <span class="fl">0.1</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="op">)</span></span>
-<span><span class="va">SD.tiles</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/plyr/man/ldply.html" class="external-link">ldply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">pol</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="../reference/SDtileNames.html">SDtileNames</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span>, <span class="va">data.frame</span><span class="op">)</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="op">-</span><span class="fl">2</span><span class="op">]</span></span>
-<span><span class="va">sd_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/mask.html" class="external-link">mask</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">merge</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">SD.tiles</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu">raster</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, <span class="va">study_region</span><span class="op">)</span></span>
+<span><span class="co"># # Obtain SD raster from AGB product using SDtileNames()</span></span>
+<span><span class="co"># # Sample random cells from AGB map (0.5% of cells)</span></span>
+<span><span class="co"># sampled &lt;- terra::spatSample(agb_map, size = ncell(agb_map) * 0.005,</span></span>
+<span><span class="co">#                              method = "random", as.points = TRUE, na.rm = TRUE)</span></span>
+<span><span class="co"># pt_coords &lt;- terra::crds(sampled)</span></span>
+<span></span>
+<span><span class="co"># pol &lt;- lapply(1:nrow(pt_coords), function(x) {</span></span>
+<span><span class="co">#   MakeBlockPolygon(pt_coords[x, 1], pt_coords[x, 2], 0.1)</span></span>
+<span><span class="co"># })</span></span>
+<span></span>
+<span><span class="co"># # Get unique SD tile names</span></span>
+<span><span class="co"># SD.tiles_list &lt;- lapply(pol, SDtileNames)</span></span>
+<span><span class="co"># SD.tiles &lt;- unique(do.call(c, lapply(SD.tiles_list, function(x) as.character(x[[1]]))))</span></span>
+<span><span class="co"># SD.tiles &lt;- SD.tiles[SD.tiles != "" &amp; !is.na(SD.tiles)]</span></span>
+<span></span>
+<span><span class="co"># # Load and merge SD tiles (requires tiles to be downloaded first)</span></span>
+<span><span class="co"># sd_rasters &lt;- lapply(SD.tiles, function(x) {</span></span>
+<span><span class="co">#   if (file.exists(x)) {</span></span>
+<span><span class="co">#     terra::rast(x)</span></span>
+<span><span class="co">#   } else {</span></span>
+<span><span class="co">#     warning("SD tile not found: ", x, "\nDownload ESA-CCI SD tiles first.")</span></span>
+<span><span class="co">#     NULL</span></span>
+<span><span class="co">#   }</span></span>
+<span><span class="co"># })</span></span>
+<span><span class="co"># sd_rasters &lt;- sd_rasters[!sapply(sd_rasters, is.null)]</span></span>
+<span></span>
+<span><span class="co"># if (length(sd_rasters) &gt; 0) {</span></span>
+<span><span class="co">#   sd_map &lt;- terra::mask(terra::merge(terra::sprc(sd_rasters)), study_region)</span></span>
+<span><span class="co"># } else {</span></span>
+<span><span class="co">#   stop("No SD tiles found. Please download ESA-CCI SD tiles first.")</span></span>
+<span><span class="co"># }</span></span>
 <span></span>
 <span><span class="co"># Manually load other covariates (height, treecover, slope, etc.)</span></span>
 <span><span class="co"># ... (user provides their own covariate rasters)</span></span></code></pre></div>
