@@ -289,3 +289,260 @@ test_that("RawPlotsTree processes tree data correctly", {
   expect_length(result_without_height, 2)
   expect_named(result_without_height[[1]], c("id", "genus", "species", "diameter", "size", "fez", "gez", "year"))
 })
+
+# ============================================================================
+# Tests for column_map parameter
+# ============================================================================
+
+test_that("RawPlots column_map works with all columns specified", {
+  # Create test data with non-standard column names
+  test_data <- data.frame(
+    MyPlotID = c("Site1", "Site2", "Site3"),
+    Biomass_MgHa = c(100, 150, 200),
+    Easting = c(-5.5, -5.6, -5.7),
+    Northing = c(36.5, 36.6, 36.7),
+    Area_ha = c(1.0, 0.5, 1.5),
+    MeasYear = c(2015, 2016, 2017)
+  )
+
+  result <- RawPlots(test_data,
+    allow_interactive = FALSE,
+    column_map = list(
+      id = "MyPlotID",
+      agb = "Biomass_MgHa",
+      x = "Easting",
+      y = "Northing",
+      size = "Area_ha",
+      year = "MeasYear"
+    ))
+
+  # Verify output structure
+  expect_s3_class(result, "data.frame")
+  expect_equal(nrow(result), 3)
+  expect_equal(result$PLOT_ID, c("Site1", "Site2", "Site3"))
+  expect_equal(result$AGB_T_HA, c(100, 150, 200))
+  expect_equal(result$POINT_X, c(-5.5, -5.6, -5.7))
+  expect_equal(result$POINT_Y, c(36.5, 36.6, 36.7))
+  expect_equal(result$SIZE_HA, c(1.0, 0.5, 1.5))
+  expect_equal(result$AVG_YEAR, c(2015, 2016, 2017))
+})
+
+test_that("RawPlots column_map works without id (generates sequential IDs)", {
+  test_data <- data.frame(
+    Biomass_MgHa = c(100, 150, 200),
+    Easting = c(-5.5, -5.6, -5.7),
+    Northing = c(36.5, 36.6, 36.7),
+    Area_ha = c(1.0, 0.5, 1.5),
+    MeasYear = c(2015, 2016, 2017)
+  )
+
+  result <- RawPlots(test_data,
+    allow_interactive = FALSE,
+    column_map = list(
+      agb = "Biomass_MgHa",
+      x = "Easting",
+      y = "Northing",
+      size = "Area_ha",
+      year = "MeasYear"
+    ))
+
+  # Verify sequential IDs were generated
+  expect_equal(result$PLOT_ID, c("PLOT_1", "PLOT_2", "PLOT_3"))
+  expect_equal(result$AGB_T_HA, c(100, 150, 200))
+})
+
+test_that("RawPlots column_map errors with missing required columns", {
+  test_data <- data.frame(
+    Biomass_MgHa = c(100, 150, 200),
+    Easting = c(-5.5, -5.6, -5.7),
+    Northing = c(36.5, 36.6, 36.7)
+  )
+
+  # Missing size and year
+  expect_error(
+    RawPlots(test_data,
+      allow_interactive = FALSE,
+      column_map = list(
+        agb = "Biomass_MgHa",
+        x = "Easting",
+        y = "Northing"
+      )),
+    "Required columns missing from column_map"
+  )
+  expect_error(
+    RawPlots(test_data,
+      allow_interactive = FALSE,
+      column_map = list(
+        agb = "Biomass_MgHa",
+        x = "Easting",
+        y = "Northing"
+      )),
+    "size"
+  )
+})
+
+test_that("RawPlots column_map errors when specified columns don't exist in data", {
+  test_data <- data.frame(
+    Biomass_MgHa = c(100, 150, 200),
+    Easting = c(-5.5, -5.6, -5.7),
+    Northing = c(36.5, 36.6, 36.7),
+    Area_ha = c(1.0, 0.5, 1.5),
+    MeasYear = c(2015, 2016, 2017)
+  )
+
+  # Specify non-existent column
+  expect_error(
+    RawPlots(test_data,
+      allow_interactive = FALSE,
+      column_map = list(
+        agb = "NonExistentColumn",
+        x = "Easting",
+        y = "Northing",
+        size = "Area_ha",
+        year = "MeasYear"
+      )),
+    "Columns specified in column_map not found in data"
+  )
+  expect_error(
+    RawPlots(test_data,
+      allow_interactive = FALSE,
+      column_map = list(
+        agb = "NonExistentColumn",
+        x = "Easting",
+        y = "Northing",
+        size = "Area_ha",
+        year = "MeasYear"
+      )),
+    "NonExistentColumn"
+  )
+})
+
+test_that("RawPlots column_map errors when not a list", {
+  test_data <- data.frame(
+    Biomass_MgHa = c(100, 150, 200),
+    Easting = c(-5.5, -5.6, -5.7),
+    Northing = c(36.5, 36.6, 36.7),
+    Area_ha = c(1.0, 0.5, 1.5),
+    MeasYear = c(2015, 2016, 2017)
+  )
+
+  # Pass non-list as column_map
+  expect_error(
+    RawPlots(test_data,
+      allow_interactive = FALSE,
+      column_map = "not_a_list"),
+    "column_map must be a named list"
+  )
+})
+
+test_that("RawPlots column_map handles m² to hectare conversion", {
+  test_data <- data.frame(
+    Biomass_MgHa = c(100, 150, 200),
+    Easting = c(-5.5, -5.6, -5.7),
+    Northing = c(36.5, 36.6, 36.7),
+    Area_m2 = c(10000, 5000, 100),  # Mix of m² and ha
+    MeasYear = c(2015, 2016, 2017)
+  )
+
+  result <- RawPlots(test_data,
+    allow_interactive = FALSE,
+    column_map = list(
+      agb = "Biomass_MgHa",
+      x = "Easting",
+      y = "Northing",
+      size = "Area_m2",
+      year = "MeasYear"
+    ))
+
+  # Verify conversion (values > 50 are assumed to be m²)
+  expect_equal(result$SIZE_HA, c(1.0, 0.5, 0.01))
+})
+
+test_that("RawPlots column_map filters out NA AGB values", {
+  test_data <- data.frame(
+    Biomass_MgHa = c(100, NA, 200),
+    Easting = c(-5.5, -5.6, -5.7),
+    Northing = c(36.5, 36.6, 36.7),
+    Area_ha = c(1.0, 0.5, 1.5),
+    MeasYear = c(2015, 2016, 2017)
+  )
+
+  result <- RawPlots(test_data,
+    allow_interactive = FALSE,
+    column_map = list(
+      agb = "Biomass_MgHa",
+      x = "Easting",
+      y = "Northing",
+      size = "Area_ha",
+      year = "MeasYear"
+    ))
+
+  # Should only have 2 rows (first and third)
+  expect_equal(nrow(result), 2)
+  expect_equal(result$AGB_T_HA, c(100, 200))
+})
+
+test_that("RawPlotsTree column_map works with all columns including height", {
+  skip("RawPlotsTree tests require interactive session")
+
+  test_data <- data.frame(
+    PlotCode = c(1, 1, 2),
+    TreeGenus = c("Pinus", "Pinus", "Quercus"),
+    TreeSpecies = c("sylvestris", "sylvestris", "robur"),
+    DBH_cm = c(15, 20, 25),
+    Height_m = c(10, 12, 15),
+    PlotArea_ha = c(0.01, 0.01, 0.01),
+    MeasYear = c(2010, 2010, 2010),
+    Longitude = c(-62.215, -62.215, -62.205),
+    Latitude = c(-3.465, -3.465, -3.455)
+  )
+
+  result <- RawPlotsTree(test_data,
+    allow_interactive = FALSE,
+    column_map = list(
+      id = "PlotCode",
+      genus = "TreeGenus",
+      species = "TreeSpecies",
+      diameter = "DBH_cm",
+      height = "Height_m",
+      x = "Longitude",
+      y = "Latitude",
+      size = "PlotArea_ha",
+      year = "MeasYear"
+    ))
+
+  expect_length(result, 2)
+  expect_named(result[[1]], c("id", "genus", "species", "diameter", "height", "size", "fez", "gez", "year"))
+  expect_named(result[[2]], c("id", "x", "y"))
+})
+
+test_that("RawPlotsTree column_map works without height column", {
+  skip("RawPlotsTree tests require interactive session")
+
+  test_data <- data.frame(
+    PlotCode = c(1, 1, 2),
+    TreeGenus = c("Pinus", "Pinus", "Quercus"),
+    TreeSpecies = c("sylvestris", "sylvestris", "robur"),
+    DBH_cm = c(15, 20, 25),
+    PlotArea_ha = c(0.01, 0.01, 0.01),
+    MeasYear = c(2010, 2010, 2010),
+    Longitude = c(-62.215, -62.215, -62.205),
+    Latitude = c(-3.465, -3.465, -3.455)
+  )
+
+  result <- RawPlotsTree(test_data,
+    allow_interactive = FALSE,
+    column_map = list(
+      id = "PlotCode",
+      genus = "TreeGenus",
+      species = "TreeSpecies",
+      diameter = "DBH_cm",
+      x = "Longitude",
+      y = "Latitude",
+      size = "PlotArea_ha",
+      year = "MeasYear"
+    ))
+
+  expect_length(result, 2)
+  expect_named(result[[1]], c("id", "genus", "species", "diameter", "size", "fez", "gez", "year"))
+})

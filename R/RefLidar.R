@@ -219,7 +219,6 @@ validate_crs <- function(raster_files, target_crs = "EPSG:4326") {
 #'
 #' @param lidar.dir Character string specifying the directory containing LiDAR raster files.
 #' @param auto_detect Logical indicating whether to attempt automatic filename pattern detection (default: TRUE).
-#' @param pattern_config Optional list with manual pattern configuration (for advanced users).
 #'
 #' @return A data frame containing processed point data with columns varying based on the raster type:
 #'   \item{PLOT_ID}{Unique identifier for each plot (auto-extracted or user-specified)}
@@ -241,9 +240,10 @@ validate_crs <- function(raster_files, target_crs = "EPSG:4326") {
 #'
 #' @param lidar.dir Directory containing ALS raster files
 #' @param auto_detect Enable automatic pattern detection for PLOT_ID and YEAR (default: TRUE)
-#' @param pattern_config Optional manual pattern configuration (overrides auto-detection)
 #' @param raster_type Optional raster type specification ("AGB", "CV", or "SD"). If NULL, auto-detects from filename or prompts user.
 #' @param allow_interactive Allow interactive prompts if auto-detection fails (default: TRUE). Set to FALSE for automated pipelines.
+#' @param metadata_map Optional data frame with explicit file metadata. Must have columns: filename (basename only), plot_id, year. Bypasses pattern detection. Example:
+#'   \code{data.frame(filename = c("file1.tif", "file2.tif"), plot_id = c("P1", "P2"), year = c(2020, 2021))}
 #'
 #' @examples
 #' \dontrun{
@@ -257,6 +257,18 @@ validate_crs <- function(raster_files, target_crs = "EPSG:4326") {
 #'   allow_interactive = FALSE
 #' )
 #'
+#' # Explicit metadata mapping (simplest approach)
+#' metadata <- data.frame(
+#'   filename = c("site1.tif", "site2.tif", "site3.tif"),
+#'   plot_id = c("PlotA", "PlotB", "PlotC"),
+#'   year = c(2020, 2021, 2022)
+#' )
+#' lidar_data <- RefLidar(
+#'   lidar.dir = "data/custom_rasters/",
+#'   metadata_map = metadata,
+#'   raster_type = "AGB"
+#' )
+#'
 #' # Process Coefficient of Variation rasters
 #' cv_data <- RefLidar(
 #'   lidar.dir = "data/uncertainty_maps/",
@@ -268,36 +280,6 @@ validate_crs <- function(raster_files, target_crs = "EPSG:4326") {
 #' lidar_data <- RefLidar(
 #'   lidar.dir = "data/custom_naming/",
 #'   auto_detect = FALSE,
-#'   raster_type = "AGB"
-#' )
-#'
-#' # Manual pattern_config for custom filename formats
-#' custom_pattern <- list(
-#'   type = "custom",
-#'   plot_start = 1,
-#'   plot_end = 15,
-#'   year_start = 22,
-#'   year_end = 25,
-#'   confidence = "high"
-#' )
-#' lidar_data <- RefLidar(
-#'   lidar.dir = "data/custom_format/",
-#'   pattern_config = custom_pattern,
-#'   raster_type = "AGB"
-#' )
-#'
-#' # Pattern config for Brazil format (ANA_A01_2017_AGB_100m.tif)
-#' brazil_pattern <- list(
-#'   type = "site_code_year_type",
-#'   plot_start = 1,
-#'   plot_end = 3,
-#'   year_start = 9,
-#'   year_end = 12,
-#'   confidence = "high"
-#' )
-#' brazil_data <- RefLidar(
-#'   lidar.dir = "data/brazil_slb/",
-#'   pattern_config = brazil_pattern,
 #'   raster_type = "AGB"
 #' )
 #'
@@ -325,9 +307,27 @@ validate_crs <- function(raster_files, target_crs = "EPSG:4326") {
 #' @importFrom utils menu
 #'
 #' @export
-RefLidar <- function(lidar.dir, auto_detect = TRUE, pattern_config = NULL, raster_type = NULL, allow_interactive = TRUE) {
+RefLidar <- function(lidar.dir, auto_detect = TRUE, raster_type = NULL, allow_interactive = TRUE, metadata_map = NULL) {
 
   newproj <- "EPSG:4326"  # WGS84 target projection
+
+  # Validate metadata_map first (before checking directory)
+  if (!is.null(metadata_map)) {
+    # Validate metadata_map structure
+    if (!is.data.frame(metadata_map)) {
+      stop("metadata_map must be a data frame")
+    }
+
+    required_cols <- c("filename", "plot_id", "year")
+    missing_cols <- setdiff(required_cols, names(metadata_map))
+    if (length(missing_cols) > 0) {
+      stop(paste0(
+        "metadata_map missing required columns: ",
+        paste(missing_cols, collapse = ", "),
+        "\nRequired: filename, plot_id, year"
+      ))
+    }
+  }
 
   # Get all raster files (filter out auxiliary files)
   raw <- list.files(lidar.dir, full.names = TRUE)
@@ -337,6 +337,37 @@ RefLidar <- function(lidar.dir, auto_detect = TRUE, pattern_config = NULL, raste
 
   if (length(raw) == 0) {
     stop("No valid raster files found in directory: ", lidar.dir)
+  }
+
+  # If metadata_map is provided, apply filtering
+  if (!is.null(metadata_map)) {
+    cat("\n=== Using explicit metadata mapping ===\n")
+    cat("Mapped", nrow(metadata_map), "files\n")
+
+    # Match files from directory with metadata
+    file_basenames <- basename(raw)
+    metadata_match <- match(file_basenames, metadata_map$filename)
+
+    unmapped_files <- file_basenames[is.na(metadata_match)]
+    if (length(unmapped_files) > 0) {
+      warning(paste0(
+        "Some files in directory not found in metadata_map and will be skipped:\n",
+        paste(head(unmapped_files, 5), collapse = ", "),
+        if (length(unmapped_files) > 5) paste0(" ... and ", length(unmapped_files) - 5, " more") else ""
+      ))
+    }
+
+    # Filter to only files with metadata
+    valid_indices <- !is.na(metadata_match)
+    raw <- raw[valid_indices]
+    metadata_match <- metadata_match[valid_indices]
+
+    if (length(raw) == 0) {
+      stop("No files from directory match filenames in metadata_map")
+    }
+
+    cat("Processing", length(raw), "files with metadata\n")
+    cat("=====================================\n\n")
   }
 
   cat("Found", length(raw), "raster files for processing\n")
@@ -416,8 +447,30 @@ RefLidar <- function(lidar.dir, auto_detect = TRUE, pattern_config = NULL, raste
   # Combine all points into a single data frame
   pts <- do.call(rbind, pts.list)
 
+  # ===== USE METADATA_MAP IF PROVIDED =====
+  if (!is.null(metadata_map)) {
+    cat("Applying metadata from metadata_map...\n")
+
+    # For each point, match its ID (filename) to metadata_map and assign PLOT_ID and AVG_YEAR
+    pts$PLOT_ID <- metadata_map$plot_id[match(pts$ID, metadata_map$filename)]
+    pts$AVG_YEAR <- metadata_map$year[match(pts$ID, metadata_map$filename)]
+
+    # Check for any unmatched points (shouldn't happen given earlier filtering)
+    unmatched <- is.na(pts$PLOT_ID) | is.na(pts$AVG_YEAR)
+    if (any(unmatched)) {
+      warning(paste0(
+        sum(unmatched), " points could not be matched to metadata_map and will be removed"
+      ))
+      pts <- pts[!unmatched, ]
+    }
+
+    cat("Successfully assigned PLOT_ID and YEAR from metadata_map\n")
+    cat("Unique PLOT_IDs:", length(unique(pts$PLOT_ID)), "\n")
+    cat("Sample PLOT_ID values:", paste(unique(pts$PLOT_ID)[1:min(3, length(unique(pts$PLOT_ID)))], collapse = ", "), "\n")
+    cat("Sample YEAR values:", paste(unique(pts$AVG_YEAR)[1:min(3, length(unique(pts$AVG_YEAR)))], collapse = ", "), "\n")
+
   # ===== ENHANCEMENT 2: INTELLIGENT PATTERN DETECTION =====
-  if (auto_detect) {
+  } else if (auto_detect) {
     cat("Attempting automatic pattern detection...\n")
     detected_patterns <- detect_patterns_ml(unique(pts$ID))
 
@@ -439,10 +492,45 @@ RefLidar <- function(lidar.dir, auto_detect = TRUE, pattern_config = NULL, raste
       cat("Automatic pattern detection failed or low confidence, falling back to manual input\n")
       auto_detect <- FALSE
     }
-  }
 
-  # Fall back to manual input if auto-detection fails or is disabled
-  if (!auto_detect) {
+    # Fall back to manual input if auto-detection fails
+    if (!auto_detect) {
+      if (!allow_interactive) {
+        # Non-interactive mode: use filename as PLOT_ID and try to extract year
+        cat("Non-interactive mode: Using filename as PLOT_ID\n")
+        pts$PLOT_ID <- tools::file_path_sans_ext(pts$ID)
+
+        # Try to extract year from filename using pattern matching
+        year_match <- regmatches(pts$ID, regexpr("[12][0-9]{3}", pts$ID))
+        if (length(year_match) > 0 && all(nzchar(year_match))) {
+          pts$AVG_YEAR <- as.integer(year_match)
+          cat("Extracted years from filenames\n")
+        } else {
+          # If no year found, use a default
+          pts$AVG_YEAR <- 2020
+          cat("WARNING: Could not extract year from filenames, using default year 2020\n")
+        }
+      } else {
+        # Interactive mode: Manual entry for PLOT_ID and AVG_YEAR (original behavior)
+        message("User input needed to extract PLOT_ID from filename(s)...")
+        message(paste0("File(s) used to extract data: ",  paste(unique(pts$ID), collapse = "")))
+        plot_start <- as.integer(readline(prompt = "Enter numeric index of the first letter of PLOT_ID: "))
+        plot_end <- as.integer(readline(prompt = "Enter numeric index of the last letter of PLOT_ID: "))
+        pts$PLOT_ID <- substr(pts$ID, plot_start, plot_end)
+
+        message("User input needed to extract YEAR from filename(s)...")
+        message(paste0("File(s) used to extract data: ",  paste(unique(pts$ID), collapse = "")))
+        year_start <- as.integer(readline(prompt = "Enter numeric index of the first letter of YEAR: "))
+        year_end <- as.integer(readline(prompt = "Enter numeric index of the last letter of YEAR: "))
+        year_raw <- substr(pts$ID, year_start, year_end)
+
+        # Apply enhanced year standardization
+        pts$AVG_YEAR <- sapply(year_raw, standardize_year)
+      }
+    }
+  # ===== END OF PATTERN DETECTION / FALLBACK =====
+  } else {
+    # No metadata_map and auto_detect = FALSE: fall back to manual/non-interactive
     if (!allow_interactive) {
       # Non-interactive mode: use filename as PLOT_ID and try to extract year
       cat("Non-interactive mode: Using filename as PLOT_ID\n")
