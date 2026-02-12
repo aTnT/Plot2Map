@@ -10,6 +10,8 @@
 
 - [Bias Modeling and Correction for AGB
   Maps](https://atnt.github.io/Plot2Map/articles/bias-modeling.md):
+- [Validating AGB Maps with Airborne LiDAR
+  Data](https://atnt.github.io/Plot2Map/articles/als-lidar-validation.md):
 
 ### Advanced Topics
 

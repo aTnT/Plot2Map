@@ -31,6 +31,7 @@ common column name variations and applies taxonomic correction using BIOMASS::co
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/introduction.html">Introduction</a></li>
     <li><a class="dropdown-item" href="../articles/plot-data-preparation.html">Plot data preparation</a></li>
     <li><a class="dropdown-item" href="../articles/bias-modeling.html">Bias Modeling and Correction for AGB Maps</a></li>
+    <li><a class="dropdown-item" href="../articles/als-lidar-validation.html">Validating AGB Maps with Airborne LiDAR Data</a></li>
     <li><a class="dropdown-item" href="../articles/advanced-uncertainty.html">Advanced Uncertainty Quantification with Spatial Correlation</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -219,32 +220,21 @@ Biogeosciences, 9, 3381–3403.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">plot_uncertainties</span> <span class="op">&lt;-</span> <span class="fu">sd_tree</span><span class="op">(</span><span class="va">plotsTree</span>, <span class="va">xyTree</span>, region <span class="op">=</span> <span class="st">"India"</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Using useCache=TRUE is recommended to reduce online search time for the next query</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |                                                                              |                                                                      |   0%</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>There seem to be a problem reaching the TNRS API!</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> Failed to perform HTTP request.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Taxonomic correction attempt 1 failed: Invalid taxonomic correction results (empty or length mismatch). Retrying in 1 seconds...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Using useCache=TRUE is recommended to reduce online search time for the next query</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |                                                                              |                                                                      |   0%</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>There seem to be a problem reaching the TNRS API!</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> Failed to perform HTTP request.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Taxonomic correction attempt 2 failed: Invalid taxonomic correction results (empty or length mismatch). Retrying in 1 seconds...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Using useCache=TRUE is recommended to reduce online search time for the next query</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |                                                                              |                                                                      |   0%</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>There seem to be a problem reaching the TNRS API!</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> Failed to perform HTTP request.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Taxonomic correction failed after 3 attempts: Invalid taxonomic correction results (empty or length mismatch). Using original taxonomic names.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Taxonomic correction failed after all retry attempts. Using original taxonomic names.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   |                                                                              |                                                                      |   0%  |                                                                              |======================================================================| 100%</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Source iplant_tnrs:27712</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Corrections FALSE:27092, TRUE:599, TaxaNotFound:19, SpNotFound:2</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>DRYAD data only stored 289 wood density values in your region of interest. You could provide additional wood densities (parameter addWoodDensityData) or widen your region (region="World")</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> The reference dataset contains 289 wood density values</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Your taxonomic table contains 340 taxa</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> No tree height data found in original plot data. Calculating height using BIOMASS height-diameter model.</span>
 <span class="r-in"><span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">plot_uncertainties</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   PLOT_ID  POINT_X  POINT_Y SIZE_HA AVG_YEAR  AGB_T_HA    sdTree</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1    BSP1 74.91944 14.36806       1     1996 158.03745  9.839335</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1    BSP1 74.91944 14.36806       1     1996 159.00181  9.933843</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2   BSP10 74.69861 14.94722       1     1996 417.99472 22.585124</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3  BSP100 75.82000 13.54722       1     1996  41.25254  3.934893</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  BSP101 75.43444 13.72639       1     1996 348.63751 38.003134</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  BSP102 74.88833 13.92361       1     1996 516.82368 39.705160</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  BSP101 75.43444 13.72639       1     1996 349.38941 38.024094</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  BSP102 74.88833 13.92361       1     1996 516.87190 39.705064</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6  BSP104 74.90917 13.87000       1     1996 700.53039 74.854013</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

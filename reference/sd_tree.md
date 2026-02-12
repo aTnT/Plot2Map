@@ -228,31 +228,20 @@ head(xyTree)
 
 plot_uncertainties <- sd_tree(plotsTree, xyTree, region = "India")
 #> Using useCache=TRUE is recommended to reduce online search time for the next query
-#>   |                                                                              |                                                                      |   0%
-#> Warning: There seem to be a problem reaching the TNRS API!
-#> Failed to perform HTTP request.
-#> Taxonomic correction attempt 1 failed: Invalid taxonomic correction results (empty or length mismatch). Retrying in 1 seconds...
-#> Using useCache=TRUE is recommended to reduce online search time for the next query
-#>   |                                                                              |                                                                      |   0%
-#> Warning: There seem to be a problem reaching the TNRS API!
-#> Failed to perform HTTP request.
-#> Taxonomic correction attempt 2 failed: Invalid taxonomic correction results (empty or length mismatch). Retrying in 1 seconds...
-#> Using useCache=TRUE is recommended to reduce online search time for the next query
-#>   |                                                                              |                                                                      |   0%
-#> Warning: There seem to be a problem reaching the TNRS API!
-#> Failed to perform HTTP request.
-#> Taxonomic correction failed after 3 attempts: Invalid taxonomic correction results (empty or length mismatch). Using original taxonomic names.
-#> Warning: Taxonomic correction failed after all retry attempts. Using original taxonomic names.
+#>   |                                                                              |                                                                      |   0%  |                                                                              |======================================================================| 100%
+#> Source iplant_tnrs:27712
+#> Corrections FALSE:27092, TRUE:599, TaxaNotFound:19, SpNotFound:2
+#> 
 #> Warning: DRYAD data only stored 289 wood density values in your region of interest. You could provide additional wood densities (parameter addWoodDensityData) or widen your region (region="World")
 #> The reference dataset contains 289 wood density values
 #> Your taxonomic table contains 340 taxa
 #> No tree height data found in original plot data. Calculating height using BIOMASS height-diameter model.
 head(plot_uncertainties)
 #>   PLOT_ID  POINT_X  POINT_Y SIZE_HA AVG_YEAR  AGB_T_HA    sdTree
-#> 1    BSP1 74.91944 14.36806       1     1996 158.03745  9.839335
+#> 1    BSP1 74.91944 14.36806       1     1996 159.00181  9.933843
 #> 2   BSP10 74.69861 14.94722       1     1996 417.99472 22.585124
 #> 3  BSP100 75.82000 13.54722       1     1996  41.25254  3.934893
-#> 4  BSP101 75.43444 13.72639       1     1996 348.63751 38.003134
-#> 5  BSP102 74.88833 13.92361       1     1996 516.82368 39.705160
+#> 4  BSP101 75.43444 13.72639       1     1996 349.38941 38.024094
+#> 5  BSP102 74.88833 13.92361       1     1996 516.87190 39.705064
 #> 6  BSP104 74.90917 13.87000       1     1996 700.53039 74.854013
 ```

@@ -3,10 +3,11 @@ pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   advanced-uncertainty: advanced-uncertainty.html
+  als-lidar-validation: als-lidar-validation.html
   bias-modeling: bias-modeling.html
   introduction: introduction.html
   plot-data-preparation: plot-data-preparation.html
-last_built: 2026-02-12T16:53Z
+last_built: 2026-02-12T17:25Z
 urls:
   reference: https://atnt.github.io/Plot2Map/reference
   article: https://atnt.github.io/Plot2Map/articles

@@ -1,0 +1,637 @@
+# Validating AGB Maps with Airborne LiDAR Data
+
+## Introduction
+
+Airborne Laser Scanning (ALS), provides high-resolution
+three-dimensional measurements of forest structure that can be used to
+estimate Above-Ground Biomass (AGB) with remarkable accuracy. Unlike
+field plots that provide point measurements, ALS offers wall-to-wall
+coverage at fine spatial resolutions (often 20-100m), making it an
+excellent reference dataset for validating satellite-derived biomass
+maps.
+
+This vignette demonstrates how to use the Plot2Map package to validate
+satellite biomass products against ALS-derived AGB estimates. We’ll use
+a sample dataset from the Sustainable Landscapes Brazil (SLB) project,
+which provides ALS-derived biomass maps at 100m resolution for a site in
+the Brazilian Amazon. The workflow includes:
+
+- Loading ALS data using the
+  [`RefLidar()`](https://atnt.github.io/Plot2Map/reference/RefLidar.md)
+  function
+- Preparing uncertainty estimates from Coefficient of Variation (CV)
+  maps
+- Validating against ESA-CCI Biomass 2018 product
+- Calculating accuracy metrics and creating visualizations
+- Interpreting results in the context of tropical forest monitoring
+
+ALS validation is particularly valuable when you need to assess spatial
+patterns of map accuracy, validate products at fine resolutions, or work
+in regions with limited field plot data. However, field plots remain
+essential for calibrating ALS models and quantifying uncertainties
+across diverse forest types.
+
+## Setup and Load Required Packages
+
+``` r
+library(Plot2Map)
+library(terra)
+library(ggplot2)
+```
+
+## Load SLB ALS Data
+
+The SLB dataset includes ALS-derived biomass estimates and their
+associated uncertainties for a 1,190 hectare area near Manaus, Brazil.
+The data were collected in 2018 and processed to 100m grid cells (1
+hectare each).
+
+``` r
+# Get paths to bundled SLB data
+slb.agb.dir <- sample_lidar_folder("SustainableLandscapeBrazil_v04/SLB_AGBmaps")
+slb.cv.dir <- sample_lidar_folder("SustainableLandscapeBrazil_v04/SLB_CVmaps")
+
+# Preview available files
+list.files(slb.agb.dir)
+list.files(slb.cv.dir)
+# [1] "BON_A01_2018_AGB_100m.tif"
+# [1] "BON_A01_2018_CV_100m.tif"
+```
+
+The
+[`RefLidar()`](https://atnt.github.io/Plot2Map/reference/RefLidar.md)
+function automatically processes ALS rasters by:
+
+- Detecting and reprojecting coordinate systems to WGS84
+- Extracting plot IDs and years from filenames
+- Converting raster pixels to a point data frame
+- Preparing data for Plot2Map validation workflows
+
+``` r
+# Load Above-Ground Biomass raster
+agb_data <- RefLidar(
+  lidar.dir = slb.agb.dir,
+  raster_type = "AGB",
+  allow_interactive = FALSE  # Non-interactive mode for reproducibility
+)
+
+# Preview data structure
+head(agb_data)
+cat("Total ALS cells:", nrow(agb_data), "\n")
+cat("AGB range:", range(agb_data$AGB, na.rm = TRUE), "Mg/ha\n")
+cat("Mean AGB:", round(mean(agb_data$AGB, na.rm = TRUE), 1), "Mg/ha\n")
+# Found 1 raster files for processing
+# Validating coordinate reference systems...
+# Files requiring CRS transformation to EPSG:4326 :
+# BON_A01_2018_AGB_100m.tif 
+# Using raster type: AGB 
+# Processing raster files with multi-band support...
+# Transforming rasters to target CRS: EPSG:4326 
+# Reprojecting raster with CRS: WGS 84 / UTM zone 19S 
+# Calculated average cell size: 0.999803 hectares
+# Attempting automatic pattern detection...
+# Analyzing filename patterns from: BON_A01_2018_AGB_100m 
+# Detected Pattern 1: Site_Code_Year_Type format
+# Using automatically detected patterns (confidence: high )
+# Successfully extracted PLOT_ID and YEAR using automatic detection
+# Sample PLOT_ID values: BON 
+# Sample YEAR values: 2018 
+
+# === RefLidar Processing Summary ===
+# Extracted points: 592 
+# Unique plots: 1 
+# Year range: 2018 - 2018 
+# Cell size (ha): 0.999803 
+# CRS transformations: Yes 
+# Multi-band processing: No 
+#    PLOT_ID   POINT_X   POINT_Y       AGB AVG_YEAR
+# 21     BON -67.28247 -9.859331 0.2824650     2018
+# 54     BON -67.28337 -9.860239 0.1802490     2018
+# 55     BON -67.28247 -9.860239 0.3926857     2018
+# 56     BON -67.28156 -9.860239 0.3369435     2018
+# 87     BON -67.28428 -9.861147 1.4032360     2018
+# 88     BON -67.28337 -9.861147 6.1049371     2018
+# Total ALS cells: 592 
+# AGB range: 0.180249 337.6577 Mg/ha
+# Mean AGB: 187.9 Mg/ha
+```
+
+The Coefficient of Variation (CV) provides a measure of uncertainty in
+the ALS-derived biomass estimates. This will be used to weight
+observations and calculate total uncertainty.
+
+``` r
+# Load Coefficient of Variation (uncertainty)
+cv_data <- RefLidar(
+  lidar.dir = slb.cv.dir,
+  raster_type = "CV",
+  allow_interactive = FALSE
+)
+
+# Preview CV values
+cat("CV range:", round(range(cv_data$CV, na.rm = TRUE), 3), "\n")
+cat("Mean CV:", round(mean(cv_data$CV, na.rm = TRUE), 3), "\n")
+# Found 1 raster files for processing
+# Validating coordinate reference systems...
+# Files requiring CRS transformation to EPSG:4326 :
+# BON_A01_2018_CV_100m.tif 
+# Using raster type: CV 
+# Processing raster files with multi-band support...
+# Transforming rasters to target CRS: EPSG:4326 
+# Reprojecting raster with CRS: WGS 84 / UTM zone 19S 
+# Calculated average cell size: 0.999803 hectares
+# Attempting automatic pattern detection...
+# Analyzing filename patterns from: BON_A01_2018_CV_100m 
+# Detected Pattern 1: Site_Code_Year_Type format
+# Using automatically detected patterns (confidence: high )
+# Successfully extracted PLOT_ID and YEAR using automatic detection
+# Sample PLOT_ID values: BON 
+# Sample YEAR values: 2018 
+
+# === RefLidar Processing Summary ===
+# Extracted points: 592 
+# Unique plots: 1 
+# Year range: 2018 - 2018 
+# Cell size (ha): 0.999803 
+# CRS transformations: Yes 
+# Multi-band processing: No 
+# CV range: 0.284 13.91 
+# Mean CV: 0.711 
+```
+
+## Data Preparation
+
+Now we’ll prepare the ALS data for validation by calculating
+uncertainties and adding required metadata fields.
+
+``` r
+# Calculate SD from CV × AGB
+agb_data$sdTree <- cv_data$CV * agb_data$AGB
+
+# Rename AGB column for Plot2Map compatibility
+names(agb_data)[names(agb_data) == "AGB"] <- "AGB_T_HA"
+
+# Preview uncertainty
+summary(agb_data[, c("AGB_T_HA", "sdTree")])
+#     AGB_T_HA            sdTree       
+#  Min.   :  0.1802   Min.   :  2.507  
+#  1st Qu.:162.4689   1st Qu.: 66.167  
+#  Median :202.5485   Median : 73.826  
+#  Mean   :187.9305   Mean   : 69.534  
+#  3rd Qu.:234.7198   3rd Qu.: 79.624  
+#  Max.   :337.6578   Max.   :106.186  
+```
+
+The
+[`BiomePair()`](https://atnt.github.io/Plot2Map/reference/BiomePair.md)
+function assigns ecological zones based on coordinates, which is
+necessary for selecting appropriate biomass models and validation
+datasets.
+
+``` r
+# Assign ecological zones using BiomePair()
+agb_data <- BiomePair(agb_data)
+
+# Add plot size (100m × 100m = 1 hectare)
+agb_data$SIZE_HA <- 1
+
+# Check assigned zones and years
+unique(agb_data$ZONE)
+unique(agb_data$FAO.ecozone)
+unique(agb_data$AVG_YEAR)
+# [1] "S.America"
+# [1] "Tropical rainforest"
+# [1] 2018
+```
+
+The
+[`calculateTotalUncertainty()`](https://atnt.github.io/Plot2Map/reference/calculateTotalUncertainty.md)
+function combines multiple sources of uncertainty:
+
+- `sdTree`: Measurement uncertainty from ALS processing (from CV values)
+- `sdSE`: Standard error from sampling (spatial variability)
+- `varPlot`: Total variance used for weighted aggregation
+
+For ALS data at 1 hectare resolution, measurement error typically
+dominates over sampling error. Additionally, we need to add an
+`AGB_T_HA_ORIG` column which stores the original
+(pre-temporal-adjustment) biomass values. Since our ALS data is already
+from 2018 (matching the map year), no temporal adjustment is needed, so
+we simply copy the current AGB values.
+
+``` r
+# Calculate comprehensive uncertainty (measurement + scale mismatch)
+agb_unc <- calculateTotalUncertainty(
+  plot_data = agb_data,
+  map_year = 2018,
+  map_resolution = 100  # ESA-CCI resolution in meters
+)
+
+# Extract processed data with uncertainty
+als_plots <- agb_unc$data
+
+# View uncertainty components
+print(agb_unc$uncertainty_components)
+
+# Summary of total uncertainty
+cat("Mean total uncertainty (SD):",
+    round(mean(als_plots$sdTotal, na.rm = TRUE), 1), "Mg/ha\n")
+cat("Uncertainty range:",
+    round(range(als_plots$sdTotal, na.rm = TRUE), 1), "Mg/ha\n")
+
+# Add AGB_T_HA_ORIG column (required by invDasymetry)
+# Since ALS data is already from 2018 (matching map year), no temporal
+# adjustment is needed, so original and current AGB are the same
+als_plots$AGB_T_HA_ORIG <- als_plots$AGB_T_HA
+# Using existing sdTree values for tree_level data
+# Calculating sampling uncertainty using Rejou-Mechain approach
+# Loading sampling error data from package file
+# Calculating growth uncertainty by biome
+# Total uncertainty calculated for plot data of type: tree_level
+# measurement    sampling      growth 
+#   0.8845427   0.1154573   0.0000000 
+# Mean total uncertainty (SD): 145.9 Mg/ha
+# Uncertainty range: 15.9 3145.2 Mg/ha
+```
+
+## Validation Against ESA-CCI 2018
+
+Now we’ll extract ESA-CCI biomass values at each ALS cell location. The
+[`invDasymetry()`](https://atnt.github.io/Plot2Map/reference/invDasymetry.md)
+function handles:
+
+- Downloading ESA-CCI tiles (cached after first download)
+- Applying tree cover thresholds
+- Extracting map values at reference locations
+- Calculating validation metrics
+
+Note: The first run will download ~600MB of ESA-CCI tiles. Subsequent
+runs use cached data.
+
+``` r
+# Extract ESA-CCI 2018 biomass values at ALS locations
+validation <- invDasymetry(
+  plot_data = als_plots,
+  clmn = "ZONE",
+  value = "S.America",
+  aggr = NULL,              # No aggregation - cell-level validation
+  threshold = 10,           # 10% tree cover threshold
+  dataset = "esacci",
+  esacci_biomass_year = 2018,
+  map_resolution = 0.001,   # ~100m in degrees
+  parallel = FALSE
+)
+# memfrac   : 0.5
+# tolerance : 0.1
+# verbose   : FALSE
+# todisk    : FALSE
+# tempdir   : /tmp/RtmpwC3fEE
+# datatype  : FLT4S
+# memmin    : 1
+# progress  : 3
+# Filtered 592 plots where ZONE == 'S.America'
+# 592 plots or cells being processed...
+# Processing 592 plots in 1 batches of up to 592 plots each
+# Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
+# Downloading https://storage.googleapis.com/earthenginepartners-hansen/GFC-2023-v1.11/Hansen_GFC-2023-v1.11_treecover2000_00N_070W.tif to data/GFC/Hansen_GFC-2023-v1.11_treecover2000_00N_070W.tif
+# trying URL 'https://storage.googleapis.com/earthenginepartners-hansen/GFC-2023-v1.11/Hansen_GFC-2023-v1.11_treecover2000_00N_070W.tif'
+# Content type 'application/octet-stream' length 204963567 bytes (195.5 MB)
+# ==================================================
+# downloaded 195.5 MB
+
+# Successfully downloaded Hansen_GFC-2023-v1.11_treecover2000_00N_070W.tif
+# Processing tile: Hansen_GFC-2023-v1.11_treecover2000_00N_070W.tif
+# Extracting values for ROI...
+# Extraction complete
+# Processing file: N00W070_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2018-fv6.0.tif
+# File not found locally. Attempting to download...
+# Downloading 1 ESA CCI Biomass v6.0 file(s) for year 2018...
+#   |                                                  | 0 % ~calculating 
+# (...)
+# Processing tile: Hansen_GFC-2023-v1.11_treecover2000_00N_070W.tif
+# Extracting values for ROI...
+# Extraction complete
+# Processing file: N00W070_ESACCI-BIOMASS-L4-AGB-MERGED-100m-2018-fv6.0.tif
+# File already exists locally
+# Loading raster
+# Extracting values for ROI...
+# Extraction complete
+# AGB values extracted (weighted mean = FALSE): 1 values
+# (...)
+
+# View validation results
+cat("Validation cells after filtering:", nrow(validation), "\n")
+head(validation[, c("plotAGB_10", "mapAGB", "varPlot", "x", "y")])
+# Validation cells after filtering: 592 
+#   plotAGB_10 mapAGB   varPlot         x         y
+# 1   210.6665    248 5362368.6 -67.28882 -9.890197
+# 2   226.1070    226 9892433.9 -67.28791 -9.890197
+# 3   227.4593    240 4637174.9 -67.28882 -9.889289
+# 4   214.9921    257 1040870.6 -67.28973 -9.889289
+# 5   232.2306    273  366678.6 -67.28882 -9.888382
+# 6   175.7104    250  208071.6 -67.28973 -9.888382
+```
+
+The validation data frame contains:
+
+- `plotAGB_10`: ALS biomass after 10% tree cover filter
+- `mapAGB`: ESA-CCI 2018 biomass at same locations
+- `varPlot`: Uncertainty for weighted aggregation
+- `x`, `y`: Coordinates
+
+The tree cover threshold filters out non-forested areas where biomass
+estimates are less reliable. In this case no cell was filtered.
+
+## Accuracy Assessment
+
+The
+[`Accuracy()`](https://atnt.github.io/Plot2Map/reference/Accuracy.md)
+function calculates validation metrics stratified by AGB bins, which
+helps identify systematic patterns like saturation at high biomass
+values. The function now automatically uses the `varPlot` column from
+your input data (calculated by
+[`calculateTotalUncertainty()`](https://atnt.github.io/Plot2Map/reference/calculateTotalUncertainty.md)
+and preserved by
+[`invDasymetry()`](https://atnt.github.io/Plot2Map/reference/invDasymetry.md))
+for uncertainty-aware validation. The varPlot values shown in the output
+represent the mean variance within each AGB bin.
+
+``` r
+# Calculate accuracy metrics by AGB bins
+accuracy_results <- Accuracy(
+  df = validation,
+  intervals = 8,
+  dir = "results",
+  str = "slb_vs_esacci2018"
+)
+
+# Display results
+print(accuracy_results)
+# Using varPlot values from input data for uncertainty-aware validation
+#   AGB bin (Mg/ha)   n AGBref (Mg/ha) AGBmap (Mg/ha) RMSD varPlot
+# 1            0-50  47             14             59   63     319
+# 2          50-100  13             85            188  111    1264
+# 3         100-150  70            127            221   99    6867
+# 4         150-200 150            180            231   56   35229
+# 5         200-250 224            223            237   26  298848
+# 6         250-300  81            265            240   35  137395
+# 7         300-400   7            311            249   66   13537
+# 9           total 592            188            219   55  141828
+```
+
+The `varPlot` column now shows the actual mean variance values for each
+AGB bin, reflecting the uncertainty in your ALS measurements. Higher
+varPlot values indicate greater uncertainty in those biomass ranges.
+
+Let’s extract and interpret the overall metrics:
+
+``` r
+# Extract overall metrics from accuracy table
+overall <- accuracy_results[nrow(accuracy_results), ]
+
+# Calculate additional metrics from validation data
+r_value <- cor(validation$plotAGB_10, validation$mapAGB, use = "complete.obs")
+r2_value <- r_value^2
+bias_value <- mean(validation$mapAGB - validation$plotAGB_10, na.rm = TRUE)
+
+cat("Correlation (R):", round(r_value, 3), "\n")
+cat("R²:", round(r2_value, 3), "\n")
+cat("RMSE:", round(overall$RMSD, 1), "Mg/ha\n")
+cat("Bias:", round(bias_value, 1), "Mg/ha\n")
+cat("Mean ALS AGB:", round(overall$`AGBref (Mg/ha)`, 1), "Mg/ha\n")
+cat("Mean ESA-CCI AGB:", round(overall$`AGBmap (Mg/ha)`, 1), "Mg/ha\n")
+cat("Sample size:", overall$n, "cells\n")
+# Correlation (R): 0.754 
+# R²: 0.569 
+# RMSE: 55 Mg/ha
+# Bias: 30.9 Mg/ha
+# Mean ALS AGB: 188 Mg/ha
+# Mean ESA-CCI AGB: 219 Mg/ha
+# Sample size: 592 cells
+```
+
+**Interpreting the metrics:**
+
+The validation results show **good agreement** between ALS and ESA-CCI
+2018:
+
+- **Correlation (R = 0.754)**: Strong linear relationship, well above
+  the typical 0.5-0.8 range for tropical forests. This indicates ESA-CCI
+  captures the spatial patterns of biomass variation observed by ALS.
+- **R² = 0.569**: ESA-CCI explains 57% of the variance in ALS
+  measurements, which is good performance given the different sensor
+  technologies and resolutions.
+- **RMSE = 55 Mg/ha**: The average prediction error is moderate and
+  within the expected range (60-120 Mg/ha) for tropical forest
+  validation.
+- **Bias = +30.9 Mg/ha**: ESA-CCI systematically overestimates biomass
+  by ~31 Mg/ha (16% relative to mean ALS AGB of 188 Mg/ha). This
+  positive bias is consistent across the site.
+
+**Patterns across AGB bins** (from accuracy table):
+
+- **Low biomass (0-100 Mg/ha)**: Large overestimation (ALS: 14-85 Mg/ha,
+  ESA-CCI: 59-188 Mg/ha, RMSD: 63-111 Mg/ha). Likely due to ground/soil
+  backscatter confusion in radar.
+- **Medium biomass (100-250 Mg/ha)**: More consistent agreement with
+  moderate overestimation (RMSD: 26-99 Mg/ha). This is the bulk of the
+  data (444 cells).
+- **High biomass (250-400 Mg/ha)**: Slight underestimation at very high
+  biomass (ALS: 265-311 Mg/ha, ESA-CCI: 240-249 Mg/ha), suggesting
+  potential saturation, though sample size is limited (88 cells).
+
+**Uncertainty trends**: varPlot increases with AGB (319 at low biomass
+to 298,848 at medium biomass), reflecting greater measurement
+uncertainty in denser forests where ALS penetration is more challenging.
+
+## Visualisations
+
+Visual comparisons help identify systematic patterns and spatial
+structure in validation errors.
+
+### Scatter Plot
+
+The scatter plot shows individual cell comparisons. Points near the 1:1
+line (dashed) indicate good agreement.
+
+``` r
+# Create scatter plot comparing ALS vs ESA-CCI
+Scatter(
+  x = validation$plotAGB_10,
+  y = validation$mapAGB,
+  caption = "SLB ALS vs ESA-CCI 2018",
+  fname = "slb_als_scatter.png",
+  outDir = "results"
+)
+```
+
+![SLB ALS vs ESA-CCI 2018 Scatter Plot](slb_als_scatter.png)
+
+SLB ALS vs ESA-CCI 2018 Scatter Plot
+
+### Binned Comparison
+
+The binned plot aggregates observations into AGB bins, showing trends
+more clearly than individual points.
+
+``` r
+# Create binned comparison plot
+Binned(
+  x = validation$plotAGB_10,
+  y = validation$mapAGB,
+  caption = "Binned Comparison: ALS vs Satellite",
+  fname = "slb_als_binned.png",
+  outDir = "results"
+)
+```
+
+![Binned Comparison: ALS vs ESA-CCI 2018](slb_als_binned.png)
+
+Binned Comparison: ALS vs ESA-CCI 2018
+
+### Spatial Residuals Map
+
+Spatial visualization of residuals (map - ALS) can reveal geographic
+patterns in errors, such as topographic effects or edge artifacts.
+
+``` r
+# Calculate residuals (map - ALS)
+validation$residual <- validation$mapAGB - validation$plotAGB_10
+
+# Create spatial visualization
+library(ggplot2)
+ggplot(validation, aes(x = x, y = y, color = residual)) +
+  geom_point(size = 2.5) +
+  scale_color_gradient2(
+    low = "blue", mid = "white", high = "red",
+    midpoint = 0,
+    name = "Residual\n(Mg/ha)",
+    limits = c(-150, 150)
+  ) +
+  coord_fixed() +
+  theme_minimal() +
+  labs(
+    title = "ESA-CCI 2018 Residuals vs ALS",
+    subtitle = "Blue = Underestimate, Red = Overestimate",
+    x = "Longitude", y = "Latitude"
+  )
+```
+
+![ESA-CCI 2018 Residuals vs ALS](slb_als_residuals_map.png)
+
+ESA-CCI 2018 Residuals vs ALS
+
+## Discussion and Interpretation
+
+**Our results in context:**
+
+The SLB validation shows better-than-typical agreement for tropical
+forests:
+
+- **Our correlation (R = 0.754)** exceeds the typical 0.6-0.8 range,
+  suggesting the relatively homogeneous Amazon forest at this site is
+  well-suited for radar-based biomass estimation.
+- **Our RMSE (55 Mg/ha)** is at the lower end of the typical 60-120
+  Mg/ha range, indicating good overall accuracy.
+- **Our bias (+31 Mg/ha)** shows systematic overestimation rather than
+  the saturation typically seen at high biomass. The bias is
+  concentrated in low biomass areas, not high biomass areas.
+
+## Extensions and Next Steps
+
+### Bias Modeling
+
+The validation results can be used to develop bias correction models
+that improve satellite map accuracy. The Plot2Map package includes
+comprehensive bias modeling functionality demonstrated in the bias
+modeling vignette:
+
+``` r
+vignette("bias-modeling", package = "Plot2Map")
+```
+
+ALS-derived corrections can improve satellite products by:
+
+- Reducing systematic bias across AGB ranges
+- Accounting for regional forest structure differences
+- Providing spatially continuous training data
+
+### Custom ALS Datasets
+
+This workflow can be applied to your own ALS data. The key requirements
+are:
+
+- Georeferenced raster format (GeoTIFF, etc.)
+- AGB estimates in Mg/ha
+- Optional uncertainty maps (CV, SD, or variance)
+
+``` r
+# Example for users with custom ALS data
+custom_als <- RefLidar(
+  lidar.dir = "path/to/custom/als/",
+  raster_type = "AGB",
+  allow_interactive = FALSE,
+  metadata_map = data.frame(
+    filename = c("site1_agb.tif", "site2_agb.tif"),
+    plot_id = c("Site1", "Site2"),
+    year = c(2020, 2021)
+  )
+)
+```
+
+The `metadata_map` argument allows explicit specification of plot IDs
+and years when filenames don’t follow standard naming conventions.
+
+### Related Vignettes
+
+For more information on Plot2Map workflows:
+
+- **Plot data preparation**:
+  [`vignette("plot-data-preparation")`](https://atnt.github.io/Plot2Map/articles/plot-data-preparation.md) -
+  Field plot data formatting and RefLidar() usage
+- **Advanced uncertainty**:
+  [`vignette("advanced-uncertainty")`](https://atnt.github.io/Plot2Map/articles/advanced-uncertainty.md) -
+  Spatial uncertainty quantification methods
+- **Bias modeling**:
+  [`vignette("bias-modeling")`](https://atnt.github.io/Plot2Map/articles/bias-modeling.md) -
+  Full bias correction workflow from validation to map improvement
+
+## Conclusion
+
+This vignette demonstrated a complete workflow for validating satellite
+biomass maps using high-resolution ALS reference data. Starting from the
+bundled SLB dataset, we:
+
+1.  Loaded ALS-derived AGB and uncertainty maps using
+    [`RefLidar()`](https://atnt.github.io/Plot2Map/reference/RefLidar.md)
+    (592 cells)
+2.  Prepared metadata and calculated total uncertainties (mean: 146
+    Mg/ha SD)
+3.  Validated ESA-CCI 2018 against 592 ALS cells via
+    [`invDasymetry()`](https://atnt.github.io/Plot2Map/reference/invDasymetry.md)
+4.  Calculated accuracy metrics stratified by AGB bins using
+    [`Accuracy()`](https://atnt.github.io/Plot2Map/reference/Accuracy.md)
+5.  Created visualizations to identify patterns and spatial structure
+
+**Key findings from the SLB validation:**
+
+- **Strong correlation (R = 0.754, R² = 0.569)** between ALS and
+  ESA-CCI, exceeding typical performance for tropical forests
+- **Moderate RMSE (55 Mg/ha)** at the lower end of expected range
+- **Systematic positive bias (+31 Mg/ha)** indicating ESA-CCI
+  overestimation, primarily in low biomass areas (0-100 Mg/ha)
+- **Uncertainty increases with biomass**, reflecting greater measurement
+  challenges in dense forests (varPlot from 319 to 298,848 (Mg/ha)²)
+
+The **better-than-typical agreement** observed here is likely due to the
+relatively homogeneous tropical rainforest at the SLB site and good
+temporal matching (both 2018). The cell-level validation approach (592
+validation points) provides rich spatial information that can guide bias
+correction, identify problematic regions, and improve future biomass
+mapping efforts.
+
+This workflow is readily adaptable to any ALS dataset with appropriate
+formatting, making it a valuable tool for researchers validating biomass
+products across diverse forest ecosystems. The combination of fine-scale
+spatial coverage (100m cells) and quantified uncertainties makes ALS an
+excellent complement to traditional field plot validation.

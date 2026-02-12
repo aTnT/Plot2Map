@@ -506,6 +506,8 @@ Environment, Volume 272, 2022, 112917, ISSN 0034-4257,
 
 - [Bias Modeling and Correction for AGB
   Maps](https://atnt.github.io/Plot2Map/articles/bias-modeling.md):
+- [Validating AGB Maps with Airborne LiDAR
+  Data](https://atnt.github.io/Plot2Map/articles/als-lidar-validation.md):
 
 ### Advanced Topics
 
