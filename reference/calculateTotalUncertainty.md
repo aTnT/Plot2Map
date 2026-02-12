@@ -237,21 +237,10 @@ tree_locations <- utils::read.csv(sample_file("SampleTreeXY.csv"))
 # Calculate AGB and measurement uncertainty
 tree_results <- sd_tree(tree_data, tree_locations, region = "World")
 #> Using useCache=TRUE is recommended to reduce online search time for the next query
-#>   |                                                                              |                                                                      |   0%
-#> Warning: There seem to be a problem reaching the TNRS API!
-#> Failed to perform HTTP request.
-#> Taxonomic correction attempt 1 failed: Invalid taxonomic correction results (empty or length mismatch). Retrying in 1 seconds...
-#> Using useCache=TRUE is recommended to reduce online search time for the next query
-#>   |                                                                              |                                                                      |   0%
-#> Warning: There seem to be a problem reaching the TNRS API!
-#> Failed to perform HTTP request.
-#> Taxonomic correction attempt 2 failed: Invalid taxonomic correction results (empty or length mismatch). Retrying in 1 seconds...
-#> Using useCache=TRUE is recommended to reduce online search time for the next query
-#>   |                                                                              |                                                                      |   0%
-#> Warning: There seem to be a problem reaching the TNRS API!
-#> Failed to perform HTTP request.
-#> Taxonomic correction failed after 3 attempts: Invalid taxonomic correction results (empty or length mismatch). Using original taxonomic names.
-#> Warning: Taxonomic correction failed after all retry attempts. Using original taxonomic names.
+#>   |                                                                              |                                                                      |   0%  |                                                                              |======================================================================| 100%
+#> Source iplant_tnrs:27712
+#> Corrections FALSE:27092, TRUE:599, TaxaNotFound:19, SpNotFound:2
+#> 
 #> The reference dataset contains 16467 wood density values
 #> Your taxonomic table contains 340 taxa
 #> No tree height data found in original plot data. Calculating height using BIOMASS height-diameter model.

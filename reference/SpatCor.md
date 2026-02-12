@@ -32,7 +32,7 @@ adjusted for spatial correlation.
 ``` r
   # Aggregate a synthetic raster to 0.1-degree resolution:
   library(terra)
-#> terra 1.8.80
+#> terra 1.8.93
   library(gstat)
   set.seed(42)
   r <- rast(ncol = 20, nrow = 20, xmin = 0, xmax = 1, ymin = 0, ymax = 1, vals = runif(400))
