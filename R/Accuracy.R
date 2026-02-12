@@ -14,12 +14,29 @@
 #' root mean squared differences (RMSD), variances, and other statistics per AGB bin
 #' and overall, saving the results to a CSV file.
 #'
-#' @param df Dataframe containing plot and map AGB data. Defaults to \code{plotsBACC}.
+#' The function now supports uncertainty-aware validation when a \code{varPlot} column is
+#' present in the input data (typically from \code{calculateTotalUncertainty()} or
+#' \code{invDasymetry()}). If \code{varPlot} is available, it will be used to calculate
+#' proper variance estimates and the IVar diagnostic. Otherwise, defaults to 1 for
+#' backward compatibility.
+#'
+#' @param df Dataframe containing plot and map AGB data. Must include columns with
+#'   \code{plotAGB_} prefix (e.g., \code{plotAGB_10}) and \code{mapAGB}. Optionally
+#'   include \code{varPlot} for uncertainty-aware validation.
 #' @param intervals Number of intervals for binning AGB values. Must be 6, 7, or 8. Defaults to 8.
 #' @param dir Directory where the results will be saved. Defaults to \code{resultsFolder}.
 #' @param str String to append to the output CSV file name. Defaults to an empty string.
 #'
-#' @return A dataframe with accuracy metrics for each AGB bin and a total row.
+#' @return A dataframe with accuracy metrics for each AGB bin and a total row, including:
+#'   \describe{
+#'     \item{AGB bin (Mg/ha)}{Biomass range for the bin}
+#'     \item{n}{Number of observations in the bin}
+#'     \item{AGBref (Mg/ha)}{Mean reference (plot) AGB}
+#'     \item{AGBmap (Mg/ha)}{Mean map AGB}
+#'     \item{RMSD}{Root mean squared difference}
+#'     \item{varPlot}{Mean plot variance (uses actual varPlot if available, otherwise 1)}
+#'     \item{AGBmap-AGBref}{Bias (map - reference)}
+#'   }
 #'
 #' @importFrom dplyr filter select group_by summarize mutate inner_join arrange bind_rows
 #' @importFrom tidyr pivot_wider pivot_longer
@@ -43,8 +60,23 @@
 #' print(results)
 #' }
 Accuracy <- function(df, intervals = 8, dir = "results", str = '') {
-  df$sdMap <- 1
-  df$sdPlot <- 1
+  # Use actual uncertainties if available, otherwise default to 1 for backward compatibility
+  # Check for varPlot column (from calculateTotalUncertainty/invDasymetry)
+  if (!"sdPlot" %in% names(df)) {
+    if ("varPlot" %in% names(df)) {
+      # Convert variance to standard deviation
+      df$sdPlot <- sqrt(df$varPlot)
+      message("Using varPlot values from input data for uncertainty-aware validation")
+    } else {
+      # Fall back to default value for backward compatibility
+      df$sdPlot <- 1
+    }
+  }
+
+  # Map uncertainty rarely available, default to 1
+  if (!"sdMap" %in% names(df)) {
+    df$sdMap <- 1
+  }
 
   # Assign AGB bins
   if (intervals == 8) {
@@ -107,9 +139,15 @@ Accuracy <- function(df, intervals = 8, dir = "results", str = '') {
     dplyr::group_by(group) |>
     dplyr::summarise(val = mean(sdMap^2, na.rm = TRUE), .groups = 'drop')
 
+  # Ensure all bins are present (fill empty bins with NA)
+  # This prevents errors when some AGB bins have no observations
   len <- length(bins.str)
-  agg.plot <- agg.plot[1:len, ]
-  agg.map <- agg.map[1:len, ]
+  all_groups <- data.frame(
+    group = factor(levels(grp1$group)[1:len], levels = levels(grp1$group))
+  )
+
+  agg.plot <- dplyr::left_join(all_groups, agg.plot, by = "group")
+  agg.map <- dplyr::left_join(all_groups, agg.map, by = "group")
 
   # Join accuracy metrics with original table
   df.new <- dplyr::left_join(agg.plot, agg.map, by = "group") |>
@@ -119,13 +157,18 @@ Accuracy <- function(df, intervals = 8, dir = "results", str = '') {
     dplyr::left_join(check, by = "group") |>
     dplyr::select(-group)
 
-  # Add plot tally
+  # Add plot tally - ensure all bins are represented
   plot.count <- as.data.frame(table(grp1$group))
+  plot.count <- dplyr::left_join(all_groups, plot.count, by = c("group" = "Var1"))
+  plot.count$Freq[is.na(plot.count$Freq)] <- 0
 
   # Combine all
-  df.new <- cbind(plot.count, df.new)
-  names(df.new) <- c('bins', 'plot_count', 'plot', 'map', 'msd', 'plot_var', 'map_var', 'checker')
+  df.new <- cbind(plot.count[, "Freq", drop = FALSE], df.new)
+  names(df.new) <- c('plot_count', 'plot', 'map', 'msd', 'plot_var', 'map_var', 'checker')
   df.new$bins <- bins.str
+
+  # Reorder columns to put bins first
+  df.new <- df.new[, c('bins', 'plot_count', 'plot', 'map', 'msd', 'plot_var', 'map_var', 'checker')]
 
   # Add last row for totals
   lastrow <- data.frame(

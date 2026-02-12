@@ -7,7 +7,9 @@
 Accuracy(df, intervals = 8, dir = "results", str = "")
 }
 \arguments{
-\item{df}{Dataframe containing plot and map AGB data. Defaults to \code{plotsBACC}.}
+\item{df}{Dataframe containing plot and map AGB data. Must include columns with
+\code{plotAGB_} prefix (e.g., \code{plotAGB_10}) and \code{mapAGB}. Optionally
+include \code{varPlot} for uncertainty-aware validation.}
 
 \item{intervals}{Number of intervals for binning AGB values. Must be 6, 7, or 8. Defaults to 8.}
 
@@ -16,13 +18,29 @@ Accuracy(df, intervals = 8, dir = "results", str = "")
 \item{str}{String to append to the output CSV file name. Defaults to an empty string.}
 }
 \value{
-A dataframe with accuracy metrics for each AGB bin and a total row.
+A dataframe with accuracy metrics for each AGB bin and a total row, including:
+\describe{
+\item{AGB bin (Mg/ha)}{Biomass range for the bin}
+\item{n}{Number of observations in the bin}
+\item{AGBref (Mg/ha)}{Mean reference (plot) AGB}
+\item{AGBmap (Mg/ha)}{Mean map AGB}
+\item{RMSD}{Root mean squared difference}
+\item{varPlot}{Mean plot variance (uses actual varPlot if available, otherwise 1)}
+\item{AGBmap-AGBref}{Bias (map - reference)}
+}
 }
 \description{
 This function calculates accuracy metrics for Above Ground Biomass (AGB) estimates
 from plot data and map data, grouped into specified intervals. It computes means,
 root mean squared differences (RMSD), variances, and other statistics per AGB bin
 and overall, saving the results to a CSV file.
+}
+\details{
+The function now supports uncertainty-aware validation when a \code{varPlot} column is
+present in the input data (typically from \code{calculateTotalUncertainty()} or
+\code{invDasymetry()}). If \code{varPlot} is available, it will be used to calculate
+proper variance estimates and the IVar diagnostic. Otherwise, defaults to 1 for
+backward compatibility.
 }
 \examples{
 \donttest{
