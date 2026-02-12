@@ -39,6 +39,7 @@ articles:
   navbar: ~
   contents:
   - bias-modeling
+  - als-lidar-validation
 - title: Advanced Topics
   navbar: ~
   contents:
