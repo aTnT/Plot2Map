@@ -28,10 +28,10 @@ test_that("Test with non-existent file (should error)", {
 
 test_that("sample_lidar_folder returns correct folder paths", {
   # Test with valid folder
-  lidar_folder <- sample_lidar_folder("SustainableLandscapeBrazil_v04/SLB_AGBmaps")
+  lidar_folder <- sample_lidar_folder("TERN_data_package_v01/TERN_AGBmaps")
   expect_type(lidar_folder, "character")
   # Now expect an absolute path that contains the directory
-  expect_true(grepl("SustainableLandscapeBrazil_v04/SLB_AGBmaps$", lidar_folder))
+  expect_true(grepl("TERN_data_package_v01/TERN_AGBmaps$", lidar_folder))
   expect_true(dir.exists(lidar_folder))
   
   # Test with non-existent folder (should error)

@@ -15,6 +15,6 @@ directory. This function make them easy to access
 }
 \examples{
 \dontrun{
-sample_lidar_folder("SustainableLandscapeBrazil_v04/SLB_AGBmaps")
+sample_lidar_folder("TERN_data_package_v01/TERN_AGBmaps")
 }
 }

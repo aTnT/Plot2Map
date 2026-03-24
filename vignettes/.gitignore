@@ -10,3 +10,5 @@
 *.hdf5
 *.HDF5
 data/
+
+/.quarto/

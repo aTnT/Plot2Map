@@ -1,0 +1,10 @@
+Country	State	Bioregion	Dataset	Site.Name	Year	Unit.Dimensions_m	Unit.Area_ha	Unit.Number	Inventory.Area_ha	Mean.DBH_cm	Range.DBH_cm	N.all	Allometry	Mean.AGB_mg/ha	Range.AGB_mg/ha	LiDAR.Acquisition	Sampled.Area_km2	Time.difference_yr
+Australia	New South Wales	Australian Alps	Supersite	Tumbarumba	2015	100x100	1	1	1	28.3	10.0 - 121.6	380	Paul2016	360.9	360.9 - 360.9	TUM_2011	31.79	4
+Australia	Queensland	Brigalow Belt South	Injune	Injune	2000	50x50	0.25	31	7.75	19.3	10.0 - 97.1	2314	Paul2016	66	23.7 - 112.9	INJ_2015	139.49	15
+Australia	Queensland	Wet Tropics	CSIRO	Robson Creek	2011	100x50	0.5	1	0.5	23.4	10.0 - 127.0	430	Chave2014	531.9	531.9 - 531.9	RBS_2012	25.02	1
+Australia	Queensland	Wet Tropics	Supersite	Robson Creek	2012	100x100	1	25	25	20.9	10.0 - 152.5	23402	Chave2014	410	314.2 - 555.6	RBS_2012	25.02	0
+Australia	Queensland	Wet Tropics	Supersite	Robson Creek	2015	100x100	1	1	1	21.2	10.0 - 93.0	969	Chave2014	422.5	422.5 - 422.5	RBS_2012	25.02	3
+Australia	Tasmania	Tasmanian Southern Ranges	AusPlotsForest, Supersite	Warra	2012	100x100	1	2	2	33.2	10.0 - 273.7	962	Paul2016	659.8	658.4 - 661.3	WRR_2014	24.96	2
+Australia	Western Australia	Coolgardie	Supersite	Great Western Woodlands	2012	100x100	1	2	2	40.2	10.0 - 105.0	62	Paul2016	42.3	39.2 - 45.4	GWW_2012	25.01	0
+Australia	Western Australia	Coolgardie	Supersite	Great Western Woodlands	2013	100x100	1	2	2	22.4	10.0 - 73.3	257	Paul2016	45	37.9 - 52.1	GWW_2012	25.01	1
+Australia	Western Australia	Coolgardie	Supersite	Great Western Woodlands	2018	100x100	1	1	1	50.9	10.6 - 105.0	18	Paul2016	41.6	41.6 - 41.6	GWW_2012	25.01	6

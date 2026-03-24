@@ -143,13 +143,13 @@ test_that("determineDataType correctly identifies plot data types", {
 
   # LiDAR data example with CV column
   lidar_data <- data.frame(
-    PLOT_ID = c("BON_A01", "BON_A01"),
-    POINT_X = c(-67.28247, -67.28337),
-    POINT_Y = c(-9.859331, -9.860239),
-    AGB = c(0.2824650, 0.1802490),
-    AVG_YEAR = c(2018, 2018),
-    CV = c(10.991895, 13.910153),
-    sdTree = c(3.104826, 2.507291)
+    PLOT_ID = c("ALC", "ALC"),
+    POINT_X = c(317.300, 317.400),
+    POINT_Y = c(-33.500, -33.510),
+    AGB = c(35.2, 28.6),
+    AVG_YEAR = c(2014, 2014),
+    CV = c(0.65, 0.72),
+    sdTree = c(22.88, 20.59)
   )
 
   # Tree data with non-standard column names but containing tree indicators

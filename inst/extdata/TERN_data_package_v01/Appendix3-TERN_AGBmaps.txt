@@ -1,0 +1,14 @@
+Country	State	Site.Name	LiDAR.Acquisition	Year	UTM.Zone	Sampled.Area_km2	Mean.TCH_m	Range.TCH_m	Mean.AGB_Mg/ha	Range.AGB_Mg/ha	Mean.CV_unitless	Range.CV_unitless	N.Pixel
+Australia	New South Wales	Tumbarumba	TUM_2011	2011	55S	31.79	17.2	0.0 - 40.0	292.7	3.3 - 708.2	0.2	0.2 - 1.0	3130
+Australia	Northern Territory	Alice Mulga	ALC_2014	2014	53S	24.18	2.2	0.3 - 3.9	31.6	10.4 - 49.7	0.7	0.6 - 1.0	2371
+Australia	Northern Territory	Litchfield Savanna	LTC_2013	2013	52S	25.01	4.6	0.3 - 11.6	70.3	7.2 - 171.2	0.5	0.3 - 1.0	2401
+Australia	Queensland	Injune	INJ_2015	2015	55S	139.49	4.3	0.0 - 13.7	67.2	0.0 - 204.4	0.5	0.3 - 1.0	10789
+Australia	Queensland	Karawatha	KRW_2013	2013	56S	12.77	9.7	0.0 - 20.3	158.8	0.0 - 308.6	0.3	0.2 - 1.0	1144
+Australia	Queensland	Robson Creek	RBS_2012	2012	55S	25.02	25.2	8.0 - 41.1	440.7	189.1 - 654.5	0.2	0.2 - 0.3	2450
+Australia	South Australia	Calperum Mallee	CLP_2012	2012	54S	25.01	1.5	0.1 - 3.5	20.9	3.2 - 43.4	0.9	0.6 - 1.0	2401
+Australia	Tasmania	Warra	WRR_2014	2014	55S	24.96	25.6	0.3 - 47.0	450.6	12.0 - 806.5	0.2	0.2 - 1.0	2499
+Australia	Victoria	Rushworth Forest	RSH_2012	2012	55S	25.01	7.5	0.0 - 14.2	118.6	0.0 - 213.9	0.4	0.3 - 1.0	2450
+Australia	Victoria	Watts Creek	WTT_2012	2012	55S	25	34.4	0.2 - 62.0	618.8	30.1 - 1041.6	0.2	0.1 - 0.6	2447
+Australia	Victoria	Whroo	WHR_2012	2012	55S	1	9.6	5.2 - 13.1	154.6	108.0 - 201.0	0.3	0.3 - 0.4	100
+Australia	Victoria	Zig Zag Creek	ZGZ_2012	2012	55S	25.01	15.1	1.0 - 32.5	254.7	17.1 - 500.5	0.3	0.2 - 1.0	2450
+Australia	Western Australia	Great Western Woodlands	GWW_2012	2012	51S	25.01	2.3	0.0 - 10.2	33.6	0.7 - 108.6	0.7	0.4 - 1.0	2450

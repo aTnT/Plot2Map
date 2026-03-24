@@ -1,0 +1,189 @@
+Country	State	Bioregion	Dataset	Site.Name	Unit.Code	Year	Unit.Dimensions_m	Unit.Area_ha	Xutm_m	Yutm_m	UTM.Zone	paulAGB.Mean_mg/ha	chaveAGB.Mean_mg/ha	chaveAGB.Cred2.5_mg/ha	chaveAGB.Cred97.5_mg/ha	TCH_m
+Australia	New South Wales	3	Supersite	Tumbarumba	Tumbarumba	2015	100x100	1	604251.9	6053602.7	55	360.9	na	na	na	19.541
+Australia	New South Wales	3	Supersite	Tumbarumba	Tumbarumba_0_0	2015	50x50	0.25	604226.6	6053578	55	358.9	na	na	na	18.67
+Australia	New South Wales	3	Supersite	Tumbarumba	Tumbarumba_0_1	2015	50x50	0.25	604227.2	6053628	55	375.9	na	na	na	17.728
+Australia	New South Wales	3	Supersite	Tumbarumba	Tumbarumba_1_0	2015	50x50	0.25	604276.6	6053577.4	55	336.7	na	na	na	21.906
+Australia	New South Wales	3	Supersite	Tumbarumba	Tumbarumba_1_1	2015	50x50	0.25	604277.2	6053627.4	55	371.9	na	na	na	19.862
+Australia	Queensland	7	Injune	Injune	p023s15	2000	50x50	0.25	543478.1	7195630.2	55	67	na	na	na	7.487
+Australia	Queensland	7	Injune	Injune	p023s16	2000	50x50	0.25	543527.5	7195623.3	55	53.9	na	na	na	4.763
+Australia	Queensland	7	Injune	Injune	p023s20	2000	50x50	0.25	543729.5	7195644.7	55	87.1	na	na	na	1.288
+Australia	Queensland	7	Injune	Injune	p023s24	2000	50x50	0.25	543428.1	7195579.6	55	82.7	na	na	na	6.495
+Australia	Queensland	7	Injune	Injune	p058s24	2000	50x50	0.25	561953.5	7183570.7	55	54.6	na	na	na	3.911
+Australia	Queensland	7	Injune	Injune	p058s29	2000	50x50	0.25	562197	7183565.2	55	73.1	na	na	na	4.167
+Australia	Queensland	7	Injune	Injune	p081s08	2000	50x50	0.25	536222.6	7171673.7	55	76.7	na	na	na	6.369
+Australia	Queensland	7	Injune	Injune	p081s11	2000	50x50	0.25	535877.3	7171641.3	55	106.5	na	na	na	8.103
+Australia	Queensland	7	Injune	Injune	p081s16	2000	50x50	0.25	536113.1	7171631.8	55	85.8	na	na	na	6.694
+Australia	Queensland	7	Injune	Injune	p083s12	2000	50x50	0.25	543290.9	7171572.2	55	23.7	na	na	na	2.213
+Australia	Queensland	7	Injune	Injune	p083s20	2000	50x50	0.25	543713.8	7171624.5	55	60.6	na	na	na	4.155
+Australia	Queensland	7	Injune	Injune	p111s12	2000	50x50	0.25	535920	7159651.4	55	98.6	na	na	na	6.917
+Australia	Queensland	7	Injune	Injune	p111s18	2000	50x50	0.25	536214.7	7159644.7	55	100.4	na	na	na	8.696
+Australia	Queensland	7	Injune	Injune	p114s04	2000	50x50	0.25	547125.7	7159666.1	55	77.9	na	na	na	3.468
+Australia	Queensland	7	Injune	Injune	p114s12	2000	50x50	0.25	547016.2	7159593.2	55	24.9	na	na	na	2.099
+Australia	Queensland	7	Injune	Injune	p124s06	2000	50x50	0.25	547211.8	7155659.2	55	73.6	na	na	na	4.263
+Australia	Queensland	7	Injune	Injune	p124s19	2000	50x50	0.25	547380.5	7155597.3	55	112.9	na	na	na	4.711
+Australia	Queensland	7	Injune	Injune	p131s18	2000	50x50	0.25	536245.8	7151618.5	55	35.8	na	na	na	1.355
+Australia	Queensland	7	Injune	Injune	p138s16	2000	50x50	0.25	562050.2	7151600.4	55	45.2	na	na	na	4.499
+Australia	Queensland	7	Injune	Injune	p138s21	2000	50x50	0.25	561784.1	7151564.2	55	52.4	na	na	na	4.228
+Australia	Queensland	7	Injune	Injune	p138s28	2000	50x50	0.25	562141.7	7151529.6	55	82.3	na	na	na	3.377
+Australia	Queensland	7	Injune	Injune	p142s02	2000	50x50	0.25	539627.1	7147640.5	55	34.3	na	na	na	2.388
+Australia	Queensland	7	Injune	Injune	p142s13	2000	50x50	0.25	539675.2	7147591.6	55	38	na	na	na	4.06
+Australia	Queensland	7	Injune	Injune	p142s18	2000	50x50	0.25	539927.4	7147593.3	55	67.8	na	na	na	4.354
+Australia	Queensland	7	Injune	Injune	p142s20	2000	50x50	0.25	540036.4	7147595.1	55	49.3	na	na	na	4.487
+Australia	Queensland	7	Injune	Injune	p144s135	2000	50x50	0.25	547100	7147571.4	55	97.8	na	na	na	5.557
+Australia	Queensland	7	Injune	Injune	p144s19	2000	50x50	0.25	547389.2	7147557.5	55	46.2	na	na	na	3.688
+Australia	Queensland	7	Injune	Injune	p148s01	2000	50x50	0.25	561756	7147653.6	55	52.2	na	na	na	5.076
+Australia	Queensland	7	Injune	Injune	p148s16	2000	50x50	0.25	562011.9	7147567.5	55	63.9	na	na	na	6.172
+Australia	Queensland	7	Injune	Injune	p148s21	2000	50x50	0.25	561732.3	7147544.5	55	58.6	na	na	na	3.908
+Australia	Queensland	7	Injune	Injune	p148s29	2000	50x50	0.25	562177.5	7147538	55	61.2	na	na	na	5.505
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH01	2012	100x100	1	354300	8106450	55	218.6	353.6	329.4	379.4	24.22
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH01_0_0	2012	50x50	0.25	354275	8106425	55	203.2	313.6	272.5	368.9	24.431
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH01_0_1	2012	50x50	0.25	354275	8106475	55	225.5	354.4	305.2	415.1	24.653
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH01_1_0	2012	50x50	0.25	354325	8106425	55	231.2	392.6	350.6	442.8	24.814
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH01_1_1	2012	50x50	0.25	354325	8106475	55	214.5	354	316.6	400	22.984
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH02	2012	100x100	1	354400	8106450	55	240	397.5	374.9	422.7	24.421
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH02_0_0	2012	50x50	0.25	354375	8106425	55	239.6	428.1	388.5	474.6	24.245
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH02_0_1	2012	50x50	0.25	354375	8106475	55	291.4	453.5	403.5	513.6	25.231
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH02_1_0	2012	50x50	0.25	354425	8106425	55	221.8	357.3	318.3	400.4	24.047
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH02_1_1	2012	50x50	0.25	354425	8106475	55	207.3	350.9	316.3	395.1	24.159
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH03	2012	100x100	1	354500	8106450	55	215.3	367.7	345.8	392.6	22.241
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH03_0_0	2012	50x50	0.25	354475	8106425	55	254.8	430.6	370.9	513.5	24.231
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH03_0_1	2012	50x50	0.25	354475	8106475	55	194.1	350.4	309	397.7	23.067
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH03_1_0	2012	50x50	0.25	354525	8106425	55	207.2	327.7	299.5	362.7	21.113
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH03_1_1	2012	50x50	0.25	354525	8106475	55	204.9	362.2	326.7	400.7	20.551
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH04	2012	100x100	1	354600	8106450	55	199.6	314.2	298.2	332.7	20.3
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH04_0_0	2012	50x50	0.25	354575	8106425	55	181.6	286.7	264.6	313	19.231
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH04_0_1	2012	50x50	0.25	354575	8106475	55	239.7	387.4	353.5	430.3	22.978
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH04_1_0	2012	50x50	0.25	354625	8106425	55	176.9	284.1	258.8	311.4	17.979
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH04_1_1	2012	50x50	0.25	354625	8106475	55	200.1	298.5	263.2	340.8	21.011
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH05	2012	100x100	1	354700	8106450	55	247.1	419	393.8	445.7	23.769
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH05_0_0	2012	50x50	0.25	354675	8106425	55	248.8	423.3	377.3	474.8	22.653
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH05_0_1	2012	50x50	0.25	354675	8106475	55	200.6	336.6	302.7	379.9	23.603
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH05_1_0	2012	50x50	0.25	354725	8106425	55	266.4	445.1	396.9	502.8	24.789
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH05_1_1	2012	50x50	0.25	354725	8106475	55	272.7	471	423.7	519.5	24.032
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH06	2012	100x100	1	354300	8106550	55	237	412.1	389.1	439	24.487
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH06	2015	100x100	1	354300	8106550	55	246.4	422.5	398.3	448.2	24.487
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH06_0_0	2012	50x50	0.25	354275	8106525	55	228.6	386.2	348.9	434.5	24.255
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH06_0_0	2015	50x50	0.25	354275	8106525	55	241.2	402.2	362.3	449.3	24.255
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH06_0_1	2012	50x50	0.25	354275	8106575	55	247.7	405.5	365.7	451.5	24.197
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH06_0_1	2015	50x50	0.25	354275	8106575	55	247.9	401.8	360.2	448.7	24.197
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH06_1_0	2012	50x50	0.25	354325	8106525	55	251.3	459.4	410.4	515.5	24.252
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH06_1_0	2015	50x50	0.25	354325	8106525	55	265.8	474.9	427.2	522.8	24.252
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH06_1_1	2012	50x50	0.25	354325	8106575	55	220.2	397.2	353.4	449.3	25.244
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH06_1_1	2015	50x50	0.25	354325	8106575	55	230.5	410.9	365.6	470.1	25.244
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH07	2012	100x100	1	354400	8106550	55	269.8	479.1	449.4	512.8	24.757
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH07_0_0	2012	50x50	0.25	354375	8106525	55	243.5	412.8	357	477.6	23.887
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH07_0_1	2012	50x50	0.25	354375	8106575	55	236.5	423.8	377.8	481.5	24.898
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH07_1_0	2012	50x50	0.25	354425	8106525	55	309	558.4	489.2	632.6	26.515
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH07_1_1	2012	50x50	0.25	354425	8106575	55	290.1	521.5	470.9	582.3	23.728
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH08	2012	100x100	1	354500	8106550	55	219.8	386.2	365.2	412.1	24.771
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH08_0_0	2012	50x50	0.25	354475	8106525	55	232.6	424.9	377.2	478.5	25.676
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH08_0_1	2012	50x50	0.25	354475	8106575	55	257.9	476.5	427.2	537.9	26.72
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH08_1_0	2012	50x50	0.25	354525	8106525	55	188.9	308.7	273.4	347.5	21.547
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH08_1_1	2012	50x50	0.25	354525	8106575	55	199.8	334.9	304.6	371.3	25.139
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH09	2012	100x100	1	354600	8106550	55	222	375.9	354.1	400.4	22.637
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH09_0_0	2012	50x50	0.25	354575	8106525	55	194.1	328.3	291	370.5	20.989
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH09_0_1	2012	50x50	0.25	354575	8106575	55	231.9	379.7	339.5	436	23.784
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH09_1_0	2012	50x50	0.25	354625	8106525	55	225	400.2	358.6	450.4	22.35
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH09_1_1	2012	50x50	0.25	354625	8106575	55	237.2	395.5	359.5	441.9	23.425
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH10	2012	100x100	1	354700	8106550	55	243.4	401.5	377.2	427.5	23.988
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH10_0_0	2012	50x50	0.25	354675	8106525	55	246	388.3	344.8	441.4	23.363
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH10_0_1	2012	50x50	0.25	354675	8106575	55	214.4	345.1	308.3	387.2	23.11
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH10_1_0	2012	50x50	0.25	354725	8106525	55	299.5	506.3	450.1	573.9	24.98
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH10_1_1	2012	50x50	0.25	354725	8106575	55	213.7	366.5	325.5	420.2	24.498
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH11	2012	100x100	1	354300	8106650	55	218.6	352.5	332.2	374.3	23.113
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH11_0_0	2012	50x50	0.25	354275	8106625	55	214.7	350.1	315.6	389.6	24.885
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH11_0_1	2012	50x50	0.25	354275	8106675	55	232.2	364.4	322.8	409.4	22.169
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH11_1_0	2012	50x50	0.25	354325	8106625	55	218	344.2	306.9	387.3	23.528
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH11_1_1	2012	50x50	0.25	354325	8106675	55	209.5	351.3	310.8	397.4	21.869
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH12	2012	100x100	1	354400	8106650	55	228.5	394.2	370.7	421.8	23.719
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH12_0_0	2012	50x50	0.25	354375	8106625	55	211	365.2	329.4	405.1	24.429
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH12_0_1	2012	50x50	0.25	354375	8106675	55	157.3	263.6	239.4	294.7	21.826
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH12_1_0	2012	50x50	0.25	354425	8106625	55	258.6	464.1	407.6	533.3	23.369
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH12_1_1	2012	50x50	0.25	354425	8106675	55	287.3	483.8	432	544.3	25.251
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH13	2012	100x100	1	354500	8106650	55	275.5	510.6	480.6	546.8	26.468
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH13_0_0	2012	50x50	0.25	354475	8106625	55	265.9	499.6	441	560.6	27.158
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH13_0_1	2012	50x50	0.25	354475	8106675	55	320.9	559	482.4	643	27.337
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH13_1_0	2012	50x50	0.25	354525	8106625	55	233.4	416.3	376	459.6	26.628
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH13_1_1	2012	50x50	0.25	354525	8106675	55	282	567.3	508.6	636.1	24.75
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH14	2012	100x100	1	354600	8106650	55	246.1	417.9	395.1	442.8	23.081
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH14_0_0	2012	50x50	0.25	354575	8106625	55	251	448	403.8	503.4	25.276
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH14_0_1	2012	50x50	0.25	354575	8106675	55	243.1	429.9	387.4	476.4	22.816
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH14_1_0	2012	50x50	0.25	354625	8106625	55	250	401.7	357	450.6	23.21
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH14_1_1	2012	50x50	0.25	354625	8106675	55	240.1	392.1	355.9	438.4	21.02
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH15	2012	100x100	1	354700	8106650	55	219.3	381.3	358.9	405.9	23.942
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH15_0_0	2012	50x50	0.25	354675	8106625	55	227.3	402.9	367.5	444.4	24.48
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH15_0_1	2012	50x50	0.25	354675	8106675	55	188.3	316.2	283.2	353.5	22.754
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH15_1_0	2012	50x50	0.25	354725	8106625	55	227.1	391.9	346	445.8	24.293
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH15_1_1	2012	50x50	0.25	354725	8106675	55	234.6	414.3	368.4	472.5	24.242
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH16	2012	100x100	1	354300	8106750	55	231.7	384.6	363.7	408.5	22.789
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH16_0_0	2012	50x50	0.25	354275	8106725	55	248.9	398.9	357.3	448.1	19.501
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH16_0_1	2012	50x50	0.25	354275	8106775	55	187.1	302.7	273.6	338.8	21.026
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH16_1_0	2012	50x50	0.25	354325	8106725	55	211.3	358.2	317.3	406	24.66
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH16_1_1	2012	50x50	0.25	354325	8106775	55	279.7	478.8	431.1	540.3	25.969
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH17	2012	100x100	1	354400	8106750	55	274.5	475.1	445.1	508.1	26.065
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH17_0_0	2012	50x50	0.25	354375	8106725	55	230.9	384.6	336.4	452.9	25.367
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH17_0_1	2012	50x50	0.25	354375	8106775	55	309.9	508.6	456	570.4	26.553
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH17_1_0	2012	50x50	0.25	354425	8106725	55	234.5	432.7	382.2	490.4	25.618
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH17_1_1	2012	50x50	0.25	354425	8106775	55	322.8	574.7	509.7	655.9	26.721
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH18	2012	100x100	1	354500	8106750	55	308.2	555.6	520	591.9	26.332
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH18_0_0	2012	50x50	0.25	354475	8106725	55	384.4	674.6	586.9	774.9	27.632
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH18_0_1	2012	50x50	0.25	354475	8106775	55	277.4	492.1	442	556.6	25.778
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH18_1_0	2012	50x50	0.25	354525	8106725	55	281	493.6	445.3	555	26.308
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH18_1_1	2012	50x50	0.25	354525	8106775	55	289.9	562.2	500.6	632.8	25.61
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH19	2012	100x100	1	354600	8106750	55	217.4	376.2	353.9	400.1	21.419
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH19_0_0	2012	50x50	0.25	354575	8106725	55	245	442.1	387.4	511.7	23.435
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH19_0_1	2012	50x50	0.25	354575	8106775	55	215.2	368.3	329.8	415.4	22.672
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH19_1_0	2012	50x50	0.25	354625	8106725	55	177.8	298	274.8	322.9	19.293
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH19_1_1	2012	50x50	0.25	354625	8106775	55	231.4	396.4	357.2	442.4	20.277
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH20	2012	100x100	1	354700	8106750	55	245.3	389.7	369.1	412.8	22.285
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH20_0_0	2012	50x50	0.25	354675	8106725	55	229.1	369.5	335.4	406	21.221
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH20_0_1	2012	50x50	0.25	354675	8106775	55	226.7	358.4	320	398.3	21.829
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH20_1_0	2012	50x50	0.25	354725	8106725	55	243.6	409.5	368.6	457.5	23.537
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH20_1_1	2012	50x50	0.25	354725	8106775	55	281.9	421.6	375	477.3	22.553
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH21	2012	100x100	1	354300	8106850	55	212.7	355.9	336.4	377.3	21.751
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH21_0_0	2012	50x50	0.25	354275	8106825	55	168.3	272.5	252	297.7	20.111
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH21_0_1	2012	50x50	0.25	354275	8106875	55	219.7	372.3	330.3	425.8	21.97
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH21_1_0	2012	50x50	0.25	354325	8106825	55	245.2	406.8	366.5	450.4	22.944
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH21_1_1	2012	50x50	0.25	354325	8106875	55	217.6	372	334.4	419	21.977
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH22	2012	100x100	1	354400	8106850	55	242.8	417.4	390.2	445.4	23.314
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH22_0_0	2012	50x50	0.25	354375	8106825	55	244.8	414.4	363.3	474.5	22.97
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH22_0_1	2012	50x50	0.25	354375	8106875	55	230.4	375	334.4	422.1	22.347
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH22_1_0	2012	50x50	0.25	354425	8106825	55	271.8	512.7	441.9	596.1	25.334
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH22_1_1	2012	50x50	0.25	354425	8106875	55	224.3	367.5	331	415.2	22.605
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH23	2012	100x100	1	354500	8106850	55	249.9	442.3	415.5	471.9	24.181
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH23_0_0	2012	50x50	0.25	354475	8106825	55	265.6	453	399.8	517.3	25.141
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH23_0_1	2012	50x50	0.25	354475	8106875	55	257.1	462.4	407.2	525.1	22.729
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH23_1_0	2012	50x50	0.25	354525	8106825	55	270.3	481.2	431.9	540.1	25.164
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH23_1_1	2012	50x50	0.25	354525	8106875	55	206.7	372.5	333.3	420.6	23.692
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH24	2012	100x100	1	354600	8106850	55	280	504.2	476.1	532.1	23.852
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH24_0_0	2012	50x50	0.25	354575	8106825	55	270.9	483.8	431.6	545.4	23.51
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH24_0_1	2012	50x50	0.25	354575	8106875	55	274	516.8	461.2	583.3	23.763
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH24_1_0	2012	50x50	0.25	354625	8106825	55	259.2	465.9	425.6	510.2	23.803
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH24_1_1	2012	50x50	0.25	354625	8106875	55	315.9	550.4	500.3	606.6	24.332
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH25	2012	100x100	1	354700	8106850	55	227.2	385.1	357.9	417.4	21.042
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH25_0_0	2012	50x50	0.25	354675	8106825	55	253.1	432.2	378.3	507.7	23.091
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH25_0_1	2012	50x50	0.25	354675	8106875	55	291.1	506.1	433.5	607.3	23.369
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH25_1_0	2012	50x50	0.25	354725	8106825	55	174.9	284.3	257.5	316	18.1
+Australia	Queensland	88	Supersite	Robson Creek	RobsonCreekH25_1_1	2012	50x50	0.25	354725	8106875	55	189.7	317.9	285.9	354.1	19.606
+Australia	Queensland	88	CSIRO	Robson LA	RobsonLA	2011	100x50	0.5	354582.2	8107200.3	55	325.9	531.9	482.8	588.8	27.869
+Australia	Queensland	88	CSIRO	Robson LA	RobsonLA_0_0	2011	50x50	0.25	354574.7	8107176.5	55	308.5	513.3	440.5	603.5	28.183
+Australia	Queensland	88	CSIRO	Robson LA	RobsonLA_1_0	2011	50x50	0.25	354589.8	8107224.1	55	343.4	550.5	487.9	633.3	27.555
+Australia	Tasmania	82	AusPlotsForest	Bird Track	BirdTrack	2012	100x100	1	471006.1	5229243.9	55	658.4	na	na	na	37.164
+Australia	Tasmania	82	AusPlotsForest	Bird Track	BirdTrack_0_0	2012	50x50	0.25	470983	5229217.2	55	763.3	na	na	na	37.826
+Australia	Tasmania	82	AusPlotsForest	Bird Track	BirdTrack_0_1	2012	50x50	0.25	470979.4	5229267	55	473.6	na	na	na	37.312
+Australia	Tasmania	82	AusPlotsForest	Bird Track	BirdTrack_1_0	2012	50x50	0.25	471032.9	5229220.8	55	504.2	na	na	na	36.688
+Australia	Tasmania	82	AusPlotsForest	Bird Track	BirdTrack_1_1	2012	50x50	0.25	471029.2	5229270.6	55	892.6	na	na	na	36.83
+Australia	Tasmania	82	Supersite	Warra	Warra	2012	100x100	1	471863.9	5228534.9	55	661.3	na	na	na	37.739
+Australia	Tasmania	82	Supersite	Warra	Warra_0_0	2012	50x50	0.25	471839.7	5228509.2	55	626.1	na	na	na	38.137
+Australia	Tasmania	82	Supersite	Warra	Warra_0_1	2012	50x50	0.25	471838.2	5228559.2	55	1135.4	na	na	na	39.982
+Australia	Tasmania	82	Supersite	Warra	Warra_1_0	2012	50x50	0.25	471889.7	5228510.7	55	438.8	na	na	na	36.167
+Australia	Tasmania	82	Supersite	Warra	Warra_1_1	2012	50x50	0.25	471888.2	5228560.7	55	445	na	na	na	36.672
+Australia	Western Australia	18	Supersite	Blackbutt	Blackbutt	2013	100x100	1	272140.3	6657252.7	51	52.1	na	na	na	4.213
+Australia	Western Australia	18	Supersite	Gimlet	Gimlet	2012	100x100	1	273865.2	6657611	51	39.2	na	na	na	1.814
+Australia	Western Australia	18	Supersite	Redwood	Redwood	2013	100x100	1	272984.3	6657552	51	37.9	na	na	na	2.389
+Australia	Western Australia	18	Supersite	Salmon	Salmon	2012	100x100	1	274299.1	6657670.1	51	45.4	na	na	na	1.862
+Australia	Western Australia	18	Supersite	Salmon	Salmon	2018	100x100	1	274299.1	6657670.1	51	41.6	na	na	na	1.862
+Australia	Western Australia	18	Supersite	Salmon	Salmon_0_0	2018	50x50	0.25	274272.1	6657647.3	51	52.6	na	na	na	3.46
+Australia	Western Australia	18	Supersite	Salmon	Salmon_0_1	2018	50x50	0.25	274276.3	6657697.2	51	34.1	na	na	na	0.894
+Australia	Western Australia	18	Supersite	Salmon	Salmon_1_0	2018	50x50	0.25	274321.9	6657643.1	51	35.9	na	na	na	0.854
+Australia	Western Australia	18	Supersite	Salmon	Salmon_1_1	2018	50x50	0.25	274326.2	6657692.9	51	43.9	na	na	na	2.241
