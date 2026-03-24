@@ -550,61 +550,47 @@ package:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Sample lidar data folder location:</span></span>
-<span><span class="va">slb.agb.dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_lidar_folder.html">sample_lidar_folder</a></span><span class="op">(</span><span class="st">"SustainableLandscapeBrazil_v04/SLB_AGBmaps"</span><span class="op">)</span></span>
-<span><span class="va">slb.cv.dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_lidar_folder.html">sample_lidar_folder</a></span><span class="op">(</span><span class="st">"SustainableLandscapeBrazil_v04/SLB_CVmaps"</span><span class="op">)</span></span>
+<span><span class="va">tern.agb.dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_lidar_folder.html">sample_lidar_folder</a></span><span class="op">(</span><span class="st">"TERN_data_package_v01/TERN_AGBmaps"</span><span class="op">)</span></span>
+<span><span class="va">tern.cv.dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sample_lidar_folder.html">sample_lidar_folder</a></span><span class="op">(</span><span class="st">"TERN_data_package_v01/TERN_CVmaps"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Obtaining the Coeficient of Variation for each cell in the dataset:</span></span>
-<span><span class="va">slb.cv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RefLidar.html">RefLidar</a></span><span class="op">(</span><span class="va">slb.cv.dir</span><span class="op">)</span></span>
-<span><span class="co"># Enter raster type (AGB, CV, or SD): cv</span></span>
-<span><span class="co"># User input needed to extract PLOT_ID from filename(s)...</span></span>
-<span><span class="co"># File(s) used to extract data: BON_A01_2018_CV_100m.tif</span></span>
-<span><span class="co"># Enter numeric index of the first letter of PLOT_ID: 1</span></span>
-<span><span class="co"># Enter numeric index of the last letter of PLOT_ID: 7</span></span>
-<span><span class="co"># User input needed to extract YEAR from filename(s)...</span></span>
-<span><span class="co"># File(s) used to extract data: BON_A01_2018_CV_100m.tif</span></span>
-<span><span class="co"># Enter numeric index of the first letter of YEAR: 9</span></span>
-<span><span class="co"># Enter numeric index of the last letter of YEAR: 12</span></span>
+<span><span class="va">tern.cv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RefLidar.html">RefLidar</a></span><span class="op">(</span><span class="va">tern.cv.dir</span>, raster_type <span class="op">=</span> <span class="st">"CV"</span>, allow_interactive <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="co"># Using raster type: CV</span></span>
+<span><span class="co"># Processing raster files with multi-band support...</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">slb.cv</span><span class="op">)</span></span>
-<span><span class="co">#      PLOT_ID   POINT_X   POINT_Y        CV AVG_YEAR</span></span>
-<span><span class="co"># 1135 BON_A01 -67.28973 -9.889289 0.3526200     2018</span></span>
-<span><span class="co"># 1136 BON_A01 -67.28882 -9.889289 0.3432670     2018</span></span>
-<span><span class="co"># 1137 BON_A01 -67.28791 -9.889289 0.3390796     2018</span></span>
-<span><span class="co"># 1138 BON_A01 -67.28700 -9.889289 0.3368152     2018</span></span>
-<span><span class="co"># 1170 BON_A01 -67.28882 -9.890197 0.3561200     2018</span></span>
-<span><span class="co"># 1171 BON_A01 -67.28791 -9.890197 0.3443113     2018</span></span>
+<span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">tern.cv</span><span class="op">)</span></span>
+<span><span class="co">#                PLOT_ID  POINT_X   POINT_Y        CV AVG_YEAR</span></span>
+<span><span class="co"># 24286  ZGZ_2012_CV_100m 148.3180 -37.49671 0.3142311     2012</span></span>
+<span><span class="co"># 24296  ZGZ_2012_CV_100m 148.3191 -37.49671 0.3190602     2012</span></span>
+<span><span class="co"># 24304  ZGZ_2012_CV_100m 148.3201 -37.49671 0.3930413     2012</span></span>
+<span><span class="co"># 243110 ZGZ_2012_CV_100m 148.3211 -37.49671 0.5244141     2012</span></span>
+<span><span class="co"># 24327  ZGZ_2012_CV_100m 148.3221 -37.49671 0.5503288     2012</span></span>
+<span><span class="co"># 24335  ZGZ_2012_CV_100m 148.3232 -37.49671 0.4246517     2012</span></span>
 <span></span>
 <span><span class="co"># Obtaining the Above Ground Biomass for each cell in the dataset:</span></span>
-<span><span class="va">plots_lidar</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RefLidar.html">RefLidar</a></span><span class="op">(</span><span class="va">slb.agb.dir</span><span class="op">)</span></span>
-<span><span class="co"># Enter raster type (AGB, CV, or SD): agb</span></span>
-<span><span class="co"># User input needed to extract PLOT_ID from filename(s)...</span></span>
-<span><span class="co"># File(s) used to extract data: BON_A01_2018_AGB_100m.tif</span></span>
-<span><span class="co"># Enter numeric index of the first letter of PLOT_ID: 1</span></span>
-<span><span class="co"># Enter numeric index of the last letter of PLOT_ID: 7</span></span>
-<span><span class="co"># User input needed to extract YEAR from filename(s)...</span></span>
-<span><span class="co"># File(s) used to extract data: BON_A01_2018_AGB_100m.tif</span></span>
-<span><span class="co"># Enter numeric index of the first letter of YEAR: 9</span></span>
-<span><span class="co"># Enter numeric index of the last letter of YEAR: 12</span></span>
+<span><span class="va">plots_lidar</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RefLidar.html">RefLidar</a></span><span class="op">(</span><span class="va">tern.agb.dir</span>, raster_type <span class="op">=</span> <span class="st">"AGB"</span>, allow_interactive <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="co"># Using raster type: AGB</span></span>
+<span><span class="co"># Processing raster files with multi-band support...</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">plots_lidar</span><span class="op">)</span></span>
-<span><span class="co">#      PLOT_ID   POINT_X   POINT_Y      AGB AVG_YEAR</span></span>
-<span><span class="co"># 1135 BON_A01 -67.28973 -9.889289 214.9921     2018</span></span>
-<span><span class="co"># 1136 BON_A01 -67.28882 -9.889289 227.4593     2018</span></span>
-<span><span class="co"># 1137 BON_A01 -67.28791 -9.889289 233.1332     2018</span></span>
-<span><span class="co"># 1138 BON_A01 -67.28700 -9.889289 236.3842     2018</span></span>
-<span><span class="co"># 1170 BON_A01 -67.28882 -9.890197 210.6665     2018</span></span>
-<span><span class="co"># 1171 BON_A01 -67.28791 -9.890197 226.1070     2018</span></span>
+<span><span class="co">#       PLOT_ID  POINT_X   POINT_Y       AGB AVG_YEAR</span></span>
+<span><span class="co"># 24286     ZGZ 148.3180 -37.49671 151.55905     2012</span></span>
+<span><span class="co"># 24296     ZGZ 148.3191 -37.49671 145.86589     2012</span></span>
+<span><span class="co"># 24304     ZGZ 148.3201 -37.49671 110.43783     2012</span></span>
+<span><span class="co"># 243110    ZGZ 148.3211 -37.49671  56.86149     2012</span></span>
+<span><span class="co"># 24327     ZGZ 148.3221 -37.49671  52.26966     2012</span></span>
+<span><span class="co"># 24335     ZGZ 148.3232 -37.49671  94.79680     2012</span></span>
 <span></span>
 <span><span class="co"># Calculating the Standard Deviation (SD = CV * AGB) and adding it to the final plot data:</span></span>
-<span><span class="va">plots_lidar</span><span class="op">$</span><span class="va">sdTree</span> <span class="op">&lt;-</span> <span class="va">slb.cv</span><span class="op">$</span><span class="va">CV</span> <span class="op">*</span> <span class="va">plots_lidar</span><span class="op">$</span><span class="va">AGB</span></span>
+<span><span class="va">plots_lidar</span><span class="op">$</span><span class="va">sdTree</span> <span class="op">&lt;-</span> <span class="va">tern.cv</span><span class="op">$</span><span class="va">CV</span> <span class="op">*</span> <span class="va">plots_lidar</span><span class="op">$</span><span class="va">AGB</span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">plots_lidar</span><span class="op">)</span></span>
-<span><span class="co">#      PLOT_ID   POINT_X   POINT_Y      AGB AVG_YEAR   sdTree</span></span>
-<span><span class="co"># 1135 BON_A01 -67.28973 -9.889289 214.9921     2018 75.81052</span></span>
-<span><span class="co"># 1136 BON_A01 -67.28882 -9.889289 227.4593     2018 78.07928</span></span>
-<span><span class="co"># 1137 BON_A01 -67.28791 -9.889289 233.1332     2018 79.05070</span></span>
-<span><span class="co"># 1138 BON_A01 -67.28700 -9.889289 236.3842     2018 79.61778</span></span>
-<span><span class="co"># 1170 BON_A01 -67.28882 -9.890197 210.6665     2018 75.02255</span></span>
-<span><span class="co"># 1171 BON_A01 -67.28791 -9.890197 226.1070     2018 77.85120</span></span>
+<span><span class="co">#       PLOT_ID  POINT_X   POINT_Y       AGB AVG_YEAR    sdTree</span></span>
+<span><span class="co"># 24286      ZGZ 148.3180 -37.49671 151.55905     2012 124.80281</span></span>
+<span><span class="co"># 24296      ZGZ 148.3191 -37.49671 145.86589     2012 110.25450</span></span>
+<span><span class="co"># 24304      ZGZ 148.3201 -37.49671 110.43783     2012  88.92837</span></span>
+<span><span class="co"># 243110     ZGZ 148.3211 -37.49671  56.86149     2012  40.88781</span></span>
+<span><span class="co"># 24327      ZGZ 148.3221 -37.49671  52.26966     2012  39.72771</span></span>
+<span><span class="co"># 24335      ZGZ 148.3232 -37.49671  94.79680     2012  69.36698</span></span>
 <span></span>
 <span><span class="co"># Add biome information</span></span>
 <span><span class="va">plots_lidar</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/BiomePair.html">BiomePair</a></span><span class="op">(</span><span class="va">plots_lidar</span><span class="op">)</span></span>
@@ -615,34 +601,44 @@ package:</p>
 <span><span class="co"># Rename AGB column to AGB_T_HA to match what calculateTotalUncertainty expects</span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">plots_lidar</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">plots_lidar</span><span class="op">)</span> <span class="op">==</span> <span class="st">"AGB"</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"AGB_T_HA"</span></span>
 <span></span>
+<span><span class="co"># Apply temporal adjustment to align ALS years (2011-2015) with map year (2015)</span></span>
+<span><span class="va">plots_lidar</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/TempApplyVar.html">TempApplyVar</a></span><span class="op">(</span><span class="va">plots_lidar</span>, map_year <span class="op">=</span> <span class="fl">2015</span><span class="op">)</span></span>
+<span></span>
 <span><span class="co"># Calculate total uncertainty (measurement, sampling, and growth)</span></span>
-<span><span class="va">plots_lidar_unc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculateTotalUncertainty.html">calculateTotalUncertainty</a></span><span class="op">(</span><span class="va">plots_lidar</span>, map_year <span class="op">=</span> <span class="fl">2018</span>, map_resolution <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<span><span class="va">plots_lidar_unc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculateTotalUncertainty.html">calculateTotalUncertainty</a></span><span class="op">(</span><span class="va">plots_lidar</span>, map_year <span class="op">=</span> <span class="fl">2015</span>, map_resolution <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
 <span><span class="co"># Using existing sdTree values for tree_level data</span></span>
 <span><span class="co"># Calculating sampling uncertainty using Rejou-Mechain approach</span></span>
 <span><span class="co"># Loading sampling error data from package file</span></span>
-<span><span class="co"># Calculating growth uncertainty by biome</span></span>
+<span><span class="co"># Using existing growth uncertainty (sdGrowth) values</span></span>
 <span><span class="co"># Total uncertainty calculated for plot data of type: tree_level</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">plots_lidar_unc</span><span class="op">$</span><span class="va">data</span><span class="op">)</span></span>
-<span><span class="co">#     PLOT_ID AGB_T_HA AVG_YEAR   sdTree      ZONE         FAO.ecozone      GEZ SIZE_HA   POINT_X   POINT_Y</span></span>
-<span><span class="co"># 1 BON_A01 210.6665     2018 75.02255 S.America Tropical rainforest Tropical       1 -67.28882 -9.890197</span></span>
-<span><span class="co"># 2 BON_A01 226.1070     2018 77.85120 S.America Tropical rainforest Tropical       1 -67.28791 -9.890197</span></span>
-<span><span class="co"># 3 BON_A01 227.4593     2018 78.07928 S.America Tropical rainforest Tropical       1 -67.28882 -9.889289</span></span>
-<span><span class="co"># 4 BON_A01 233.1332     2018 79.05070 S.America Tropical rainforest Tropical       1 -67.28791 -9.889289</span></span>
-<span><span class="co"># 5 BON_A01 214.9921     2018 75.81052 S.America Tropical rainforest Tropical       1 -67.28973 -9.889289</span></span>
-<span><span class="co"># 6 BON_A01 195.5950     2018 72.22207 S.America Tropical rainforest Tropical       1 -67.29064 -9.888382</span></span>
-<span><span class="co">#   RS_HA ratio     sdSE sdGrowth  varPlot  sdTotal</span></span>
-<span><span class="co"># 1     1     1 16.34357        0 5895.496 76.78213</span></span>
-<span><span class="co"># 2     1     1 16.34357        0 6327.922 79.54824</span></span>
-<span><span class="co"># 3     1     1 16.34357        0 6363.486 79.77146</span></span>
-<span><span class="co"># 4     1     1 16.34357        0 6516.126 80.72252</span></span>
-<span><span class="co"># 5     1     1 16.34357        0 6014.347 77.55222</span></span>
-<span><span class="co"># 6     1     1 16.34357        0 5483.140 74.04823</span></span>
+<span><span class="co">#   PLOT_ID AGB_T_HA AVG_YEAR    sdTree  POINT_X   POINT_Y      ZONE</span></span>
+<span><span class="co"># 1     WRR 232.3062     2014 220.60146 146.6645 -43.12495 Australia</span></span>
+<span><span class="co"># 2     WRR 171.9812     2014 159.30778 146.6655 -43.12495 Australia</span></span>
+<span><span class="co"># 3     WRR 444.2952     2014  77.54340 146.6688 -43.12495 Australia</span></span>
+<span><span class="co"># 4     WRR 353.5665     2014 339.78065 146.6634 -43.12495 Australia</span></span>
+<span><span class="co"># 5     WRR 355.5949     2014 205.32216 146.6602 -43.12495 Australia</span></span>
+<span><span class="co"># 6     WRR 320.1187     2014  67.43811 146.6559 -43.12495 Australia</span></span>
+<span><span class="co">#                FAO.ecozone       GEZ SIZE_HA AGB_T_HA_ORIG sdGrowth RS_HA ratio</span></span>
+<span><span class="co"># 1 Temperate oceanic forest Temperate       1      231.9362     0.37     1     1</span></span>
+<span><span class="co"># 2 Temperate oceanic forest Temperate       1      171.6112     0.37     1     1</span></span>
+<span><span class="co"># 3 Temperate oceanic forest Temperate       1      443.9252     0.37     1     1</span></span>
+<span><span class="co"># 4 Temperate oceanic forest Temperate       1      353.1965     0.37     1     1</span></span>
+<span><span class="co"># 5 Temperate oceanic forest Temperate       1      355.2249     0.37     1     1</span></span>
+<span><span class="co"># 6 Temperate oceanic forest Temperate       1      319.7487     0.37     1     1</span></span>
+<span><span class="co">#       sdSE    varPlot   sdTotal</span></span>
+<span><span class="co"># 1 16.17953  48926.918 221.19430</span></span>
+<span><span class="co"># 2 16.17953  25640.883 160.12771</span></span>
+<span><span class="co"># 3 16.17953   6274.894  79.21423</span></span>
+<span><span class="co"># 4 16.17953 115712.806 340.16585</span></span>
+<span><span class="co"># 5 16.17953  42419.104 205.95899</span></span>
+<span><span class="co"># 6 16.17953   4809.813  69.35282</span></span>
 <span></span>
 <span><span class="co"># See the relative contribution of different uncertainty components</span></span>
 <span><span class="va">plots_lidar_unc</span><span class="op">$</span><span class="va">uncertainty_components</span></span>
-<span><span class="co"># measurement    sampling      growth </span></span>
-<span><span class="co">#  0.91475934  0.08524066  0.00000000 </span></span></code></pre></div>
+<span><span class="co"># measurement    sampling      growth</span></span>
+<span><span class="co">#  0.79553108  0.18651725  0.01795167 </span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="plot-data-is-a-gis-file">Plot data is a GIS file<a class="anchor" aria-label="anchor" href="#plot-data-is-a-gis-file"></a>

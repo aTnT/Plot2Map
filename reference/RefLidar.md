@@ -106,11 +106,11 @@ patterns or prompts user if `allow_interactive = TRUE`.
 ``` r
 if (FALSE) { # \dontrun{
 # Basic usage with automatic detection
-lidar_data <- RefLidar(lidar.dir = "data/SustainableLandscapeBrazil_v04/SLB_AGBmaps")
+lidar_data <- RefLidar(lidar.dir = "data/TERN_data_package_v01/TERN_AGBmaps")
 
 # Non-interactive mode for automated pipelines
 lidar_data <- RefLidar(
-  lidar.dir = "data/SustainableLandscapeBrazil_v04/SLB_AGBmaps",
+  lidar.dir = "data/TERN_data_package_v01/TERN_AGBmaps",
   raster_type = "AGB",
   allow_interactive = FALSE
 )
