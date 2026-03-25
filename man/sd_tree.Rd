@@ -4,7 +4,14 @@
 \alias{sd_tree}
 \title{Calculate AGB and standard deviations from tree-level data}
 \usage{
-sd_tree(plot, xy, region = "World", max_retries = 3, retry_delay = 1)
+sd_tree(
+  plot,
+  xy,
+  region = "World",
+  useCache = TRUE,
+  max_retries = 3,
+  retry_delay = 1
+)
 }
 \arguments{
 \item{plot}{A data frame containing tree-level data. The function automatically detects column names with flexible patterns:
@@ -46,6 +53,8 @@ set to 'World', but you can restrict the WD estimates to a single region :
 \item \code{SouthAmericaTrop}: South America (tropical)
 \item \code{World}: World
 }}
+
+\item{useCache}{Use cached results for taxonomic correction to reduce online search time on subsequent queries (default: TRUE).}
 
 \item{max_retries}{Maximum number of retry attempts for taxonomic correction API calls (default: 3).}
 

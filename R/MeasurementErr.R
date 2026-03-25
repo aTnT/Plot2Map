@@ -65,6 +65,7 @@
 #'     \item{year}{Year of measurement or survey (numeric).}
 #'   }
 #'
+#' @param useCache Use cached results for taxonomic correction to reduce online search time on subsequent queries (default: TRUE).
 #' @param max_retries Maximum number of retry attempts for taxonomic correction API calls (default: 3).
 #' @param retry_delay Initial delay in seconds between retry attempts, with exponential backoff (default: 1).
 #'
@@ -125,7 +126,7 @@
 #' Biogeosciences, 9, 3381–3403.
 #'
 #' @export
-sd_tree <- function(plot, xy, region = "World", max_retries = 3, retry_delay = 1) {
+sd_tree <- function(plot, xy, region = "World", useCache = TRUE, max_retries = 3, retry_delay = 1) {
 
   # Helper function to detect column name variations
   detect_column <- function(data, patterns, required_name, required = TRUE) {
@@ -239,7 +240,7 @@ sd_tree <- function(plot, xy, region = "World", max_retries = 3, retry_delay = 1
 
   for (attempt in 1:max_retries) {
     tryCatch({
-      tax <- BIOMASS::correctTaxo(genus = plot$genus, species = plot$species)
+      tax <- BIOMASS::correctTaxo(genus = plot$genus, species = plot$species, useCache = useCache)
 
       # Check if we got valid results with correct lengths
       if (length(tax$genusCorrected) == length(plot$genus) &&
@@ -406,8 +407,7 @@ sd_tree <- function(plot, xy, region = "World", max_retries = 3, retry_delay = 1
 
 
   #add XY
-  #plot.fin <- left_join(plot, xy, by = c('id' = 'id')) #needs full to avoid gaps
-  plot.fin <- dplyr::left_join(plot, unique(xy), by = dplyr::join_by(id))
+  plot.fin <- dplyr::left_join(plot, unique(xy), by = "id")
 
   #remove unecessaries
   plot.fin <- plot.fin[,c("id","x","y", 'size', 'year')] # retain columns of interest
