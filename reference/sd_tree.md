@@ -9,7 +9,14 @@ applies taxonomic correction using BIOMASS::correctTaxo.
 ## Usage
 
 ``` r
-sd_tree(plot, xy, region = "World", max_retries = 3, retry_delay = 1)
+sd_tree(
+  plot,
+  xy,
+  region = "World",
+  useCache = TRUE,
+  max_retries = 3,
+  retry_delay = 1
+)
 ```
 
 ## Arguments
@@ -110,6 +117,11 @@ sd_tree(plot, xy, region = "World", max_retries = 3, retry_delay = 1)
   - `SouthAmericaTrop`: South America (tropical)
 
   - `World`: World
+
+- useCache:
+
+  Use cached results for taxonomic correction to reduce online search
+  time on subsequent queries (default: TRUE).
 
 - max_retries:
 
@@ -227,9 +239,8 @@ head(xyTree)
 #> 6 BSP1 14.36806 74.91944
 
 plot_uncertainties <- sd_tree(plotsTree, xyTree, region = "India")
-#> Using useCache=TRUE is recommended to reduce online search time for the next query
-#>   |                                                                              |                                                                      |   0%  |                                                                              |======================================================================| 100%
-#> Source iplant_tnrs:27712
+#> Cache last modification time : 2026-03-25 14:17:02.091428
+#> Source cache:27712
 #> Corrections FALSE:27092, TRUE:599, TaxaNotFound:19, SpNotFound:2
 #> 
 #> Warning: DRYAD data only stored 289 wood density values in your region of interest. You could provide additional wood densities (parameter addWoodDensityData) or widen your region (region="World")

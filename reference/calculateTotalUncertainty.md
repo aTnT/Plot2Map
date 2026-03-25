@@ -236,8 +236,8 @@ tree_locations <- utils::read.csv(sample_file("SampleTreeXY.csv"))
 
 # Calculate AGB and measurement uncertainty
 tree_results <- sd_tree(tree_data, tree_locations, region = "World")
-#> Using useCache=TRUE is recommended to reduce online search time for the next query
 #>   |                                                                              |                                                                      |   0%  |                                                                              |======================================================================| 100%
+#> Cache updated
 #> Source iplant_tnrs:27712
 #> Corrections FALSE:27092, TRUE:599, TaxaNotFound:19, SpNotFound:2
 #> 
