@@ -281,15 +281,15 @@ validation <- invDasymetry(
 
 # View validation results
 cat("Validation cells after filtering:", nrow(validation), "\n")
-# Validation cells after filtering: 2385
+# Validation cells after filtering: 28943
 head(validation[, c("plotAGB_10", "mapAGB", "varPlot", "x", "y")])
 #   plotAGB_10 mapAGB  varPlot        x         y
-# 1   42.93502     14 905.3276 133.2737 -22.30556
-# 2   42.88473     13 904.2596 133.2737 -22.30463
-# 3   33.10369     12 754.1814 133.2737 -22.30182
-# 4   32.53916     15 750.0342 133.2737 -22.29994
-# 5   32.18783     15 744.5615 133.2737 -22.29714
-# 6   30.34475     15 722.6837 133.2737 -22.29620
+# 1    39.6864     14 905.3276 133.2278 -22.26248
+# 2    36.5325     13 904.2596 133.2287 -22.26248
+# 3    39.3937     12 754.1814 133.2297 -22.26248
+# 4    36.4297     15 750.0342 133.2306 -22.26248
+# 5    31.5472     15 744.5615 133.2315 -22.26248
+# 6    29.8923     15 722.6837 133.2325 -22.26248
 ```
 
 The validation data frame contains:
@@ -327,14 +327,21 @@ accuracy_results <- Accuracy(
 
 # Display results
 print(accuracy_results)
-#   AGB bin (Mg/ha)    n AGBref (Mg/ha) AGBmap (Mg/ha) RMSD varPlot
-# 1            0-50 2385             33             13   20     753
-# 9           total 2385             33             13   20     753
+#   AGB bin (Mg/ha)     n AGBref (Mg/ha) AGBmap (Mg/ha) RMSD varPlot
+# 1            0-50  7709             31              6   29     744
+# 2          50-100  7055             74             30   51    1401
+# 3         100-150  3751            120             66   66    2053
+# 4         150-200  1082            176            146  129    2482
+# 5         200-250  1421            225            229  154    3420
+# 6         250-300  1356            275            264  189    4801
+# 7         300-400  2362            347            320  209    7437
+# 8            >400  4207            583            501  235   13337
+# 9           total 28943            185            146  128    3837
 ```
 
-The `varPlot` column now shows the actual mean variance values for each
-AGB bin, reflecting the uncertainty in your ALS measurements. Higher
-varPlot values indicate greater uncertainty in those biomass ranges.
+The `varPlot` column shows the actual mean variance values for each AGB
+bin, reflecting the uncertainty in your ALS measurements. Higher varPlot
+values indicate greater uncertainty in those biomass ranges.
 
 Let’s extract and interpret the overall metrics:
 
@@ -348,26 +355,27 @@ r2_value <- r_value^2
 bias_value <- mean(validation$mapAGB - validation$plotAGB_10, na.rm = TRUE)
 
 cat("Correlation (R):", round(r_value, 3), "\n")
-# Correlation (R): 0.286
+# Correlation (R): 0.823
 cat("R²:", round(r2_value, 3), "\n")
-# R²: 0.082
+# R²: 0.677
 cat("RMSE:", round(overall$RMSD, 1), "Mg/ha\n")
-# RMSE: 20.3 Mg/ha
+# RMSE: 128.3 Mg/ha
 cat("Bias:", round(bias_value, 1), "Mg/ha\n")
-# Bias: -19.7 Mg/ha
+# Bias: -39.9 Mg/ha
 cat("Mean ALS AGB:", round(overall$`AGBref (Mg/ha)`, 1), "Mg/ha\n")
-# Mean ALS AGB: 32.5 Mg/ha
+# Mean ALS AGB: 185.5 Mg/ha
 cat("Mean ESA-CCI AGB:", round(overall$`AGBmap (Mg/ha)`, 1), "Mg/ha\n")
-# Mean ESA-CCI AGB: 12.8 Mg/ha
+# Mean ESA-CCI AGB: 145.5 Mg/ha
 cat("Sample size:", overall$n, "cells\n")
-# Sample size: 2385 cells
+# Sample size: 28943 cells
 ```
 
 **Interpreting the metrics:**
 
-The validation results provide insight into agreement between ALS and
-ESA-CCI 2015. Specific metrics will vary by site, forest type, and
-biomass range.
+The validation results show moderate agreement between ALS and ESA-CCI
+2015 (R = 0.82, R² = 0.68). ESA-CCI underestimates biomass by ~40 Mg/ha
+on average, with RMSE of 128.3 Mg/ha. Specific metrics vary by site,
+forest type, and biomass range.
 
 The
 [`Accuracy()`](https://atnt.github.io/Plot2Map/reference/Accuracy.md)
@@ -450,6 +458,17 @@ ggplot(validation, aes(x = x, y = y, color = residual)) +
 ![ESA-CCI 2015 Residuals vs ALS](tern_als_residuals_map.png)
 
 ESA-CCI 2015 Residuals vs ALS
+
+### Site-Level Residuals
+
+To better understand spatial patterns in validation errors, we can zoom
+in to individual sites. The WTT site shows the largest residual range
+(1,410 Mg/ha), revealing both significant underestimates (blue) and
+overestimates (red) in the ESA-CCI product.
+
+![ESA-CCI 2015 Residuals - WTT Site](tern_als_residuals_zoom.png)
+
+ESA-CCI 2015 Residuals - WTT Site
 
 ## Discussion and Interpretation
 

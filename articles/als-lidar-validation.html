@@ -357,15 +357,15 @@ runs use cached data.</p>
 <span></span>
 <span><span class="co"># View validation results</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Validation cells after filtering:"</span>, <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">validation</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co"># Validation cells after filtering: 2385</span></span>
+<span><span class="co"># Validation cells after filtering: 28943</span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">validation</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"plotAGB_10"</span>, <span class="st">"mapAGB"</span>, <span class="st">"varPlot"</span>, <span class="st">"x"</span>, <span class="st">"y"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#   plotAGB_10 mapAGB  varPlot        x         y</span></span>
-<span><span class="co"># 1   42.93502     14 905.3276 133.2737 -22.30556</span></span>
-<span><span class="co"># 2   42.88473     13 904.2596 133.2737 -22.30463</span></span>
-<span><span class="co"># 3   33.10369     12 754.1814 133.2737 -22.30182</span></span>
-<span><span class="co"># 4   32.53916     15 750.0342 133.2737 -22.29994</span></span>
-<span><span class="co"># 5   32.18783     15 744.5615 133.2737 -22.29714</span></span>
-<span><span class="co"># 6   30.34475     15 722.6837 133.2737 -22.29620</span></span></code></pre></div>
+<span><span class="co"># 1    39.6864     14 905.3276 133.2278 -22.26248</span></span>
+<span><span class="co"># 2    36.5325     13 904.2596 133.2287 -22.26248</span></span>
+<span><span class="co"># 3    39.3937     12 754.1814 133.2297 -22.26248</span></span>
+<span><span class="co"># 4    36.4297     15 750.0342 133.2306 -22.26248</span></span>
+<span><span class="co"># 5    31.5472     15 744.5615 133.2315 -22.26248</span></span>
+<span><span class="co"># 6    29.8923     15 722.6837 133.2325 -22.26248</span></span></code></pre></div>
 <p>The validation data frame contains:</p>
 <ul>
 <li>
@@ -403,13 +403,20 @@ each AGB bin.</p>
 <span></span>
 <span><span class="co"># Display results</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">accuracy_results</span><span class="op">)</span></span>
-<span><span class="co">#   AGB bin (Mg/ha)    n AGBref (Mg/ha) AGBmap (Mg/ha) RMSD varPlot</span></span>
-<span><span class="co"># 1            0-50 2385             33             13   20     753</span></span>
-<span><span class="co"># 9           total 2385             33             13   20     753</span></span></code></pre></div>
-<p>The <code>varPlot</code> column now shows the actual mean variance
-values for each AGB bin, reflecting the uncertainty in your ALS
-measurements. Higher varPlot values indicate greater uncertainty in
-those biomass ranges.</p>
+<span><span class="co">#   AGB bin (Mg/ha)     n AGBref (Mg/ha) AGBmap (Mg/ha) RMSD varPlot</span></span>
+<span><span class="co"># 1            0-50  7709             31              6   29     744</span></span>
+<span><span class="co"># 2          50-100  7055             74             30   51    1401</span></span>
+<span><span class="co"># 3         100-150  3751            120             66   66    2053</span></span>
+<span><span class="co"># 4         150-200  1082            176            146  129    2482</span></span>
+<span><span class="co"># 5         200-250  1421            225            229  154    3420</span></span>
+<span><span class="co"># 6         250-300  1356            275            264  189    4801</span></span>
+<span><span class="co"># 7         300-400  2362            347            320  209    7437</span></span>
+<span><span class="co"># 8            &gt;400  4207            583            501  235   13337</span></span>
+<span><span class="co"># 9           total 28943            185            146  128    3837</span></span></code></pre></div>
+<p>The <code>varPlot</code> column shows the actual mean variance values
+for each AGB bin, reflecting the uncertainty in your ALS measurements.
+Higher varPlot values indicate greater uncertainty in those biomass
+ranges.</p>
 <p>Let’s extract and interpret the overall metrics:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Extract overall metrics from accuracy table</span></span>
@@ -421,23 +428,24 @@ those biomass ranges.</p>
 <span><span class="va">bias_value</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/summarize-generics.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">validation</span><span class="op">$</span><span class="va">mapAGB</span> <span class="op">-</span> <span class="va">validation</span><span class="op">$</span><span class="va">plotAGB_10</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Correlation (R):"</span>, <span class="fu"><a href="https://rspatial.github.io/terra/reference/math-generics.html" class="external-link">round</a></span><span class="op">(</span><span class="va">r_value</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co"># Correlation (R): 0.286</span></span>
+<span><span class="co"># Correlation (R): 0.823</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"R²:"</span>, <span class="fu"><a href="https://rspatial.github.io/terra/reference/math-generics.html" class="external-link">round</a></span><span class="op">(</span><span class="va">r2_value</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co"># R²: 0.082</span></span>
+<span><span class="co"># R²: 0.677</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"RMSE:"</span>, <span class="fu"><a href="https://rspatial.github.io/terra/reference/math-generics.html" class="external-link">round</a></span><span class="op">(</span><span class="va">overall</span><span class="op">$</span><span class="va">RMSD</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"Mg/ha\n"</span><span class="op">)</span></span>
-<span><span class="co"># RMSE: 20.3 Mg/ha</span></span>
+<span><span class="co"># RMSE: 128.3 Mg/ha</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Bias:"</span>, <span class="fu"><a href="https://rspatial.github.io/terra/reference/math-generics.html" class="external-link">round</a></span><span class="op">(</span><span class="va">bias_value</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"Mg/ha\n"</span><span class="op">)</span></span>
-<span><span class="co"># Bias: -19.7 Mg/ha</span></span>
+<span><span class="co"># Bias: -39.9 Mg/ha</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Mean ALS AGB:"</span>, <span class="fu"><a href="https://rspatial.github.io/terra/reference/math-generics.html" class="external-link">round</a></span><span class="op">(</span><span class="va">overall</span><span class="op">$</span><span class="va">`AGBref (Mg/ha)`</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"Mg/ha\n"</span><span class="op">)</span></span>
-<span><span class="co"># Mean ALS AGB: 32.5 Mg/ha</span></span>
+<span><span class="co"># Mean ALS AGB: 185.5 Mg/ha</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Mean ESA-CCI AGB:"</span>, <span class="fu"><a href="https://rspatial.github.io/terra/reference/math-generics.html" class="external-link">round</a></span><span class="op">(</span><span class="va">overall</span><span class="op">$</span><span class="va">`AGBmap (Mg/ha)`</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"Mg/ha\n"</span><span class="op">)</span></span>
-<span><span class="co"># Mean ESA-CCI AGB: 12.8 Mg/ha</span></span>
+<span><span class="co"># Mean ESA-CCI AGB: 145.5 Mg/ha</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Sample size:"</span>, <span class="va">overall</span><span class="op">$</span><span class="va">n</span>, <span class="st">"cells\n"</span><span class="op">)</span></span>
-<span><span class="co"># Sample size: 2385 cells</span></span></code></pre></div>
+<span><span class="co"># Sample size: 28943 cells</span></span></code></pre></div>
 <p><strong>Interpreting the metrics:</strong></p>
-<p>The validation results provide insight into agreement between ALS and
-ESA-CCI 2015. Specific metrics will vary by site, forest type, and
-biomass range.</p>
+<p>The validation results show moderate agreement between ALS and
+ESA-CCI 2015 (R = 0.82, R² = 0.68). ESA-CCI underestimates biomass by
+~40 Mg/ha on average, with RMSE of 128.3 Mg/ha. Specific metrics vary by
+site, forest type, and biomass range.</p>
 <p>The <code><a href="../reference/Accuracy.html">Accuracy()</a></code> function stratifies results by AGB bins,
 helping identify systematic patterns like saturation at high biomass
 values.</p>
@@ -511,6 +519,17 @@ patterns in errors, such as topographic effects or edge artifacts.</p>
 <span>  <span class="op">)</span></span></code></pre></div>
 <div class="float">
 <img src="tern_als_residuals_map.png" alt="ESA-CCI 2015 Residuals vs ALS"><div class="figcaption">ESA-CCI 2015 Residuals vs ALS</div>
+</div>
+</div>
+<div class="section level3">
+<h3 id="site-level-residuals">Site-Level Residuals<a class="anchor" aria-label="anchor" href="#site-level-residuals"></a>
+</h3>
+<p>To better understand spatial patterns in validation errors, we can
+zoom in to individual sites. The WTT site shows the largest residual
+range (1,410 Mg/ha), revealing both significant underestimates (blue)
+and overestimates (red) in the ESA-CCI product.</p>
+<div class="float">
+<img src="tern_als_residuals_zoom.png" alt="ESA-CCI 2015 Residuals - WTT Site"><div class="figcaption">ESA-CCI 2015 Residuals - WTT Site</div>
 </div>
 </div>
 </div>
